@@ -20,7 +20,7 @@ As exportações usam o conteúdo atual do formulário, sem exigir salvamento pr
 
 Para criar o PDF depois, abra o documento no Word ou no LibreOffice e use **Arquivo → Exportar/Salvar como → PDF**. Os nomes dos menus podem variar conforme o aplicativo.
 
-O DOCX do PEI usa A4, Arial 12, texto justificado, margens de 1,5 cm, borda preta de página e tabelas de 18 cm, seguindo o padrão do PAEE/Relatório (a Diagnóstica usa Arial 11). O DOCX dos demais módulos preserva o modelo de exportação existente, com larguras de tabela explícitas para maior compatibilidade. O ODT é editável e preserva texto, tabelas e imagens incorporadas, mas pode apresentar diferenças de formatação em relação ao DOCX. Confira o resultado antes de entregar documentos oficiais.
+O DOCX do PEI usa A4, Arial 12, todos os textos justificados (inclusive títulos e cabeçalhos de tabelas), margens de 1,5 cm, borda preta de página e tabelas de 18 cm, seguindo o padrão do PAEE/Relatório (a Diagnóstica usa Arial 11). O DOCX dos demais módulos preserva o modelo de exportação existente, com larguras de tabela explícitas para maior compatibilidade. O ODT é editável e preserva texto, tabelas e imagens incorporadas, mas pode apresentar diferenças de formatação em relação ao DOCX. Confira o resultado antes de entregar documentos oficiais.
 
 No PEI, os arquivos são reconstruídos a partir do HTML armazenado. Formatação perdida na importação original do PEI não pode ser recuperada a partir desse HTML.
 

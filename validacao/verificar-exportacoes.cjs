@@ -40,6 +40,7 @@ async function validate(entry,format){
     assert.equal(attr(defaults.getElementsByTagNameNS(namespace,'rFonts')[0],'ascii'),'Arial');
     assert.equal(attr(defaults.getElementsByTagNameNS(namespace,'sz')[0],'val'),'24');
     assert.equal(attr(defaults.getElementsByTagNameNS(namespace,'jc')[0],'val'),'both');
+    for(const alignment of parsed.getElementsByTagNameNS(namespace,'jc'))assert.equal(attr(alignment,'val'),'both','Todos os textos do PEI devem estar justificados, inclusive cabeçalhos');
     assert.equal(attr(find('tblW'),'w'),'10205');
     assert.equal(Array.from(find('tblGrid').children).reduce((total,col)=>total+Number(attr(col,'w')),0),10205);
   }

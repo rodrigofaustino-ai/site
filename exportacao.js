@@ -138,11 +138,11 @@
     }
     function blocks(container) {
       return Array.from(container.childNodes).flatMap(node => {
-        if (node.nodeType === 3) return node.textContent.trim() ? [new Paragraph({children:runs(node,container.tagName==='TH'?{bold:true}:{}),spacing:{before:40,after:40},alignment:container.tagName==='TH'?AlignmentType.CENTER:AlignmentType.JUSTIFIED})] : [];
+        if (node.nodeType === 3) return node.textContent.trim() ? [new Paragraph({children:runs(node,container.tagName==='TH'?{bold:true}:{}),spacing:{before:40,after:40},alignment:AlignmentType.JUSTIFIED})] : [];
         if (node.nodeType !== 1) return [];
         if (node.tagName === 'TABLE') return [table(node)];
         if (/^(DIV|SECTION|ARTICLE|UL|OL|LI)$/.test(node.tagName)) return blocks(node);
-        return [new Paragraph({children:runs(node,container.tagName==='TH'?{bold:true}:{}),spacing:{before:40,after:40},alignment:container.tagName==='TH'?AlignmentType.CENTER:AlignmentType.JUSTIFIED,...(/^H[1-6]$/.test(node.tagName)?{style:'PEIHeading'+node.tagName[1],spacing:{before:200,after:60}}:{})})];
+        return [new Paragraph({children:runs(node,container.tagName==='TH'?{bold:true}:{}),spacing:{before:40,after:40},alignment:AlignmentType.JUSTIFIED,...(/^H[1-6]$/.test(node.tagName)?{style:'PEIHeading'+node.tagName[1],spacing:{before:200,after:60}}:{})})];
       });
     }
     const pageBorder={style:BorderStyle.SINGLE,size:8,color:'000000',space:24};
