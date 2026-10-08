@@ -1,50 +1,78 @@
 # Site SRM — exportações PDF, DOCX e ODT
 
+## Publicação
+
+O site continua no Netlify. Para PDF com a formatação do DOCX, esta versão usa um conversor próprio de LibreOffice e uma Netlify Function. **É necessário hospedar o conversor e configurar o Netlify antes de usar o botão PDF.** Publique pela integração GitHub do Netlify, selecionando a branch `feat/exportacoes-pdf-docx-odt` para testar; arrastar apenas uma pasta de HTMLs não instala a Function.
+
+O passo a passo está em [conversor/README.md](conversor/README.md). O arquivo `netlify.toml` define a pasta do site e das Functions. As credenciais devem ficar nas variáveis privadas da hospedagem, nunca no código ou nos chats.
+
 ## Como usar
 
-Publique os cinco HTMLs junto com `exportacao.js` e toda a pasta `vendor`, mantendo os nomes e as pastas. Abra `index.html` no site publicado. Não basta substituir apenas os HTMLs: as bibliotecas locais são necessárias.
+- Diagnóstica, PAEE e Relatório: abra o formulário e escolha Exportar DOCX, PDF ou ODT.
+- Frequência: clique em Exportar frequência, informe o intervalo e escolha o formato.
+- PEI: abra Ver PEI e escolha um dos três botões.
 
-- Diagnóstica, PAEE e Relatório: abra o formulário do aluno e escolha Exportar DOCX, PDF ou ODT.
-- Frequência: clique em Exportar frequência, informe o intervalo e escolha Gerar DOCX, PDF ou ODT.
-- PEI: abra Ver PEI e escolha um dos três botões no visualizador.
+As exportações usam o conteúdo atual do formulário, sem exigir salvamento prévio. Os botões DOCX dos cartões de registros salvos continuam funcionando.
 
-As exportações usam o conteúdo atual do formulário; não é preciso salvar previamente para exportar. Os botões DOCX dos cartões de registros salvos continuam funcionando.
+## Como o PDF é produzido
 
-Para desenvolver localmente, execute em `/workspace/site`:
+O mesmo DOCX que o usuário baixa é enviado à Function `convert-docx`. Ela valida o login Firebase e o encaminha ao seu servidor privado de LibreOffice. O PDF usa o arquivo original, sem passar pela conversão DOCX → HTML e sem reconstruir margens, cores, tabelas ou páginas no navegador. O documento trafega por HTTPS entre o navegador, o Netlify e seu conversor, e os arquivos temporários são removidos no servidor após a conversão.
+
+As grades das tabelas foram corrigidas para registrar as mesmas larguras já previstas pelo modelo: especialmente a coluna de 9 cm da Diagnóstica e as colunas de nomes/semanas da Frequência. Isso evita interpretações diferentes entre Word e LibreOffice.
+
+**LibreOffice e Word podem apresentar diferenças de fontes e paginação.** A imagem Docker usa fontes substitutas; para maior fidelidade, instale as mesmas fontes autorizadas usadas nos documentos, em especial Arial. Igualdade visual absoluta com o PDF exportado pelo Word exige o próprio Word como renderizador. Compare um documento preenchido antes de entregar documentos oficiais.
+
+No PEI, o PDF usa o DOCX gerado pelo botão Exportar DOCX. O site armazena o PEI importado como HTML, portanto detalhes perdidos na importação original não são recuperáveis.
+
+DOCX e ODT continuam sendo gerados localmente no navegador. A exportação ODT mantém o caminho anterior baseado no conteúdo HTML e pode ter diferenças visuais em relação ao DOCX.
+
+## Arquitetura
+
+Cada página contém seu formulário, estilos e lógica. Firebase Authentication e Firestore fornecem autenticação e armazenamento. O diário usa o projeto `salamulti`; os formulários usam `paee-3fea6`. Essas configurações foram preservadas. IA Puter continua sendo um recurso externo opcional.
+
+- `exportacao.js`: downloads DOCX/ODT e envio do DOCX para converter em PDF.
+- `netlify/functions/convert-docx.js`: validação criptográfica dos tokens Firebase, conexão com o conversor privado e resposta PDF.
+- `conversor/server.py`: serviço Python/LibreOffice, sem dependências Python externas.
+- `conversor/Dockerfile`: servidor empacotado para hospedagem Docker.
+- `vendor/`: bibliotecas JavaScript locais e suas licenças.
+
+O servidor admite documentos/PDFs de até 4 MB e uma conversão por vez. A conversão tem limite de 45 segundos. Não há fallback para o antigo PDF reconstruído quando o servidor está indisponível; o site informa o erro.
+
+## Desenvolvimento e testes
+
+Para abrir os HTMLs, DOCX e ODT localmente:
 
 ```sh
 python3 -m http.server 8000 --bind 0.0.0.0
 ```
 
-## Arquitetura
-
-Cada página contém seu formulário, estilos e lógica. Firebase Authentication e Firestore fornecem autenticação e armazenamento. O diário usa o projeto `salamulti`, e os formulários usam `paee-3fea6`. As configurações existentes foram preservadas. O arquivo administrativo teve somente os endereços das bibliotecas substituídos pelas cópias locais.
-
-`exportacao.js` reúne as novas exportações. Para os formulários e a frequência, o DOCX existente é gerado normalmente; Mammoth extrai o conteúdo para produzir PDF com pdfmake e ODT com JSZip. O DOCX original continua sendo baixado sem essa conversão. No PEI, os três formatos são reconstruídos a partir do HTML armazenado.
-
-As conversões são locais: o conteúdo dos documentos não é enviado a um serviço de conversão. A aplicação continua acessando Firebase para sua operação normal; IA Puter é um recurso externo opcional, preservado.
-
-PDF possui texto selecionável; ODT é um pacote OpenDocument editável. Tabelas, acentos, texto e imagens incorporadas PNG/JPEG/GIF são tratados. Imagens externas não incorporadas são substituídas por texto alternativo. A conversão não preserva todos os detalhes de margens, bordas, cabeçalhos, rodapés, listas, fontes e paginação do DOCX. O PDF de frequência usa A4 paisagem. O PEI já era armazenado como HTML; detalhes perdidos na importação original não podem ser recuperados. Confira a apresentação antes de entregar documentos oficiais.
-
-## Validação realizada
-
-- Sintaxe dos scripts dos cinco HTMLs e do exportador.
-- Geração de 15 arquivos: DOCX/PDF/ODT para Diagnóstica, PAEE, Relatório, Frequência e PEI, com dados fictícios.
-- Verificação das assinaturas dos PDFs, estrutura interna DOCX/ODT, tabelas e conteúdo textual nos documentos editáveis.
-- Downloads dos três formatos dos formulários e do PEI no Chromium, usando bibliotecas reais.
-- Abertura das cinco páginas no Chromium, sem erros de execução JavaScript.
-- Abertura e conversão de ODT da Diagnóstica, PAEE e Relatório no LibreOffice.
-- Entrega HTTP dos arquivos pelo servidor local.
-
-Login, permissões e dados reais do Firebase, IA Puter e restauração em uma nova tarefa não foram validados. Não foram feitas alterações nos dados da nuvem nem uma publicação do site.
-
-O teste reutilizável está em `validacao/verificar-exportacoes.cjs`. Suas dependências são somente para teste, fora do site:
+Esse servidor estático não executa a Function de PDF. Para validar o PDF, use os testes abaixo com Python 3, LibreOffice e Poppler (`pdfinfo`/`pdftotext`) instalados; ou use uma instalação de teste do Netlify com o conversor configurado.
 
 ```sh
-npm install --prefix /tmp/site-validation --cache /tmp/npm-cache --no-audit --no-fund jsdom acorn jszip docx@8.5.0 mammoth@1.6.0 pdfmake@0.2.20 html-to-pdfmake@2.5.31
+npm install --prefix /tmp/site-validation --cache /tmp/npm-cache --no-audit --no-fund jsdom acorn jszip docx@8.5.0 mammoth@1.6.0
 NODE_PATH=/tmp/site-validation/node_modules node validacao/verificar-exportacoes.cjs
+NODE_PATH=/tmp/site-validation/node_modules node validacao/verificar-api-pdf.cjs
 ```
 
-Os arquivos de teste gerados são salvos em `/tmp/site-results` e contêm somente dados fictícios.
+Os testes de exportação e API iniciam um conversor local temporário e passam pelas mesmas funções JavaScript e pela Function, com chaves RSA e tokens exclusivamente de teste. Nenhum documento real é enviado à nuvem. O transporte do DOCX é verificado byte a byte; os PDFs são abertos pelo Poppler, e seu texto e autoria LibreOffice são conferidos. São gerados 15 arquivos com dados fictícios em `/tmp/site-results`.
 
-As bibliotecas em `vendor` foram obtidas por npm com verificação de integridade. As versões Firebase 9.23.0 e 10.12.2 foram mantidas por página. Outras versões: docx 8.5.0, Mammoth 1.6.0, JSZip 3.10.1, pdfmake 0.2.20, html-to-pdfmake 2.5.31, jsPDF 2.5.1, AutoTable 3.8.2 e LZ-String 1.4.4. Licenças disponíveis estão na pasta `vendor` e nos cabeçalhos das bibliotecas.
+Para testar a imagem Docker:
+
+```sh
+docker build -t srm-docx-converter:validation conversor
+SRM_TEST_DOCKER=1 NODE_PATH=/tmp/site-validation/node_modules node validacao/verificar-exportacoes.cjs
+SRM_TEST_DOCKER=1 NODE_PATH=/tmp/site-validation/node_modules node validacao/verificar-api-pdf.cjs
+```
+
+Login com uma conta real do Firebase, publicação do conversor, variáveis no Netlify, comparação com Microsoft Word e disponibilidade em produção dependem da configuração da hospedagem. Não foram feitas alterações nos dados do Firebase nem uma publicação do site nesta tarefa.
+
+Para conferir os botões e downloads reais no Chromium, instale `playwright-core` no mesmo diretório de dependências e execute:
+
+```sh
+npm install --prefix /tmp/site-validation --cache /tmp/npm-cache --no-audit --no-fund playwright-core
+SRM_TEST_DOCKER=1 NODE_PATH=/tmp/site-validation/node_modules node validacao/verificar-navegador.cjs
+```
+
+Use `CHROMIUM_BIN` se o executável não estiver em `/usr/bin/chromium`. O teste usa as cinco páginas e dados fictícios, bloqueia os serviços externos e passa pela Function real com autenticação RSA de teste e pelo servidor de LibreOffice real.
+
+Um par DOCX/PDF com dados fictícios, produzido pela imagem Docker validada, está em `validacao/exemplos/`. Ele serve para revisar o layout pelo GitHub; essa pasta é bloqueada pelas regras de publicação do site.

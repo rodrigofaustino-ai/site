@@ -2191,6 +2191,7 @@ async function gerarRelatorioFrequenciaPDF(formato='docx'){
 
     children.push(new Table({
       rows:[gradeTitleRow, gradeHeaderRow,...gradeDataRows],
+      columnWidths:[COL_NOME,...colSemWidths],
       width:{size:TABLE_W,type:WidthType.DXA},
       layout:TableLayoutType.FIXED,
     }));
@@ -2312,6 +2313,7 @@ async function gerarRelatorioFrequenciaPDF(formato='docx'){
 
     children.push(new Table({
       rows:[resumoTitleRow, resumoHeaderRow,...resumoDataRows],
+      columnWidths:[COL_NOME_R,...colNumWidths],
       width:{size:TABLE_W,type:WidthType.DXA},
       layout:TableLayoutType.FIXED,
     }));

@@ -1261,6 +1261,7 @@ function exportDOCX(s, formato='docx'){
 
   children.push(new Table({
     rows:tableRows,
+    columnWidths:colWidths,
     width:{size:TABLE_W,type:WidthType.DXA},
     layout:TableLayoutType.FIXED,
   }));
@@ -1284,6 +1285,7 @@ function exportDOCX(s, formato='docx'){
     ],
   });
   children.push(new Table({
+    columnWidths:[TABLE_W/2,TABLE_W/2],
     width:{size:TABLE_W,type:WidthType.DXA},
     layout:TableLayoutType.FIXED,
     rows:[new TableRow({children:[

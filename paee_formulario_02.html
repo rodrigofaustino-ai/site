@@ -1582,6 +1582,7 @@ function exportDOCX(s, formato='docx'){
     }));
     return new Table({
       rows:[headerRow,...dataRows],
+      columnWidths:colWidths,
       width:{size:TABLE_WIDTH_18CM,type:WidthType.DXA},
       layout:TableLayoutType.FIXED,
     });
@@ -1630,6 +1631,7 @@ function exportDOCX(s, formato='docx'){
     }));
     return new Table({
       rows:[headerRow,...dataRows],
+      columnWidths:colWidths,
       width:{size:TABLE_WIDTH_18CM,type:WidthType.DXA},
       layout:TableLayoutType.FIXED,
     });

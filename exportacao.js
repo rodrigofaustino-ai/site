@@ -1,11 +1,9 @@
-/* Exportações locais: nenhum documento é enviado a um serviço de conversão. */
+/* DOCX e ODT locais; PDF usa o próprio DOCX no conversor privado de LibreOffice. */
 (function () {
   'use strict';
   const sources = {
     mammoth: 'vendor/mammoth.browser.min.js',
-    JSZip: 'vendor/jszip.min.js',
-    pdfMake: 'vendor/pdfmake.min.js',
-    htmlToPdfmake: 'vendor/html-to-pdfmake.js'
+    JSZip: 'vendor/jszip.min.js'
   };
   const pending = {};
   async function load(name) {
@@ -112,7 +110,7 @@
     }
     return Packer.toBlob(new Document({sections:[{children:blocks(root)}]}));
   }
-  async function fromHtml(html, format, filename, options = {}) {
+  async function fromHtml(html, format, filename) {
     const root = clean(html);
     await Promise.all(Array.from(root.querySelectorAll('img')).map(async img => {
       if (!/^data:image\/(png|jpeg|gif);base64,/i.test(img.getAttribute('src') || '')) {img.replaceWith(document.createTextNode(img.alt || '[Imagem não incorporada]'));return;}
@@ -126,31 +124,44 @@
     if (!['pdf','odt','docx'].includes(format)) throw new Error('Formato inválido.');
     if (format === 'docx') return download(await htmlDocx(root),filename+'.docx');
     if (format === 'odt') return download(await odt(root),filename+'.odt');
-    await load('pdfMake'); await load('htmlToPdfmake');
-    if (!window.pdfMake.vfs) {
-      if (!pending.fonts) pending.fonts = new Promise((resolve,reject) => {
-        const script = document.createElement('script'); script.src='vendor/vfs_fonts.js';
-        script.onload=resolve; script.onerror=()=>reject(new Error('Não foi possível carregar as fontes PDF.')); document.head.appendChild(script);
-      }).catch(error => {delete pending.fonts; throw error;});
-      await pending.fonts;
-    }
-    const content = window.htmlToPdfmake(root.innerHTML,{window});
-    function sizeTables(value) {
-      if (!value || typeof value !== 'object') return;
-      if (value.table && value.table.body.length) value.table.widths = Array(value.table.body[0].length).fill('*');
-      Object.values(value).forEach(child => {if (Array.isArray(child)) child.forEach(sizeTables); else if (child && typeof child === 'object') sizeTables(child);});
-    }
-    sizeTables(content);
-    const blob = await new Promise((resolve,reject) => {
-      try { window.pdfMake.createPdf({pageSize:'A4',pageOrientation:options.landscape?'landscape':'portrait',pageMargins:[40,40,40,40],defaultStyle:{fontSize:options.landscape?8:10},content}).getBlob(resolve); } catch(error) { reject(error); }
-    });
-    download(blob,filename+'.pdf');
+    return pdfFromDocx(await htmlDocx(root),filename);
   }
+  async function pdfFromDocx(blob,filename) {
+    if (blob.size > 4 * 1024 * 1024) throw new Error('O documento excede o limite de 4 MB.');
+    const user = window.firebase?.auth().currentUser;
+    if (!user) throw new Error('Faça login para gerar o PDF.');
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(),65000);
+    try {
+      const response = await fetch('/.netlify/functions/convert-docx',{
+        method:'POST',redirect:'error',
+        headers:{'Content-Type':'application/vnd.openxmlformats-officedocument.wordprocessingml.document','Authorization':'Bearer '+await user.getIdToken()},
+        body:blob,signal:controller.signal,
+      });
+      if (!response.ok) {
+        let message = 'Não foi possível gerar o PDF. Verifique se o servidor de conversão está configurado.';
+        try {const error = await response.json();if (typeof error.error === 'string') message = error.error;} catch (_) {}
+        throw new Error(message);
+      }
+      if (!response.headers.get('content-type')?.toLowerCase().startsWith('application/pdf')) throw new Error('O servidor não retornou um PDF válido.');
+      const pdf = await response.blob();
+      if (pdf.size > 4 * 1024 * 1024) throw new Error('O PDF excede o limite de 4 MB.');
+      const signature = new Uint8Array(await pdf.slice(0,5).arrayBuffer());
+      if (String.fromCharCode(...signature) !== '%PDF-') throw new Error('O servidor não retornou um PDF válido.');
+      download(pdf,filename+'.pdf');
+    } catch (error) {
+      if (error.name === 'AbortError') throw new Error('A conversão demorou demais. Tente novamente.');
+      throw error;
+    } finally {clearTimeout(timer);}
+  }
+
   async function fromDocx(blob,format,filename) {
+    if (!['docx','pdf','odt'].includes(format)) throw new Error('Formato inválido.');
     if (format === 'docx') return download(blob,filename+'.docx');
+    if (format === 'pdf') return pdfFromDocx(blob,filename);
     const converter = await load('mammoth');
     const result = await converter.convertToHtml({arrayBuffer:await blob.arrayBuffer()});
-    return fromHtml(result.value,format,filename,{landscape:filename.startsWith('Relatorio_Frequencia_')});
+    return fromHtml(result.value,format,filename);
   }
   window.SRMExport = {fromDocx,fromHtml};
   window.exportarPei = async function (format) {

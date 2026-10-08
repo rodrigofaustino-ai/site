@@ -1134,6 +1134,7 @@ function exportDOCX(s, formato='docx'){
     });
     return new Table({
       rows:trows,
+      columnWidths:colW,
       width:{size:TABLE_W,type:WidthType.DXA},
       layout:TableLayoutType.FIXED,
     });
@@ -1210,6 +1211,7 @@ function exportDOCX(s, formato='docx'){
   // Duas linhas de assinatura lado a lado (tabela)
   const signW=uniformColW(2);
   children.push(new Table({
+    columnWidths:signW,
     rows:[
       new TableRow({
         height:{value:600,rule:HeightRule.ATLEAST},
