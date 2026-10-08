@@ -1,15 +1,11 @@
 const fs=require('fs'),path=require('path'),assert=require('assert'),acorn=require('acorn');
-const {execFileSync}=require('node:child_process');
 const {JSDOM}=require('jsdom');const docx=require('docx'),JSZip=require('jszip');
-const {startConverter}=require('./apoio-conversor.cjs');
-let converter;
+
 const base=path.resolve(__dirname,'..');let total=0;
 function context(file){
  const html=fs.readFileSync(path.join(base,file),'utf8');
  const dom=new JSDOM(html,{runScripts:'outside-only',url:'http://localhost/'+file});const w=dom.window;
- w.docx=docx;w.JSZip=JSZip;w.mammoth={convertToHtml:args=>require('mammoth').convertToHtml({buffer:Buffer.from(args.arrayBuffer)})};w.Blob=Blob;w.AbortController=AbortController;
- w.firebase={auth:()=>({currentUser:{getIdToken:async()=>converter.idToken}})};
- w.fetch=async(url,options)=>{const result=await converter.browserFetch(url,options);return {ok:result.ok,status:result.status,headers:result.headers,json:()=>result.json(),blob:async()=>new Blob([await result.arrayBuffer()],{type:'application/pdf'})};};
+ w.docx=docx;w.JSZip=JSZip;w.mammoth={convertToHtml:args=>require('mammoth').convertToHtml({buffer:Buffer.from(args.arrayBuffer)})};w.Blob=Blob;
  const saved=[];w.URL.createObjectURL=blob=>{saved.push({blob});return 'blob:test'};w.URL.revokeObjectURL=()=>{};
  w.HTMLAnchorElement.prototype.click=function(){saved.at(-1).name=this.download};
  w.showToast=message=>{if(message.startsWith('Erro'))throw new Error(message)};w.hideLoad=()=>{};w.showLoad=()=>{};w.hideModal=()=>{};
@@ -22,38 +18,32 @@ function context(file){
 async function waitFile(saved,count){const end=Date.now()+25000;while(saved.length<count){if(Date.now()>end)throw new Error('Exportação não concluiu');await new Promise(r=>setTimeout(r,30));}return saved[count-1];}
 async function validate(entry,format){
  const bytes=Buffer.from(await entry.blob.arrayBuffer());assert(bytes.length>100);assert(entry.name.endsWith('.'+format));
- if(format==='pdf'){assert(bytes.subarray(0,5).toString()==='%PDF-');const info=execFileSync('pdfinfo',['-'],{input:bytes}).toString();assert(/Pages:\s+[1-9]/.test(info));assert(info.includes('LibreOffice'));
-  const pageSize=/Page size:\s+([\d.]+) x ([\d.]+)/.exec(info);assert(pageSize);
-  if(entry.name.startsWith('Relatorio_Frequencia'))assert(Number(pageSize[1])>Number(pageSize[2]));else assert(Number(pageSize[1])<Number(pageSize[2]));
-  const text=execFileSync('pdftotext',['-','-'],{input:bytes}).toString();assert(text.includes('Ana'));}
- else {const zip=await JSZip.loadAsync(bytes);if(format==='odt'){
+ const zip=await JSZip.loadAsync(bytes);if(format==='odt'){
   assert.equal(await zip.file('mimetype').async('string'),'application/vnd.oasis.opendocument.text');
   const xml=await zip.file('content.xml').async('string');assert(xml.includes('Ana'));assert(xml.includes('table:table'));assert(zip.file('META-INF/manifest.xml'));
   assert.equal(bytes.readUInt16LE(8),0);assert.equal(bytes.subarray(30,38).toString(),'mimetype');
  } else {const document=await zip.file('word/document.xml').async('string');assert(document.includes('Ana'));
-  if(entry.name.startsWith('Diagnostica'))assert(document.includes('<w:gridCol w:w="5102"/>'),'A coluna dos itens deve ter 9 cm na grade DOCX');}}
+  if(entry.name.startsWith('Diagnostica'))assert(document.includes('<w:gridCol w:w="5102"/>'));
+ }
  fs.mkdirSync('/tmp/site-results',{recursive:true});fs.writeFileSync('/tmp/site-results/'+entry.name,bytes);total++;
 }
 (async()=>{
- converter=await startConverter();
- try {
  for(const file of ['diagnostica_formulario.html','paee_formulario_02.html','relatorio_formulario.html']){
   const {w,saved,dom}=context(file);const state=w.novoEstado();state.identificacao.nome='Ana São & Teste';
-  for(const fmt of ['docx','pdf','odt']){w.exportDOCX(state,fmt);const result=await waitFile(saved,saved.length+1);await validate(result,fmt);console.log(file,fmt,'OK',result.blob.size);}
+  for(const fmt of ['docx','odt']){w.exportDOCX(state,fmt);const result=await waitFile(saved,saved.length+1);await validate(result,fmt);console.log(file,fmt,'OK',result.blob.size);}
   dom.window.close();
  }
  const {w,saved,dom}=context('index.html');
  w.document.getElementById('peiConteudo').innerHTML='<h1>PEI — Ana São</h1><p>Comunicação <strong>e participação</strong>.</p><table><tr><th>Meta</th><th>Ação</th></tr><tr><td>Autonomia</td><td>Apoio visual</td></tr></table>';
  w.document.getElementById('peiNomeAluno').textContent='PEI Ana São';
- for(const fmt of ['docx','pdf','odt']){await w.exportarPei(fmt);await validate(saved.at(-1),fmt);console.log('PEI',fmt,'OK');}
+ for(const fmt of ['docx','odt']){await w.exportarPei(fmt);await validate(saved.at(-1),fmt);console.log('PEI',fmt,'OK');}
  // Frequency exporter with local fixtures; no remote writes or authentication.
  const alunos=[{id:'aluno1',nome:'Ana São',turma:'3º ano'}];const semanas=[{id:'s1',dataInicio:'2026-10-01',label:'Semana 1',registros:{}}];
  const snapshot=items=>({forEach:fn=>items.forEach(d=>fn({id:d.id,data:()=>d}))});
  w.alunosRef=()=>({get:async()=>snapshot(alunos)});w.semanasRef=()=>({get:async()=>snapshot(semanas)});
  w.filtrarAlunosPorTurno=items=>items;w.filtrarSemanasPorTurno=items=>items;w.showToast=message=>{if(message.startsWith('Erro'))throw Error(message)};
  w.val=id=>id==='freqRelDe'?'2026-10-01':'2026-10-08';
- for(const fmt of ['docx','pdf','odt']){const count=saved.length+1;await w.gerarRelatorioFrequenciaPDF(fmt);await validate(await waitFile(saved,count),fmt);console.log('Frequência',fmt,'OK');}
- await assert.rejects(w.SRMExport.fromHtml('<p></p>','pdf','vazio'),/vazio/);
- dom.window.close();console.log('TOTAL:',total,'arquivos validados com PDF renderizado por LibreOffice');
- } finally {converter.stop();}
+ for(const fmt of ['docx','odt']){const count=saved.length+1;await w.gerarRelatorioFrequencia(fmt);await validate(await waitFile(saved,count),fmt);console.log('Frequência',fmt,'OK');}
+ await assert.rejects(w.SRMExport.fromHtml('<p></p>','docx','vazio'),/vazio/);
+ dom.window.close();console.log('TOTAL:',total,'arquivos DOCX/ODT validados');
 })().catch(e=>{console.error(e);process.exit(1)});

@@ -273,7 +273,6 @@
         <div class="form-actions">
           <button class="btn secondary" id="btn-back-list">← Voltar</button>
           <button class="btn secondary" id="btn-export-docx">Exportar DOCX</button>
-          <button class="btn secondary" id="btn-export-pdf">Exportar PDF</button>
           <button class="btn secondary" id="btn-export-odt">Exportar ODT</button>
           <button class="btn" id="btn-save">Salvar</button>
         </div>
@@ -710,7 +709,6 @@ document.getElementById('btn-new').addEventListener('click',()=>{
   showView('form');
 });
 document.getElementById('btn-save').addEventListener('click',saveStudent);
-document.getElementById('btn-export-pdf').addEventListener('click',()=>exportDOCX(state,'pdf'));
 document.getElementById('btn-export-odt').addEventListener('click',()=>exportDOCX(state,'odt'));
 document.getElementById('btn-export-docx').addEventListener('click',()=>exportDOCX(state));
 

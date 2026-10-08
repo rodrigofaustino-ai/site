@@ -670,7 +670,6 @@ hr.sep{border:none;border-top:2px dashed rgba(0,0,0,.06);margin:.2rem 0;}
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
           <button class="pdf-btn" onclick="exportarPei('docx')">Exportar DOCX</button>
-          <button class="pdf-btn" onclick="exportarPei('pdf')">Exportar PDF</button>
           <button class="pdf-btn" onclick="exportarPei('odt')">Exportar ODT</button>
         </div>
         <div id="peiConteudo"></div>
@@ -1991,7 +1990,7 @@ async function confirmarAddSemana(){
   }catch(e){hideLoad();showToast('Erro ao adicionar semana');console.error(e);}
 }
 
-/* ── Relatório de frequência em PDF (intervalo de datas) ── */
+/* ── Relatório de frequência em DOCX/ODT (intervalo de datas) ── */
 function abrirModalRelatorioFreq(){
   const hoje=todayStr();
   const trintaDiasAtras=new Date();trintaDiasAtras.setDate(trintaDiasAtras.getDate()-30);
@@ -2005,14 +2004,13 @@ function abrirModalRelatorioFreq(){
     </div>
     <div style="display:flex;gap:.6rem;justify-content:flex-end;flex-wrap:wrap;margin-top:.3rem">
       <button class="back-btn" onclick="hideModal()">Cancelar</button>
-      <button class="save-btn coral" style="background:linear-gradient(135deg,var(--orange),#e07a00);box-shadow:0 4px 14px rgba(255,154,60,.35)" onclick="gerarRelatorioFrequenciaPDF('docx')">📄 Gerar DOCX</button>
-      <button class="save-btn coral" onclick="gerarRelatorioFrequenciaPDF('pdf')">Gerar PDF</button>
-      <button class="save-btn coral" onclick="gerarRelatorioFrequenciaPDF('odt')">Gerar ODT</button>
+      <button class="save-btn coral" style="background:linear-gradient(135deg,var(--orange),#e07a00);box-shadow:0 4px 14px rgba(255,154,60,.35)" onclick="gerarRelatorioFrequencia('docx')">📄 Gerar DOCX</button>
+      <button class="save-btn coral" onclick="gerarRelatorioFrequencia('odt')">Gerar ODT</button>
     </div>
   `);
 }
 
-async function gerarRelatorioFrequenciaPDF(formato='docx'){
+async function gerarRelatorioFrequencia(formato='docx'){
   const de=val('freqRelDe'),ate=val('freqRelAte');
   if(!de||!ate){showToast('Informe as duas datas');return;}
   if(de>ate){showToast('A data "De" deve ser anterior à data "Até"');return;}
