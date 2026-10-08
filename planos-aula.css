@@ -1,0 +1,14 @@
+.planos-card p{margin:0 0 14px;color:var(--muted);font-size:14px;line-height:1.5}
+.planos-form{display:grid;gap:12px;margin:20px 0;padding:18px;background:var(--teal-l);border-radius:14px}
+.planos-form h3,.planos-card h3{font-size:17px;margin-bottom:8px}
+.planos-form label,.planos-search{display:grid;gap:6px;font-size:14px;font-weight:600}
+.planos-form input,.planos-form textarea,.planos-search input{width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:8px;font:inherit;background:#fff;color:#1e293b}
+.planos-actions{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+.planos-actions button{cursor:pointer}.planos-actions button:disabled{opacity:.5;cursor:wait}
+.planos-lista{display:grid;gap:14px;margin-top:18px}
+.plano-item{padding:18px;border:1px solid #dbe4ea;border-radius:12px;overflow-wrap:anywhere}
+.plano-item p{white-space:pre-wrap}.plano-item small{display:block;color:var(--muted);line-height:1.6}
+#planoPreview{width:100%;height:70vh;border:1px solid #dbe4ea;border-radius:8px;background:#fff}
+#planosStatus{padding:8px 0;color:#334155}.planos-card [hidden]{display:none!important}
+.tabs-bar{flex-wrap:wrap}.tabs-bar .tab-btn{flex:1 1 125px}
+@media(max-width:540px){.topbar{flex-wrap:wrap}.topbar-right{flex-basis:100%;min-width:0}.user-info{max-width:100%;overflow-wrap:anywhere}.planos-form{padding:12px}}

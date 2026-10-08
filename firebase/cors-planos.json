@@ -1,0 +1,8 @@
+[
+  {
+    "origin": ["SUBSTITUA_PELA_URL_DO_SEU_SITE"],
+    "method": ["GET"],
+    "responseHeader": ["Content-Type", "Authorization"],
+    "maxAgeSeconds": 3600
+  }
+]

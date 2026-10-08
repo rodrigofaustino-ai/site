@@ -9,6 +9,9 @@
 <script src="vendor/firebase-9.23.0/firebase-app-compat.js"></script>
 <script src="vendor/firebase-9.23.0/firebase-auth-compat.js"></script>
 <script src="vendor/firebase-9.23.0/firebase-firestore-compat.js"></script>
+<script src="vendor/firebase-9.23.0/firebase-storage-compat.js"></script>
+<link rel="stylesheet" href="planos-aula.css">
+<script src="vendor/jszip.min.js"></script>
 
 <!-- jsPDF -->
 <script src="vendor/jspdf.umd.min.js"></script>
@@ -576,6 +579,7 @@ hr.sep{border:none;border-top:2px dashed rgba(0,0,0,.06);margin:.2rem 0;}
       <button class="tab-btn" id="tabBtnPaee" onclick="switchTab('paee')">📘 PAEE</button>
       <button class="tab-btn" id="tabBtnPei" onclick="switchTab('pei')">📋 PEI</button>
       <button class="tab-btn" id="tabBtnRelatorio" onclick="switchTab('relatorio')">📋 Relatório</button>
+      <button class="tab-btn" id="tabBtnPlanos" onclick="switchTab('planos')">📚 Planos de Aula</button>
       <button class="tab-btn" id="tabBtnDiagnostica" onclick="switchTab('diagnostica')">📊 Diagnóstica</button>
     </div>
 
@@ -696,6 +700,31 @@ hr.sep{border:none;border-top:2px dashed rgba(0,0,0,.06);margin:.2rem 0;}
         <div class="students-grid" id="diagnosticaStudentsList">
           <div class="empty-list"><div class="spinner" style="margin:0 auto 8px"></div>Carregando...</div>
         </div>
+      </div>
+    </div>
+
+    <div class="tab-panel" id="tabPlanos">
+      <div class="card planos-card">
+        <div class="color-strip" style="background:linear-gradient(90deg,var(--teal),var(--purple),var(--coral))"></div>
+        <div class="section-head"><div class="section-badge" style="background:var(--teal-l)">📚</div>Banco de Planos de Aula</div>
+        <p>Compartilhe planos com a equipe. Todos os usuários do Diário podem consultar e baixar; apenas o autor pode modificar ou excluir.</p>
+        <form id="planoForm" class="planos-form">
+          <h3 id="planoFormTitulo">Cadastrar plano de aula</h3>
+          <label>Título<input id="planoTitulo" required maxlength="150"></label>
+          <label>Conteúdo/tema<input id="planoTema" required maxlength="200"></label>
+          <label>Breve descrição<textarea id="planoDescricao" required maxlength="1000" rows="3"></textarea></label>
+          <label id="planoArquivoLabel">Arquivo DOCX (até 10 MB)<input id="planoArquivo" type="file" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" required></label>
+          <div class="planos-actions"><button class="save-btn" id="planoSalvar" type="submit">Cadastrar plano</button><button class="back-btn" id="planoCancelar" type="button" hidden>Cancelar edição</button></div>
+        </form>
+        <p id="planosStatus" role="status" aria-live="polite"></p>
+        <label class="planos-search">Buscar por título, conteúdo/tema, descrição ou autor<input id="planosBusca" type="search" placeholder="Digite para buscar..."></label>
+        <div id="planosLista" class="planos-lista"></div>
+      </div>
+      <div class="card planos-card" id="planoViewer" hidden>
+        <div class="planos-actions"><button id="planoFechar" class="back-btn" type="button">← Fechar prévia</button></div>
+        <h3 id="planoViewerTitulo"></h3>
+        <p>A prévia pode apresentar diferenças de formatação. Baixe o DOCX para abrir o documento original.</p>
+        <iframe id="planoPreview" title="Prévia do plano de aula" sandbox="" referrerpolicy="no-referrer"></iframe>
       </div>
     </div>
 
@@ -1231,10 +1260,11 @@ document.addEventListener('DOMContentLoaded', () => {
    TABS
 ════════════════════════════════════════ */
 function switchTab(name){
-  ['alunos','grade','frequencia','paee','pei','relatorio','diagnostica','planner','notas'].forEach(t=>{
+  ['alunos','grade','frequencia','paee','pei','relatorio','diagnostica','planner','notas','planos'].forEach(t=>{
     $('tabBtn'+t.charAt(0).toUpperCase()+t.slice(1)).classList.toggle('active',t===name);
     $('tab'+t.charAt(0).toUpperCase()+t.slice(1)).classList.toggle('active',t===name);
   });
+  if(name==='planos') window.PlanosAula.activate();
   if(name==='grade') renderGrade();
   if(name==='frequencia') renderFrequencia();
   if(name==='paee') renderPaeeList();
@@ -4041,5 +4071,6 @@ function exportPDF(){
 }
 
 </script>
+<script src="planos-aula.js"></script>
 </body>
 </html>

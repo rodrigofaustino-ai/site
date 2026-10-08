@@ -1,0 +1,32 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Copie somente este bloco match para dentro das regras existentes.
+    match /planosAula/{planoId} {
+      function valid(data) {
+        return data.keys().hasAll(['titulo', 'tema', 'descricao', 'autorUid', 'autorNome', 'uploadedAt', 'updatedAt', 'storagePath', 'fileName', 'fileSize'])
+          && data.keys().hasOnly(['titulo', 'tema', 'descricao', 'autorUid', 'autorNome', 'uploadedAt', 'updatedAt', 'storagePath', 'fileName', 'fileSize'])
+          && data.titulo is string && data.titulo.size() > 0 && data.titulo.size() <= 150
+          && data.tema is string && data.tema.size() > 0 && data.tema.size() <= 200
+          && data.descricao is string && data.descricao.size() > 0 && data.descricao.size() <= 1000
+          && data.autorUid == request.auth.uid
+          && data.autorNome is string && data.autorNome.size() > 0 && data.autorNome.size() <= 200
+          && data.uploadedAt is timestamp && data.updatedAt == request.time
+          && data.fileName is string && data.fileName.size() > 0 && data.fileName.size() <= 255
+          && data.fileName.matches('.*[.][dD][oO][cC][xX]')
+          && data.fileSize is int && data.fileSize > 0 && data.fileSize <= 10 * 1024 * 1024
+          && data.storagePath is string
+          && data.storagePath.matches('planosAula/' + request.auth.uid + '/' + planoId + '/[a-zA-Z0-9-]+[.]docx');
+      }
+      allow read: if request.auth != null;
+      allow create: if request.auth != null && valid(request.resource.data)
+        && request.resource.data.uploadedAt == request.time;
+      allow update: if request.auth != null && resource.data.autorUid == request.auth.uid
+        && valid(request.resource.data)
+        && request.resource.data.autorUid == resource.data.autorUid
+        && request.resource.data.autorNome == resource.data.autorNome
+        && request.resource.data.uploadedAt == resource.data.uploadedAt;
+      allow delete: if request.auth != null && resource.data.autorUid == request.auth.uid;
+    }
+  }
+}

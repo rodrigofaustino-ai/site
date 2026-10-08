@@ -1,11 +1,17 @@
 # Site SRM — exportações DOCX e ODT
 
+## Banco de Planos de Aula
+
+A aba **Planos de Aula** permite cadastrar título, conteúdo/tema, breve descrição e DOCX, com autor e data automática. Usuários do Diário consultam e baixam todos os planos; somente o autor edita, substitui o DOCX ou exclui. A biblioteca é compartilhada entre turnos e usa uma coleção separada dos registros dos alunos.
+
+**Antes de usar a biblioteca, siga [o passo a passo de configuração do Firebase](firebase/CONFIGURAR-PLANOS.md).** Publicar somente os arquivos no Netlify não ativa o Storage nem aplica as permissões. O DOCX baixado mantém o arquivo original; a prévia pode ter diferenças de formatação.
+
 ## Publicar no Netlify
 
 1. Abra o repositório no GitHub e selecione a branch `feat/exportacoes-pdf-docx-odt`.
 2. Clique em **Code → Download ZIP** e extraia o arquivo.
 3. No Netlify, selecione seu site existente e abra **Deploys**.
-4. Arraste a pasta que contém `index.html`, os outros HTMLs, `exportacao.js` e a pasta `vendor` para a área de publicação manual.
+4. Arraste a pasta completa que contém `index.html`, os outros HTMLs, `exportacao.js`, `planos-aula.js`, `planos-aula.css` e a pasta `vendor` para a área de publicação manual.
 5. Aguarde **Published**, abra o site e atualize a página.
 
 Envie a pasta inteira; as bibliotecas locais são necessárias. O nome `index.html` já está correto para a página inicial. Se preferir publicar pela integração GitHub, use esta branch e a raiz do repositório como pasta publicada, sem comando de build. Não há Functions, servidor de conversão, Docker nem variáveis de conversão a configurar.
