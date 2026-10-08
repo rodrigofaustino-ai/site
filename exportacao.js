@@ -180,10 +180,80 @@
     return fromHtml(result.value,format,filename);
   }
   window.SRMExport = {fromDocx,fromHtml};
+  function preparePei(html) {
+    const root=clean(html);
+    // Ler cada célula na ordem das linhas, preservando os parágrafos e imagens.
+    Array.from(root.querySelectorAll('table')).reverse().forEach(table=>{
+      const text=document.createElement('div');
+      Array.from(table.rows).forEach(row=>{
+        Array.from(row.cells).forEach(cell=>{
+          const paragraph=document.createElement('div');
+          while(cell.firstChild)paragraph.appendChild(cell.firstChild);
+          text.appendChild(paragraph);
+        });
+      });
+      table.replaceWith(text);
+    });
+    root.querySelectorAll('h1,h2,h3,h4,h5,h6').forEach(heading=>{
+      const paragraph=document.createElement('p');
+      while(heading.firstChild)paragraph.appendChild(heading.firstChild);
+      heading.replaceWith(paragraph);
+    });
+    root.querySelectorAll('b,strong').forEach(el=>el.replaceWith(...el.childNodes));
+    root.querySelectorAll('*').forEach(el=>el.removeAttribute('style'));
+    root.normalize();
+    const labels=[
+      'IDENTIFICAÇÃO',
+      'II. CARACTERÍSTICAS DO ALUNO NO CONTEXTO ESCOLAR',
+      'ASPECTOS SOCIOAFETIVOS:', 'ASPECTOS ACADÊMICOS:',
+      'ASPECTOS DE LINGUAGEM VERBAL ORAL:', 'ASPECTOS DE LINGUAGEM VERBAL ESCRITA:',
+      'ASPECTOS COGNITIVOS:', 'ASPECTOS PSICOMOTORES:',
+      'III. ESTRATÉGIAS DE ENSINO, OBJETIVOS E METAS EDUCACIONAIS:',
+      '1) Lembrar (Reconhecer/Identificar): Desenvolver a capacidade de reconhecer informações básicas do cotidiano escolar.',
+      '2) Compreender (Entender/Interpretar): Favorecer a compreensão de comandos simples e significados.',
+      '3) Aplicar (Usar/Executar): Utilizar o conhecimento em situações práticas do dia a dia.',
+      '4) Analisar (Diferenciar/Comparar): Desenvolver habilidades iniciais de comparação e organização.',
+      '5) Avaliar (Escolher/Opinar): Estimular a expressão de preferências e escolhas.',
+      '6) Criar (Produzir/Expressar): Incentivar formas de expressão e participação criativa.',
+      'Metas:', 'MODIFICAÇÕES E ADAPTAÇÕES/ADEQUAÇÕES CURRICULARES:',
+      'Procedimentos didáticos e Estratégias Pedagógicas:', 'Recursos Pedagógicos:',
+      'Ajustes Temporais:', 'Avaliações Adaptadas:',
+      'Adequações Físicas e Funcionais do Ambiente Escolar:',
+      'PROCESSO AVALIATIVO:', 'Instrumentos Complementares:', 'Parecer descritivo:',
+      'Portfólio:', 'IV. CARACTERÍSTICAS DO ALUNO NO CONTEXTO FAMILIAR',
+      'Nome:', 'Professora Regente', 'Professora de Apoio', 'Coordenadora Pedagógica',
+    ];
+    // A marcação pode dividir um título em vários spans. Marcar pelo texto completo
+    // permite reconhecer o título sem tornar o restante do parágrafo negrito.
+    const escape=text=>text.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+    const patterns=labels.map(label=>escape(label).replace(/ +/g,'\\s+').replace(/\\\.\\s\+/g,'\\.\\s*'));
+    const expression=new RegExp(patterns.sort((a,b)=>b.length-a.length).join('|'),'giu');
+    const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);
+    const nodes=[];let node;let text='';let previousBlock=null;
+    while((node=walker.nextNode())){
+      const block=node.parentElement.closest('p,div,li');
+      if(previousBlock && previousBlock!==block)text+='\n';
+      const start=text.length;text+=node.textContent;nodes.push({node,start,end:text.length});previousBlock=block;
+    }
+    const ranges=Array.from(text.matchAll(expression),match=>({start:match.index,end:match.index+match[0].length}));
+    nodes.forEach(({node,start,end})=>{
+      const overlaps=ranges.filter(range=>range.start<end && range.end>start);
+      if(!overlaps.length)return;
+      const fragment=document.createDocumentFragment();let cursor=0;
+      overlaps.forEach(range=>{
+        const from=Math.max(range.start,start)-start,to=Math.min(range.end,end)-start;
+        if(from>cursor)fragment.appendChild(document.createTextNode(node.textContent.slice(cursor,from)));
+        const bold=document.createElement('strong');bold.textContent=node.textContent.slice(from,to);fragment.appendChild(bold);cursor=to;
+      });
+      if(cursor<node.textContent.length)fragment.appendChild(document.createTextNode(node.textContent.slice(cursor)));
+      node.replaceWith(fragment);
+    });
+    return root.innerHTML;
+  }
   window.exportarPei = async function (format) {
     const root = document.getElementById('peiConteudo');
     const name = (document.getElementById('peiNomeAluno').textContent || 'PEI').replace(/[^\p{L}\p{N}_-]+/gu,'_');
-    try { await fromHtml(root.innerHTML,format,name); showToast(format.toUpperCase()+' gerado com sucesso.'); }
+    try { await fromHtml(preparePei(root.innerHTML),format,name); showToast(format.toUpperCase()+' gerado com sucesso.'); }
     catch(error) {console.error(error); showToast('Erro na exportação: '+error.message);}
   };
 })();

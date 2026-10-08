@@ -20,7 +20,7 @@ async function validate(entry,format){
  const bytes=Buffer.from(await entry.blob.arrayBuffer());assert(bytes.length>100);assert(entry.name.endsWith('.'+format));
  const zip=await JSZip.loadAsync(bytes);if(format==='odt'){
   assert.equal(await zip.file('mimetype').async('string'),'application/vnd.oasis.opendocument.text');
-  const xml=await zip.file('content.xml').async('string');assert(xml.includes('Ana'));assert(xml.includes('table:table'));assert(zip.file('META-INF/manifest.xml'));
+  const xml=await zip.file('content.xml').async('string');assert(xml.includes('Ana'));if(entry.name.startsWith('PEI'))assert(!xml.includes('<table:table '));else assert(xml.includes('table:table'));assert(zip.file('META-INF/manifest.xml'));
   assert.equal(bytes.readUInt16LE(8),0);assert.equal(bytes.subarray(30,38).toString(),'mimetype');
  } else {const document=await zip.file('word/document.xml').async('string');assert(document.includes('Ana'));
   if(entry.name.startsWith('Diagnostica'))assert(document.includes('<w:gridCol w:w="5102"/>'));
@@ -41,8 +41,21 @@ async function validate(entry,format){
     assert.equal(attr(defaults.getElementsByTagNameNS(namespace,'sz')[0],'val'),'24');
     assert.equal(attr(defaults.getElementsByTagNameNS(namespace,'jc')[0],'val'),'both');
     for(const alignment of parsed.getElementsByTagNameNS(namespace,'jc'))assert.equal(attr(alignment,'val'),'both','Todos os textos do PEI devem estar justificados, inclusive cabeçalhos');
-    assert.equal(attr(find('tblW'),'w'),'10205');
-    assert.equal(Array.from(find('tblGrid').children).reduce((total,col)=>total+Number(attr(col,'w')),0),10205);
+    assert.equal(parsed.getElementsByTagNameNS(namespace,'tbl').length,0);
+    const boldText=[];const normalText=[];
+    for(const run of parsed.getElementsByTagNameNS(namespace,'r')){
+      const text=Array.from(run.getElementsByTagNameNS(namespace,'t')).map(node=>node.textContent).join('');
+      const bold=Array.from(run.getElementsByTagNameNS(namespace,'b')).some(node=>!['false','0'].includes(attr(node,'val')));
+      (bold?boldText:normalText).push(text);
+    }
+    assert(boldText.join('').includes('IDENTIFICAÇÃO'));
+    assert(boldText.join('').includes('Metas:'));
+    assert(boldText.join('').includes('II.CARACTERÍSTICAS DO ALUNO NO CONTEXTO ESCOLAR'));
+    assert(boldText.join('').includes('1) Lembrar (Reconhecer/Identificar): Desenvolver a capacidade de reconhecer informações básicas do cotidiano escolar.'));
+    assert(!boldText.join('').includes('Ana'));
+    assert(!boldText.join('').includes('Texto comum'));
+    assert(normalText.join('').includes('Texto comum'));
+    assert(normalText.join('').includes('Apoio visual'));
   }
 
  }
@@ -55,7 +68,7 @@ async function validate(entry,format){
   dom.window.close();
  }
  const {w,saved,dom}=context('index.html');
- w.document.getElementById('peiConteudo').innerHTML='<h1>PEI — Ana São</h1><p>Comunicação <strong>e participação</strong>.</p><table><tr><th>Meta</th><th>Ação</th></tr><tr><td>Autonomia</td><td>Apoio visual</td></tr></table>';
+ w.document.getElementById('peiConteudo').innerHTML='<h1>PEI — Ana São</h1><table><tr><td><p><span>IDENTI</span><span>FICAÇÃO</span></p><p>Nome: <strong>Ana São</strong></p><p><strong>Texto comum</strong></p><p><span>II.</span><span>CARACTERÍSTICAS DO ALUNO NO CONTEXTO ESCOLAR</span></p><p><span>1) Lembrar (Reconhecer/Identificar): </span><span>Desenvolver a capacidade de reconhecer informações básicas do cotidiano escolar.</span></p><p>Metas: Apoio visual</p></td></tr></table>';
  w.document.getElementById('peiNomeAluno').textContent='PEI Ana São';
  for(const fmt of ['docx','odt']){await w.exportarPei(fmt);await validate(saved.at(-1),fmt);console.log('PEI',fmt,'OK');}
  // Frequency exporter with local fixtures; no remote writes or authentication.
