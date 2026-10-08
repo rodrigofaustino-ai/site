@@ -1,0 +1,1320 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Relatório de Atendimento · Sala de Recursos</title>
+<style>
+  :root{
+    --bg:#F5F6F0;
+    --surface:#FFFFFF;
+    --ink:#1C2620;
+    --ink-soft:#586257;
+    --ink-faint:#8B9186;
+    --primary:#1B5E3C;
+    --primary-dark:#123D28;
+    --primary-tint:#E7F0EA;
+    --accent:#B93A2E;
+    --accent-tint:#F7E8E6;
+    --border:#DDE2D6;
+    --border-soft:#EAEDE4;
+    --warn-bg:#FDF3E4;
+    --warn-border:#C77B1E;
+    --warn-ink:#7A4A0E;
+    --radius:10px;
+    --shadow:0 1px 2px rgba(28,38,32,.06), 0 6px 20px -8px rgba(28,38,32,.12);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:Arial,Helvetica,sans-serif;
+    font-size:16px;
+    -webkit-font-smoothing:antialiased;
+    line-height:1.5;
+    text-align:justify;
+  }
+  button{font-family:inherit;cursor:pointer;}
+  textarea,input,select{font-family:inherit;font-size:16px;color:var(--ink);}
+  a{color:var(--primary);}
+
+  /* ===== Top bar ===== */
+  .topbar{
+    background:var(--surface);
+    border-bottom:1px solid var(--border);
+    padding:14px 28px;
+    display:flex;
+    align-items:center;
+    gap:14px;
+    position:sticky;top:0;z-index:50;
+  }
+  .brand-mark{
+    width:38px;height:38px;border-radius:50%;flex:none;
+    background:conic-gradient(#1B5E3C 0deg 200deg, #B93A2E 200deg 360deg);
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:inset 0 0 0 3px var(--surface);
+    outline:2px solid var(--border);
+  }
+  .brand-mark::after{content:'';width:11px;height:11px;border-radius:50%;background:var(--surface);}
+  .brand-text{display:flex;flex-direction:column;line-height:1.2;}
+  .brand-text .eyebrow{font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-faint);font-weight:600;}
+  .brand-text .title{font-size:15px;font-weight:700;color:var(--primary-dark);}
+  .topbar-spacer{flex:1;}
+  .topbar-user{font-size:14px;color:var(--ink-soft);margin-right:6px;}
+  .topbar-logout{background:transparent;border:1px solid var(--border);color:var(--ink-soft);padding:6px 12px;border-radius:7px;font-size:14px;font-weight:600;}
+  .topbar-logout:hover{background:var(--border-soft);}
+  .topbar-status{font-size:13px;color:var(--ink-faint);margin-left:8px;}
+
+  /* ===== Login screen ===== */
+  #app-shell{display:none;}
+  #app-shell.active{display:block;}
+  #screen-login{
+    display:none;
+    min-height:100vh;align-items:center;justify-content:center;
+    background:var(--bg);padding:20px;
+  }
+  #screen-login.active{display:flex;}
+  .login-box{
+    background:var(--surface);border:1px solid var(--border);border-radius:14px;
+    box-shadow:var(--shadow);padding:32px 30px;max-width:380px;width:100%;
+  }
+  .login-box .brand-mark{margin:0 auto 14px;}
+  .login-box h1{font-size:18px;margin:0 0 2px;text-align:center;color:var(--primary-dark);}
+  .login-box p.sub{margin:0 0 22px;text-align:center;color:var(--ink-soft);font-size:14px;}
+  .login-field{margin-bottom:14px;}
+  .login-field label{display:block;font-size:14px;font-weight:600;color:var(--ink-soft);margin-bottom:5px;}
+  .login-field input{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:15px;}
+  .login-field input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-tint);}
+  .login-error{display:none;background:var(--accent-tint);color:var(--accent);border-radius:8px;padding:9px 12px;font-size:14px;margin-bottom:14px;}
+  .login-error.show{display:block;}
+  .login-submit{width:100%;padding:11px;border:none;border-radius:8px;background:var(--primary);color:#fff;font-weight:700;font-size:15px;}
+  .login-submit:hover{background:var(--primary-dark);}
+  .login-submit[disabled]{opacity:.6;cursor:not-allowed;}
+
+  /* ===== Layout shells ===== */
+  .shell{max-width:1180px;margin:0 auto;padding:32px 28px 80px;}
+  .view{display:none;}
+  .view.active{display:block;}
+
+  /* ===== List view ===== */
+  .list-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:22px;flex-wrap:wrap;}
+  .list-head h1{margin:0 0 4px;font-size:22px;color:var(--primary-dark);}
+  .list-head p{margin:0;color:var(--ink-soft);font-size:15px;}
+  .btn{
+    border:1px solid var(--primary);background:var(--primary);color:#fff;
+    padding:10px 18px;border-radius:8px;font-weight:600;font-size:15px;
+    display:inline-flex;align-items:center;gap:8px;transition:background .15s,transform .1s;
+  }
+  .btn:hover{background:var(--primary-dark);}
+  .btn:active{transform:translateY(1px);}
+  .btn.secondary{background:var(--surface);color:var(--primary-dark);border-color:var(--border);}
+  .btn.secondary:hover{background:var(--primary-tint);}
+  .btn.danger{background:var(--surface);color:var(--accent);border-color:var(--accent-tint);}
+  .btn.danger:hover{background:var(--accent-tint);}
+  .btn.ghost{background:transparent;border-color:transparent;color:var(--primary-dark);padding:8px 10px;}
+  .btn.ghost:hover{background:var(--primary-tint);}
+  .btn[disabled]{opacity:.5;cursor:not-allowed;}
+
+  .toolbar{display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap;align-items:center;}
+  .search-wrap{position:relative;flex:1;min-width:220px;max-width:380px;}
+  .search-wrap input{
+    width:100%;padding:10px 12px 10px 34px;border-radius:8px;border:1px solid var(--border);
+    background:var(--surface);font-size:15px;
+  }
+  .search-wrap svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);opacity:.45;}
+
+  .student-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;}
+  .student-card{
+    background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+    padding:16px 16px 14px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:8px;
+  }
+  .student-card .sc-name{font-size:16px;font-weight:700;color:var(--ink);}
+  .student-card .sc-meta{font-size:14px;color:var(--ink-soft);display:flex;flex-direction:column;gap:2px;}
+  .student-card .sc-tag{
+    align-self:flex-start;font-size:12px;text-transform:uppercase;letter-spacing:.06em;font-weight:700;
+    padding:3px 8px;border-radius:20px;background:var(--primary-tint);color:var(--primary-dark);
+  }
+  .student-card .sc-actions{display:flex;gap:6px;margin-top:auto;padding-top:10px;border-top:1px solid var(--border-soft);}
+  .student-card .sc-updated{font-size:12px;color:var(--ink-faint);}
+  .empty-state{
+    text-align:center;padding:70px 20px;color:var(--ink-faint);border:1px dashed var(--border);border-radius:var(--radius);
+    background:var(--surface);
+  }
+
+  /* ===== Form view ===== */
+  .form-shell{display:grid;grid-template-columns:220px 1fr;gap:28px;align-items:start;}
+  .form-nav{position:sticky;top:78px;display:flex;flex-direction:column;gap:2px;}
+  .form-nav button{
+    text-align:left;background:none;border:none;padding:9px 12px;border-radius:7px;font-size:14px;color:var(--ink-soft);
+    display:flex;align-items:center;gap:9px;font-weight:500;
+  }
+  .form-nav button .rn{font-weight:700;color:var(--ink-faint);font-size:13px;width:16px;}
+  .form-nav button.active{background:var(--primary-tint);color:var(--primary-dark);}
+  .form-nav button.active .rn{color:var(--primary);}
+  .form-nav button:hover{background:var(--border-soft);}
+  .form-nav .save-note{font-size:12px;color:var(--ink-faint);padding:10px 12px 0;}
+
+  .form-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:22px;gap:14px;flex-wrap:wrap;}
+  .form-header h1{font-size:20px;margin:0 0 4px;color:var(--primary-dark);}
+  .form-header .sub{font-size:14px;color:var(--ink-soft);}
+  .form-actions{display:flex;gap:8px;flex-wrap:wrap;}
+
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:20px;overflow:hidden;}
+  .card-head{
+    display:flex;align-items:center;gap:12px;padding:16px 22px;border-bottom:1px solid var(--border);
+    background:linear-gradient(180deg,#fff,#fbfbf8);
+  }
+  .card-head .roman{
+    font-weight:700;font-size:15px;color:var(--primary);
+    width:38px;text-align:center;
+  }
+  .card-head h2{margin:0;font-size:16px;color:var(--ink);}
+  .card-head .desc{font-size:13px;color:var(--ink-faint);margin-top:1px;}
+  .card-body{padding:20px 22px 22px;}
+
+  .field-group{margin-bottom:16px;}
+  .field-row{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;}
+  .field-row.cols-3{grid-template-columns:repeat(3,1fr);}
+  .field-row.cols-4{grid-template-columns:repeat(4,1fr);}
+  label{display:block;font-size:13px;font-weight:600;color:var(--ink-soft);margin-bottom:5px;}
+  input[type=text],input[type=date],input[type=number],textarea,select{
+    width:100%;padding:9px 11px;border:1px solid var(--border);border-radius:7px;background:#fff;font-size:15px;
+  }
+  textarea{resize:vertical;min-height:80px;line-height:1.7;}
+  input:focus,textarea:focus,select:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-tint);}
+  input:disabled,textarea:disabled{background:var(--border-soft);color:var(--ink-faint);}
+
+  .subhead{font-size:14px;font-weight:700;color:var(--ink);margin:18px 0 10px;padding-top:12px;border-top:1px solid var(--border-soft);}
+  .subhead:first-child{margin-top:0;padding-top:0;border-top:none;}
+  .hint{font-size:13px;color:var(--ink-faint);margin:-6px 0 10px;}
+
+  /* Área de texto com botão IA */
+  .ai-textarea-wrap{position:relative;}
+  .ai-textarea-wrap textarea{padding-right:32px;}
+  .ai-btn{
+    position:absolute;top:6px;right:6px;width:22px;height:22px;padding:0;
+    border:1px solid var(--border);border-radius:6px;background:var(--surface);
+    display:flex;align-items:center;justify-content:center;font-size:12px;line-height:1;
+    color:var(--primary-dark);box-shadow:var(--shadow);
+  }
+  .ai-btn:hover{background:var(--primary-tint);border-color:var(--primary);}
+  .ai-btn.loading{opacity:.55;pointer-events:none;}
+  .ai-textarea-wrap:has(textarea:disabled) .ai-btn{display:none;}
+
+  /* Bloco de área trabalhada */
+  .area-block{
+    border:1px solid var(--border-soft);border-radius:8px;padding:14px 16px;margin-bottom:12px;background:#FCFCFA;
+  }
+  .area-block .area-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:10px;}
+  .area-block .area-label{font-size:14px;font-weight:700;color:var(--ink);}
+  .area-block .check-na{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--ink-soft);font-weight:500;white-space:nowrap;}
+  .area-block .check-na input{width:14px;height:14px;}
+
+  /* Tabela de recursos */
+  .recursos-table{width:100%;border-collapse:collapse;margin-bottom:8px;}
+  .recursos-table th{text-align:left;font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-faint);padding:0 8px 6px;font-weight:700;}
+  .recursos-table td{padding:5px;}
+  .recursos-table tbody tr{background:#FCFCFA;border-radius:6px;}
+  .recurso-row{display:flex;align-items:flex-start;gap:8px;padding:8px 10px;border:1px solid var(--border-soft);border-radius:7px;margin-bottom:6px;}
+  .recurso-emoji{font-size:18px;flex-shrink:0;margin-top:2px;}
+  .recurso-content{flex:1;}
+  .recurso-content label{font-size:13px;font-weight:700;color:var(--ink-soft);margin-bottom:3px;}
+  .recurso-content textarea{min-height:50px;font-size:14px;}
+
+  /* Grid de assinaturas */
+  .sign-grid{display:grid;grid-template-columns:1fr 1fr;gap:26px 40px;margin-top:16px;}
+  .sign-line{border-top:1px solid var(--ink-faint);padding-top:8px;font-size:13px;color:var(--ink-soft);}
+  .sign-field{display:flex;flex-direction:column;gap:4px;}
+  .sign-field label{font-size:12px;font-weight:600;color:var(--ink-faint);margin-bottom:3px;}
+
+  .notice{
+    display:flex;gap:12px;background:var(--warn-bg);border:1px solid var(--warn-border);border-radius:9px;padding:14px 16px;
+    font-size:14px;color:var(--warn-ink);margin-top:6px;
+  }
+  .notice b{display:block;font-size:14px;margin-bottom:3px;}
+
+  .toast{
+    position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(12px);
+    background:var(--primary-dark);color:#fff;padding:11px 18px;border-radius:8px;font-size:14px;
+    box-shadow:var(--shadow);opacity:0;pointer-events:none;transition:opacity .2s, transform .2s;z-index:200;
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+  .modal-backdrop{
+    position:fixed;inset:0;background:rgba(28,38,32,.45);display:none;align-items:center;justify-content:center;z-index:300;padding:20px;
+  }
+  .modal-backdrop.show{display:flex;}
+  .modal{background:#fff;border-radius:12px;max-width:380px;width:100%;padding:22px;box-shadow:var(--shadow);}
+  .modal h3{margin:0 0 8px;font-size:16px;}
+  .modal p{margin:0 0 18px;font-size:14px;color:var(--ink-soft);}
+  .modal .row{display:flex;justify-content:flex-end;gap:8px;}
+
+  @media(max-width:860px){
+    .form-shell{grid-template-columns:1fr;}
+    .form-nav{position:static;flex-direction:row;overflow-x:auto;padding-bottom:4px;}
+    .field-row,.field-row.cols-3,.field-row.cols-4{grid-template-columns:1fr;}
+    .shell{padding:20px 14px 60px;}
+    .sign-grid{grid-template-columns:1fr;}
+  }
+</style>
+<script src="exportacao.js"></script>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="screen-login" class="active">
+  <div class="login-box">
+    <div class="brand-mark"></div>
+    <h1>Relatório de Atendimento · SRM</h1>
+    <p class="sub">Entre com o mesmo e-mail e senha do Diário de Bordo</p>
+    <div class="login-field"><label>E-mail</label><input type="email" id="loginEmail" autocomplete="email"></div>
+    <div class="login-field"><label>Senha</label><input type="password" id="loginPassword" autocomplete="current-password"></div>
+    <div class="login-error" id="loginError"></div>
+    <button class="login-submit" id="loginBtn">Entrar</button>
+  </div>
+</div>
+
+<div id="app-shell">
+  <div class="topbar">
+    <div class="brand-mark"></div>
+    <div class="brand-text">
+      <span class="eyebrow">Atendimento Educacional Especializado · SRM</span>
+      <span class="title">Relatório de Atendimento Especializado</span>
+    </div>
+    <div class="topbar-spacer"></div>
+    <span class="topbar-user" id="topbar-user"></span>
+    <button class="topbar-logout" id="btn-logout">Sair</button>
+    <span class="topbar-status" id="conn-status">conectando…</span>
+  </div>
+
+  <div class="shell">
+
+    <!-- LIST VIEW -->
+    <div class="view active" id="view-list">
+      <div class="list-head">
+        <div>
+          <h1>Relatórios de Atendimento</h1>
+          <p>Sala de Recursos Multifuncional — crie, edite e exporte o relatório de cada aluno.</p>
+        </div>
+        <button class="btn" id="btn-new">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 5v14M5 12h14"/></svg>
+          Novo Relatório
+        </button>
+      </div>
+      <div class="toolbar">
+        <div class="search-wrap">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+          <input type="text" id="search-input" placeholder="Buscar por nome do aluno ou escola…">
+        </div>
+      </div>
+      <div class="student-grid" id="student-grid"></div>
+      <div class="empty-state" id="empty-state" style="display:none;">
+        Nenhum relatório encontrado. Clique em <b>Novo Relatório</b> para começar.
+      </div>
+    </div>
+
+    <!-- FORM VIEW -->
+    <div class="view" id="view-form">
+      <div class="form-header">
+        <div>
+          <h1 id="form-title">Novo Relatório</h1>
+          <div class="sub" id="form-subtitle">Preencha as seções abaixo. Clique em Salvar para gravar na nuvem.</div>
+        </div>
+        <div class="form-actions">
+          <button class="btn secondary" id="btn-back-list">← Voltar à lista</button>
+          <button class="btn secondary" id="btn-export-docx">Exportar DOCX</button>
+          <button class="btn secondary" id="btn-export-pdf">Exportar PDF</button>
+          <button class="btn secondary" id="btn-export-odt">Exportar ODT</button>
+          <button class="btn" id="btn-save">Salvar</button>
+        </div>
+      </div>
+
+      <div class="form-shell">
+        <nav class="form-nav" id="form-nav">
+          <button data-target="sec-id"><span class="rn">·</span>Identificação</button>
+          <button data-target="sec-2"><span class="rn">II</span>Áreas Trabalhadas</button>
+          <button data-target="sec-3"><span class="rn">III</span>Adaptações</button>
+          <button data-target="sec-4"><span class="rn">IV</span>Recursos</button>
+          <button data-target="sec-5"><span class="rn">V</span>Parecer Final</button>
+          <button data-target="sec-sign"><span class="rn">·</span>Assinaturas</button>
+          <div class="save-note" id="save-note"></div>
+        </nav>
+        <div id="form-sections"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="modal-backdrop" id="modal-backdrop">
+  <div class="modal">
+    <h3>Excluir relatório?</h3>
+    <p>Esta ação remove permanentemente o relatório deste aluno. Não é possível desfazer.</p>
+    <div class="row">
+      <button class="btn secondary" id="modal-cancel">Cancelar</button>
+      <button class="btn danger" id="modal-confirm" style="background:#B93A2E;color:#fff;border-color:#B93A2E;">Excluir</button>
+    </div>
+  </div>
+</div>
+
+<!-- Firebase (compat SDK) — mesma versão do PAEE -->
+<script src="vendor/firebase-10.12.2/firebase-app-compat.js"></script>
+<script src="vendor/firebase-10.12.2/firebase-auth-compat.js"></script>
+<script src="vendor/firebase-10.12.2/firebase-firestore-compat.js"></script>
+<!-- DOCX export -->
+<script src="vendor/index.iife.js"></script>
+<!-- IA gratuita (Puter.js) -->
+<script src="https://js.puter.com/v2/"></script>
+
+<script>
+/* =========================================================================
+   CONFIGURAÇÃO DO FIREBASE
+   Use o mesmo projeto do PAEE (paee-3fea6) ou outro de sua preferência.
+   A coleção "relatorios_srm" é separada da "paee_alunos".
+   ========================================================================= */
+const firebaseConfig = {
+  apiKey: "AIzaSyBWvVhqLf2UEz2-02clHwnvsSF4eDUMPjA",
+  authDomain: "paee-3fea6.firebaseapp.com",
+  databaseURL: "https://paee-3fea6-default-rtdb.firebaseio.com",
+  projectId: "paee-3fea6",
+  storageBucket: "paee-3fea6.firebasestorage.app",
+  messagingSenderId: "466630982073",
+  appId: "1:466630982073:web:0109116a083d1a395f9e68"
+};
+
+const COLLECTION = 'relatorios_srm';
+
+let db = null, auth = null, firebaseReady = false, professorUid = null;
+try{
+  firebase.initializeApp(firebaseConfig);
+  db = firebase.firestore();
+  auth = firebase.auth();
+  firebaseReady = true;
+}catch(e){ console.warn('Firebase não inicializado.', e); }
+
+function planosRef(){
+  return db.collection(COLLECTION).where('professorUid','==',professorUid);
+}
+
+/* ========================= AUTH ========================= */
+function showScreen(name){
+  document.getElementById('screen-login').classList.toggle('active', name==='login');
+  document.getElementById('app-shell').classList.toggle('active', name==='app');
+}
+
+if(firebaseReady){
+  auth.onAuthStateChanged(user=>{
+    if(user){
+      professorUid = user.uid;
+      document.getElementById('topbar-user').textContent = user.email;
+      showScreen('app');
+      listenStudents();
+      abrirViaParametro();
+    }else{
+      professorUid = null;
+      document.getElementById('loginEmail').value='';
+      document.getElementById('loginPassword').value='';
+      document.getElementById('loginError').classList.remove('show');
+      document.getElementById('loginBtn').disabled=false;
+      document.getElementById('loginBtn').textContent='Entrar';
+      showScreen('login');
+    }
+  });
+}
+
+async function doLogin(){
+  const email=document.getElementById('loginEmail').value.trim();
+  const pass=document.getElementById('loginPassword').value;
+  const errEl=document.getElementById('loginError');
+  errEl.classList.remove('show');
+  if(!email||!pass){errEl.textContent='⚠️ Preencha o e-mail e a senha.';errEl.classList.add('show');return;}
+  const btn=document.getElementById('loginBtn');
+  btn.disabled=true;btn.textContent='Entrando...';
+  try{
+    await auth.signInWithEmailAndPassword(email,pass);
+  }catch(e){
+    const msgs={
+      'auth/wrong-password':'Senha incorreta.',
+      'auth/user-not-found':'E-mail não cadastrado.',
+      'auth/invalid-email':'E-mail inválido.',
+      'auth/too-many-requests':'Muitas tentativas. Aguarde alguns minutos.',
+      'auth/network-request-failed':'Sem conexão com a internet.',
+      'auth/invalid-credential':'E-mail ou senha incorretos.',
+    };
+    errEl.textContent='⚠️ '+(msgs[e.code]||'E-mail ou senha incorretos.');
+    errEl.classList.add('show');
+    btn.disabled=false;btn.textContent='Entrar';
+  }
+}
+document.getElementById('loginBtn').addEventListener('click', doLogin);
+document.getElementById('loginPassword').addEventListener('keydown', e=>{if(e.key==='Enter')doLogin();});
+document.getElementById('btn-logout').addEventListener('click', ()=>auth.signOut());
+
+/* ========================= DEFINIÇÃO DAS ÁREAS ========================= */
+const AREAS = [
+  {key:'oralidade', label:'1. Oralidade e Comunicação', emoji:'🗣️',
+   ph:'Ex.: O aluno expressa desejos e vontades de forma simples e objetiva. Apresenta alguma dificuldade na organização das ideias com coerência em seu discurso, que ocorre de maneira breve. Reconhece figuras e imagens, relaciona objetos às suas funções e comunica-se predominantemente por meio da fala. Seu vocabulário encontra-se em desenvolvimento, necessitando de estímulos contínuos para ampliar a coerência e a extensão do discurso.'},
+  {key:'leitura', label:'2. Leitura e Escuta', emoji:'📖',
+   ph:'Ex.: Percebe a letra inicial das palavras por meio do som, estabelecendo relações entre fonema e grafema. Compreende a sequência lógica das histórias com mediação e apoio visual. Consegue realizar a leitura de palavras simples e frases curtas, demonstrando avanços graduais na fluência e na compreensão leitora.'},
+  {key:'escrita', label:'3. Escrita', emoji:'✏️',
+   ph:'Ex.: Sua escrita ocorre predominantemente em letra caixa alta, sendo capaz de registrar palavras simples de forma legível. As palavras mais complexas ainda apresentam omissões e trocas de letras. Iniciou a escrita de frases curtas, necessitando de apoio para ampliar a autonomia e organizar melhor as ideias.'},
+  {key:'percepcao', label:'4. Percepção', emoji:'👁️',
+   ph:'Ex.: Demonstra sensibilidade ao identificar diferentes tipos de texturas, aceitando explorá-las durante as atividades. Responde verbalmente a estímulos auditivos com significado e identifica objetos por meio do tato. Compreende e executa comandos de mais de uma ordem, embora se distraia com facilidade em ambientes com muitos estímulos.'},
+  {key:'avd', label:'5. Atividades da Vida Diária', emoji:'🏠',
+   ph:'Ex.: Apresenta autonomia em sua locomoção, no uso do banheiro, nos cuidados com a higiene pessoal e na alimentação. Revela independência ao vestir-se, despir-se, calçar e amarrar o tênis. Demonstra cuidado com seus pertences, preensão de pinça adequada ao segurar o lápis e consegue montar quebra-cabeças com mais de 50 peças.'},
+  {key:'social', label:'6. Desenvolvimento Social', emoji:'🤝',
+   ph:'Ex.: Brinca e socializa de forma adequada com os colegas, estabelecendo interações positivas. Mantém bom relacionamento com a professora, demonstrando vínculo afetivo e respeito às orientações. Apresenta motivação para aprender e bom controle emocional, lidando de forma tranquila com situações de frustração e atividades desafiadoras.'},
+  {key:'numeros', label:'7. Conceito de Números', emoji:'🔢',
+   ph:'Ex.: Explora os números em diferentes contextos, reconhecendo sua presença no cotidiano. Estabelece correspondência adequada entre quantidade e numeral e identifica relações de "mais" e "menos". Demonstra compreensão inicial em situações-problema envolvendo adição e subtração simples, especialmente com apoio de materiais concretos.'},
+  {key:'formas', label:'8. Formas Geométricas e Cores', emoji:'🔺',
+   ph:'Ex.: Reconhece e nomeia as principais formas geométricas (círculo, quadrado, triângulo), apresentando dificuldade específica na nomeação do retângulo. É capaz de agrupar formas de acordo com o modelo e identifica relações de igualdade e desigualdade. Reconhece e nomeia cores primárias e secundárias.'},
+  {key:'medidas', label:'9. Medidas e Noção de Tempo e Espaço', emoji:'⏱️',
+   ph:'Ex.: Apresenta noção básica de temporalidade, compreendendo relações como antes/depois, ontem/hoje/amanhã e os períodos do dia. Reconhece os dias da semana e compreende os horários da rotina diária. Demonstra compreensão de conceitos como muito/pouco, dentro/fora, grande/pequeno, alto/baixo, leve/pesado, diferenciando também ritmos rápidos e lentos.'},
+];
+
+const RECURSOS_LISTA = [
+  {key:'visuais',      label:'Recursos visuais',               emoji:'🖼️', ph:'Ex.: cartazes, imagens, figuras, jogos de memória, quebra-cabeças, logomarcas e alfabeto ilustrado.'},
+  {key:'auditivos',    label:'Recursos auditivos',             emoji:'🎵', ph:'Ex.: músicas infantis, histórias narradas, vídeos educativos e fantoches para dramatização.'},
+  {key:'tateis',       label:'Recursos táteis e sensoriais',   emoji:'🤲', ph:'Ex.: massinha de modelar, materiais com diferentes texturas, jogos de encaixe e blocos de montar.'},
+  {key:'leituraSc',    label:'Recursos de escrita e leitura',  emoji:'📚', ph:'Ex.: livros de literatura infantil, gibis, revistas, cartões de palavras, atividades impressas e letras móveis.'},
+  {key:'tecnologicos', label:'Recursos tecnológicos',          emoji:'💻', ph:'Ex.: tablets, computadores e aplicativos educativos de jogos interativos.'},
+  {key:'concretos',    label:'Materiais pedagógicos concretos',emoji:'🧮', ph:'Ex.: material dourado, tampinhas, palitos, dados, jogos de contagem e sequência.'},
+  {key:'vidaDiaria',   label:'Recursos de vida diária',        emoji:'👕', ph:'Ex.: roupas com botões e zíperes, embalagens para treino de abertura e fechamento e utensílios de alimentação.'},
+  {key:'psicomotores', label:'Recursos psicomotores',          emoji:'⚽', ph:'Ex.: cordas, bambolês, bolas, atividades de alinhavo e exercícios de preensão e coordenação motora fina.'},
+  {key:'sociais',      label:'Recursos sociais',               emoji:'👥', ph:'Ex.: rodas de conversa, dramatizações, jogos coletivos e atividades de cooperação em grupo.'},
+];
+
+/* ========================= ESTADO / MODELO ========================= */
+function novoEstado(){
+  const areas = {};
+  AREAS.forEach(a=>{ areas[a.key] = {texto:'', naoAplica:false}; });
+
+  const recursos = {};
+  RECURSOS_LISTA.forEach(r=>{ recursos[r.key] = ''; });
+
+  return {
+    id: null,
+    identificacao:{
+      nome:'', cgm:'', dataNascimento:'', nee:'',
+      escolaRegular:'', ano:'', periodo:'',
+      escolaSRM:'', periodoSRM:'', professorSRM:'',
+      atendimentosPrevistos:'', atendimentosRealizados:''
+    },
+    areas,
+    adaptacoes: '',
+    recursos,
+    parecerFinal: '',
+    assinaturas:{
+      local:'Cambé', data:'', nomeProfessor:'', cargoProfessor:'Professora SRM',
+      nomeCoordenador:'', cargoCoordenador:'Coordenadora Pedagógica'
+    },
+    createdAt: null,
+    updatedAt: null
+  };
+}
+
+let state = novoEstado();
+let allStudents = [];
+let deleteTargetId = null;
+
+/* ========================= HELPERS ========================= */
+function esc(s){ return (s||'').toString().replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function showToast(msg){
+  const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show');
+  clearTimeout(showToast._h); showToast._h=setTimeout(()=>t.classList.remove('show'),2400);
+}
+function fmtDate(ts){
+  if(!ts) return '';
+  const d = ts.toDate ? ts.toDate() : new Date(ts);
+  return d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+}
+
+function setPath(obj, path, value){
+  const parts = path.split('.');
+  let cur = obj;
+  for(let i=0;i<parts.length-1;i++) cur = cur[parts[i]];
+  cur[parts[parts.length-1]] = value;
+}
+function getPath(obj, path){
+  return path.split('.').reduce((cur,p)=> (cur ? cur[p] : undefined), obj);
+}
+
+/* ========================= FIRESTORE ========================= */
+function sortAlpha(list){
+  return [...list].sort((a,b)=>{
+    const nA=(a.identificacao?.nome||'').trim();
+    const nB=(b.identificacao?.nome||'').trim();
+    return nA.localeCompare(nB,'pt-BR',{sensitivity:'base'});
+  });
+}
+
+function listenStudents(){
+  const statusEl = document.getElementById('conn-status');
+  if(!firebaseReady){statusEl.textContent='offline';return;}
+  statusEl.textContent='conectando…';
+  planosRef().onSnapshot(snap=>{
+    allStudents = sortAlpha(snap.docs.map(d=>({id:d.id,...d.data()})));
+    statusEl.textContent='sincronizado';
+    if(document.getElementById('view-list').classList.contains('active')) renderStudentGrid();
+  }, err=>{
+    console.error('Erro no listener Firestore:', err);
+    if(err.code==='permission-denied'){
+      statusEl.textContent='⚠️ sem permissão — configure as regras do Firestore';
+    }else if(err.code==='failed-precondition'){
+      // índice composto ausente — fallback com leitura simples
+      statusEl.textContent='carregando…';
+      planosRef().get().then(snap=>{
+        allStudents = sortAlpha(snap.docs.map(d=>({id:d.id,...d.data()})));
+        statusEl.textContent='sincronizado (sem tempo real)';
+        if(document.getElementById('view-list').classList.contains('active')) renderStudentGrid();
+      }).catch(e2=>{
+        console.error(e2);
+        statusEl.textContent='erro de conexão';
+      });
+    }else{
+      statusEl.textContent='erro de conexão';
+    }
+  });
+}
+
+async function saveStudent(){
+  if(!firebaseReady){showToast('Firebase não configurado.');return;}
+  if(!professorUid){showToast('Faça login antes de salvar.');return;}
+  if(!state.identificacao.nome.trim()){showToast('Informe ao menos o nome do aluno antes de salvar.');return;}
+
+  const btnSave = document.getElementById('btn-save');
+  btnSave.disabled = true;
+  btnSave.textContent = 'Salvando…';
+
+  const payload = JSON.parse(JSON.stringify(state));
+  delete payload.id;
+  payload.professorUid = professorUid;
+  payload.updatedAt = firebase.firestore.FieldValue.serverTimestamp();
+  if(!state.id){ payload.createdAt = firebase.firestore.FieldValue.serverTimestamp(); }
+
+  try{
+    let savedId = state.id;
+    if(state.id){
+      await db.collection(COLLECTION).doc(state.id).set(payload,{merge:true});
+    }else{
+      const ref = await db.collection(COLLECTION).add(payload);
+      savedId = ref.id;
+      state.id = ref.id;
+    }
+
+    // Atualiza lista local imediatamente sem depender do round-trip do listener
+    const localRecord = {...JSON.parse(JSON.stringify(state)), id:savedId, updatedAt:new Date()};
+    const idx = allStudents.findIndex(s=>s.id===savedId);
+    if(idx>-1){allStudents[idx]=localRecord;}else{allStudents.push(localRecord);}
+    allStudents = sortAlpha(allStudents);
+
+    showToast('✓ Relatório salvo com sucesso.');
+    showView('list');
+  }catch(e){
+    console.error('Erro ao salvar relatório:', e);
+    // Mensagem específica para erro de permissão do Firestore
+    if(e.code === 'permission-denied'){
+      showToast('⚠️ Sem permissão. Adicione a coleção "relatorios_srm" nas regras do Firestore.');
+    }else{
+      showToast('⚠️ Erro ao salvar: ' + (e.message||e.code||'verifique o console.'));
+    }
+  }finally{
+    btnSave.disabled = false;
+    btnSave.textContent = 'Salvar';
+  }
+}
+
+async function deleteStudent(id){
+  if(!firebaseReady) return;
+  try{
+    await db.collection(COLLECTION).doc(id).delete();
+    showToast('Relatório excluído.');
+  }catch(e){
+    console.error(e);
+    showToast('Não foi possível excluir.');
+  }
+}
+
+/* ========================= VIEW SWITCH ========================= */
+function showView(name){
+  document.getElementById('view-list').classList.toggle('active', name==='list');
+  document.getElementById('view-form').classList.toggle('active', name==='form');
+  if(name==='list') renderStudentGrid();
+  window.scrollTo({top:0});
+}
+
+document.getElementById('btn-back-list').addEventListener('click', ()=>showView('list'));
+document.getElementById('btn-new').addEventListener('click', ()=>{
+  state = novoEstado();
+  document.getElementById('form-title').textContent = 'Novo Relatório';
+  document.getElementById('form-subtitle').textContent = 'Preencha as seções abaixo. Clique em Salvar para gravar na nuvem.';
+  renderForm();
+  showView('form');
+});
+document.getElementById('btn-save').addEventListener('click', saveStudent);
+document.getElementById('btn-export-pdf').addEventListener('click',()=>exportDOCX(state,'pdf'));
+document.getElementById('btn-export-odt').addEventListener('click',()=>exportDOCX(state,'odt'));
+document.getElementById('btn-export-docx').addEventListener('click', ()=>exportDOCX(state));
+
+/* ========================= LIST VIEW RENDER ========================= */
+function renderStudentGrid(){
+  const q=(document.getElementById('search-input').value||'').toLowerCase().trim();
+  const grid=document.getElementById('student-grid');
+  const empty=document.getElementById('empty-state');
+  const list=allStudents.filter(s=>{
+    if(!q) return true;
+    const nome=(s.identificacao?.nome||'').toLowerCase();
+    const escola=(s.identificacao?.escolaRegular||'').toLowerCase();
+    return nome.includes(q)||escola.includes(q);
+  });
+  grid.innerHTML='';
+  empty.style.display=list.length?'none':'block';
+  list.forEach(s=>{
+    const id=s.identificacao||{};
+    const card=document.createElement('div');
+    card.className='student-card';
+    card.innerHTML=`
+      <span class="sc-tag">${esc(id.periodo||'sem período')}</span>
+      <div class="sc-name">${esc(id.nome)||'(sem nome)'}</div>
+      <div class="sc-meta">
+        <span>${esc(id.escolaRegular)||'Escola não informada'}</span>
+        <span>${esc(id.ano||'—')} ${id.nee?'· '+esc(id.nee):''}</span>
+        <span>SRM: ${esc(id.professorSRM)||'—'}</span>
+      </div>
+      <div class="sc-updated">Atualizado em ${fmtDate(s.updatedAt)||'—'}</div>
+      <div class="sc-actions">
+        <button class="btn secondary" style="flex:1;" data-act="edit" data-id="${s.id}">Editar</button>
+        <button class="btn ghost" data-act="docx" data-id="${s.id}" title="Exportar DOCX">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        </button>
+        <button class="btn ghost" data-act="del" data-id="${s.id}" title="Excluir">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6"/></svg>
+        </button>
+      </div>`;
+    grid.appendChild(card);
+  });
+}
+
+document.getElementById('search-input').addEventListener('input', renderStudentGrid);
+
+document.getElementById('student-grid').addEventListener('click', e=>{
+  const btn=e.target.closest('button[data-act]');
+  if(!btn) return;
+  const id=btn.dataset.id;
+  const rec=allStudents.find(s=>s.id===id);
+  if(!rec) return;
+  if(btn.dataset.act==='edit'){
+    state = deepMerge(novoEstado(), JSON.parse(JSON.stringify(rec)));
+    state.id = id;
+    document.getElementById('form-title').textContent = state.identificacao.nome||'Relatório';
+    document.getElementById('form-subtitle').textContent = 'Editando relatório existente.';
+    renderForm();
+    showView('form');
+  }else if(btn.dataset.act==='docx'){
+    let temp = deepMerge(novoEstado(), JSON.parse(JSON.stringify(rec)));
+    exportDOCX(temp);
+  }else if(btn.dataset.act==='del'){
+    deleteTargetId=id;
+    document.getElementById('modal-backdrop').classList.add('show');
+  }
+});
+
+function deepMerge(base, override){
+  if(Array.isArray(base)) return override!==undefined?override:base;
+  if(typeof base==='object'&&base!==null){
+    const out={...base};
+    for(const k in base){out[k]=deepMerge(base[k],override?override[k]:undefined);}
+    if(override){for(const k in override){if(!(k in base))out[k]=override[k];}}
+    return out;
+  }
+  return override!==undefined?override:base;
+}
+
+document.getElementById('modal-cancel').addEventListener('click', ()=>{
+  document.getElementById('modal-backdrop').classList.remove('show');deleteTargetId=null;
+});
+document.getElementById('modal-confirm').addEventListener('click', async ()=>{
+  if(deleteTargetId){await deleteStudent(deleteTargetId);}
+  document.getElementById('modal-backdrop').classList.remove('show');deleteTargetId=null;
+});
+
+/* ========================= FORM RENDER ========================= */
+function renderForm(){
+  const s = state;
+  const id = s.identificacao;
+  const assr = s.assinaturas;
+
+  // bloco de área trabalhada
+  function areaBlock(area){
+    const d = s.areas[area.key];
+    const phAttr = area.ph ? `placeholder="${esc(area.ph)}"` : '';
+    return `
+    <div class="area-block" id="areablock-${area.key}">
+      <div class="area-head">
+        <span class="area-label">${area.emoji} ${esc(area.label)}</span>
+        <span class="check-na">
+          <input type="checkbox" class="na-area" data-akey="${area.key}" ${d.naoAplica?'checked':''}>
+          Não se aplica
+        </span>
+      </div>
+      <div class="ai-textarea-wrap">
+        <textarea rows="4" data-area="${area.key}" ${phAttr} ${d.naoAplica?'disabled':''}>${esc(d.naoAplica?'Não se aplica.':d.texto)}</textarea>
+        <button type="button" class="ai-btn" title="Revisar e ampliar com IA">✨</button>
+      </div>
+    </div>`;
+  }
+
+  // bloco de recurso
+  function recursoBlock(r){
+    const val = s.recursos[r.key]||'';
+    return `
+    <div class="recurso-row">
+      <span class="recurso-emoji">${r.emoji}</span>
+      <div class="recurso-content">
+        <label>${esc(r.label)}</label>
+        <div class="ai-textarea-wrap">
+          <textarea rows="2" placeholder="${esc(r.ph)}" data-recurso="${r.key}">${esc(val)}</textarea>
+          <button type="button" class="ai-btn" title="Revisar com IA">✨</button>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  const html = `
+    <!-- SEÇÃO I — IDENTIFICAÇÃO -->
+    <section class="card" id="sec-id">
+      <div class="card-head">
+        <span class="roman">·</span>
+        <div><h2>I – Dados de Identificação</h2><div class="desc">Informações do aluno e do atendimento</div></div>
+      </div>
+      <div class="card-body">
+        <div class="field-row">
+          <div class="field-group"><label>Nome completo do aluno</label><input type="text" data-bind="identificacao.nome" value="${esc(id.nome)}"></div>
+          <div class="field-group"><label>CGM</label><input type="text" data-bind="identificacao.cgm" value="${esc(id.cgm)}"></div>
+        </div>
+        <div class="field-row cols-3">
+          <div class="field-group"><label>Data de nascimento</label><input type="date" data-bind="identificacao.dataNascimento" value="${esc(id.dataNascimento)}"></div>
+          <div class="field-group" style="grid-column:span 2"><label>Necessidade Educacional Especial</label><input type="text" data-bind="identificacao.nee" value="${esc(id.nee)}" placeholder="Ex.: TEA, TDAH, Dislexia…"></div>
+        </div>
+        <div class="field-row cols-3">
+          <div class="field-group" style="grid-column:span 2"><label>Escola de ensino regular</label><input type="text" data-bind="identificacao.escolaRegular" value="${esc(id.escolaRegular)}"></div>
+          <div class="field-group"><label>Ano / Série</label><input type="text" data-bind="identificacao.ano" value="${esc(id.ano)}" placeholder="Ex.: 3º ano A"></div>
+        </div>
+        <div class="field-row cols-4">
+          <div class="field-group"><label>Período (escola regular)</label>
+            <select data-bind="identificacao.periodo">
+              <option value="">Selecionar</option>
+              ${['Manhã','Tarde','Integral','Contraturno'].map(p=>`<option value="${p}" ${id.periodo===p?'selected':''}>${p}</option>`).join('')}
+            </select>
+          </div>
+          <div class="field-group" style="grid-column:span 2"><label>Escola de atendimento SRM</label><input type="text" data-bind="identificacao.escolaSRM" value="${esc(id.escolaSRM)}"></div>
+          <div class="field-group"><label>Período (SRM)</label>
+            <select data-bind="identificacao.periodoSRM">
+              <option value="">Selecionar</option>
+              ${['Manhã','Tarde','Integral','Contraturno'].map(p=>`<option value="${p}" ${id.periodoSRM===p?'selected':''}>${p}</option>`).join('')}
+            </select>
+          </div>
+        </div>
+        <div class="field-row cols-3">
+          <div class="field-group" style="grid-column:span 2"><label>Professor(a) AEE</label><input type="text" data-bind="identificacao.professorSRM" value="${esc(id.professorSRM)}"></div>
+          <div class="field-group"><label>Nº de atendimentos previstos</label><input type="number" data-bind="identificacao.atendimentosPrevistos" value="${esc(id.atendimentosPrevistos)}" min="0"></div>
+        </div>
+        <div class="field-row">
+          <div class="field-group"><label>Nº de atendimentos realizados</label><input type="number" data-bind="identificacao.atendimentosRealizados" value="${esc(id.atendimentosRealizados)}" min="0"></div>
+          <div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SEÇÃO II — ÁREAS TRABALHADAS -->
+    <section class="card" id="sec-2">
+      <div class="card-head">
+        <span class="roman">II</span>
+        <div><h2>II – Registro das Áreas Trabalhadas</h2><div class="desc">Descreva os avanços e dificuldades em cada área de desenvolvimento</div></div>
+      </div>
+      <div class="card-body">
+        <p class="hint">Clique em ✨ em qualquer campo para revisar e ampliar o texto com IA (gratuito, sem cadastro).</p>
+        ${AREAS.map(a=>areaBlock(a)).join('')}
+      </div>
+    </section>
+
+    <!-- SEÇÃO III — ADAPTAÇÕES CURRICULARES -->
+    <section class="card" id="sec-3">
+      <div class="card-head">
+        <span class="roman">III</span>
+        <div><h2>III – Adaptações Curriculares</h2><div class="desc">Estratégias e adaptações implementadas para atender às necessidades do aluno</div></div>
+      </div>
+      <div class="card-body">
+        <div class="field-group">
+          <label>Descreva as adaptações curriculares realizadas</label>
+          <div class="ai-textarea-wrap">
+            <textarea rows="8" data-bind="adaptacoes" placeholder="Ex.: Foram adotados materiais didáticos adaptados com diferentes tipos de fonte, ilustrações atrativas e suporte visual ampliado, além de recursos manipulativos como letras móveis e jogos educativos. A organização de um ambiente acolhedor e com redução de estímulos distrativos tornou-se indispensável. Foram utilizadas metodologias diversificadas, como recursos fonológicos, músicas, rimas e histórias em quadrinhos. Atividades individualizadas foram planejadas conforme o nível de desenvolvimento de cada aluno, permitindo que avançassem no próprio ritmo. O uso de recursos tecnológicos (aplicativos educativos) auxiliou no desenvolvimento da leitura, escrita e raciocínio lógico. A mediação com orientações claras e estímulos visuais favoreceu a compreensão dos conteúdos. A promoção de atividades coletivas fortaleceu competências socioemocionais, a cooperação e o apoio mútuo.">${esc(s.adaptacoes)}</textarea>
+            <button type="button" class="ai-btn" title="Revisar com IA">✨</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SEÇÃO IV — RECURSOS PEDAGÓGICOS -->
+    <section class="card" id="sec-4">
+      <div class="card-head">
+        <span class="roman">IV</span>
+        <div><h2>IV – Recursos Pedagógicos Utilizados</h2><div class="desc">Liste os materiais e recursos empregados durante os atendimentos</div></div>
+      </div>
+      <div class="card-body">
+        ${RECURSOS_LISTA.map(r=>recursoBlock(r)).join('')}
+      </div>
+    </section>
+
+    <!-- SEÇÃO V — PARECER FINAL -->
+    <section class="card" id="sec-5">
+      <div class="card-head">
+        <span class="roman">V</span>
+        <div><h2>V – Parecer Final</h2><div class="desc">Síntese do desenvolvimento e recomendações</div></div>
+      </div>
+      <div class="card-body">
+        <div class="field-group">
+          <label>Parecer descritivo</label>
+          <div class="ai-textarea-wrap">
+            <textarea rows="6" data-bind="parecerFinal" placeholder="Ex.: O aluno apresenta desenvolvimento global satisfatório, com avanços significativos em oralidade, leitura, escrita, percepção e atividades de vida diária. Mostra-se interessado e motivado em aprender, sendo capaz de socializar, comunicar-se e resolver situações de forma progressiva. Recomenda-se a continuidade de estímulos pedagógicos diversificados, visando consolidar as habilidades já adquiridas e promover avanços nas áreas que ainda necessitam de maior desenvolvimento.">${esc(s.parecerFinal)}</textarea>
+            <button type="button" class="ai-btn" title="Revisar com IA">✨</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ASSINATURAS -->
+    <section class="card" id="sec-sign">
+      <div class="card-head">
+        <span class="roman">·</span>
+        <div><h2>Assinaturas e Local/Data</h2><div class="desc">Dados impressos no DOCX exportado</div></div>
+      </div>
+      <div class="card-body">
+        <div class="field-row cols-3">
+          <div class="field-group" style="grid-column:span 2"><label>Local</label><input type="text" data-bind="assinaturas.local" value="${esc(assr.local)}" placeholder="Ex.: Cambé"></div>
+          <div class="field-group"><label>Data</label><input type="date" data-bind="assinaturas.data" value="${esc(assr.data)}"></div>
+        </div>
+        <div class="field-row">
+          <div class="field-group"><label>Nome do(a) professor(a) SRM</label><input type="text" data-bind="assinaturas.nomeProfessor" value="${esc(assr.nomeProfessor)}"></div>
+          <div class="field-group"><label>Cargo / Função</label><input type="text" data-bind="assinaturas.cargoProfessor" value="${esc(assr.cargoProfessor)}"></div>
+        </div>
+        <div class="field-row">
+          <div class="field-group"><label>Nome do(a) coordenador(a)</label><input type="text" data-bind="assinaturas.nomeCoordenador" value="${esc(assr.nomeCoordenador)}"></div>
+          <div class="field-group"><label>Cargo / Função</label><input type="text" data-bind="assinaturas.cargoCoordenador" value="${esc(assr.cargoCoordenador)}"></div>
+        </div>
+        <div class="notice" style="margin-top:14px;">
+          <div>
+            <b>ℹ️ Lembrete</b>
+            Este relatório deve ser revisado e assinado ao final de cada semestre letivo, arquivado na pasta individual do aluno e compartilhado com a equipe pedagógica da escola regular.
+          </div>
+        </div>
+      </div>
+    </section>
+  `;
+
+  document.getElementById('form-sections').innerHTML = html;
+  document.getElementById('form-title').textContent = s.identificacao.nome||(s.id?'Relatório':'Novo Relatório');
+  bindNavScroll();
+  attachAIButtons(document.getElementById('form-sections'));
+}
+
+/* ========================= BINDINGS ========================= */
+document.getElementById('form-sections').addEventListener('input', e=>{
+  const t = e.target;
+  if(t.matches('[data-bind]')){
+    setPath(state, t.dataset.bind, t.value);
+    // Atualiza título em tempo real
+    if(t.dataset.bind==='identificacao.nome'){
+      document.getElementById('form-title').textContent = t.value||'Novo Relatório';
+    }
+  }else if(t.matches('[data-area]')){
+    state.areas[t.dataset.area].texto = t.value;
+  }else if(t.matches('[data-recurso]')){
+    state.recursos[t.dataset.recurso] = t.value;
+  }
+});
+
+document.getElementById('form-sections').addEventListener('change', e=>{
+  const t = e.target;
+  if(t.matches('.na-area')){
+    const key = t.dataset.akey;
+    state.areas[key].naoAplica = t.checked;
+    const ta = t.closest('.area-block').querySelector('textarea');
+    ta.disabled = t.checked;
+    if(t.checked){ ta.value='Não se aplica.'; }
+    else{ ta.value = state.areas[key].texto||''; }
+  }else if(t.matches('[data-bind]')){
+    setPath(state, t.dataset.bind, t.value);
+  }
+});
+
+document.getElementById('form-sections').addEventListener('click', e=>{
+  const btn = e.target.closest('.ai-btn');
+  if(btn){
+    const wrap = btn.closest('.ai-textarea-wrap');
+    const ta = wrap ? wrap.querySelector('textarea') : null;
+    reviseWithAI(ta, btn);
+  }
+});
+
+/* ========================= IA (Puter.js) ========================= */
+function extractAIText(resp){
+  if(!resp) return '';
+  if(typeof resp==='string') return resp;
+  if(resp.message&&resp.message.content!==undefined){
+    const c=resp.message.content;
+    if(typeof c==='string') return c;
+    if(Array.isArray(c)) return c.map(p=>(typeof p==='string'?p:(p.text||''))).join('\n');
+  }
+  if(typeof resp.text==='string') return resp.text;
+  if(Array.isArray(resp)) return resp.map(extractAIText).join('\n');
+  return String(resp);
+}
+
+function attachAIButtons(container){
+  if(!container) return;
+  container.querySelectorAll('textarea').forEach(ta=>{
+    if(ta.closest('.ai-textarea-wrap')) return;
+    const wrap=document.createElement('div');
+    wrap.className='ai-textarea-wrap';
+    ta.parentNode.insertBefore(wrap,ta);
+    wrap.appendChild(ta);
+    const btn=document.createElement('button');
+    btn.type='button';
+    btn.className='ai-btn';
+    btn.title='Revisar e ampliar este texto com IA';
+    btn.innerHTML='✨';
+    wrap.appendChild(btn);
+  });
+}
+
+async function reviseWithAI(textarea, btn){
+  if(!textarea||textarea.disabled) return;
+  const original = textarea.value.trim();
+  if(!original){showToast('Escreva algum texto antes de usar a IA.');return;}
+  if(typeof puter==='undefined'||!puter.ai||!puter.ai.chat){
+    showToast('Serviço de IA indisponível (verifique sua conexão).');return;
+  }
+  const prevHTML=btn.innerHTML;
+  btn.classList.add('loading');btn.innerHTML='⏳';
+  try{
+    const prompt=
+      'Você é um assistente pedagógico especializado em Educação Especial e Sala de Recursos Multifuncional (SRM). '+
+      'O texto abaixo é o conteúdo de um campo de um Relatório de Atendimento Especializado (SRM). '+
+      'Revise, amplie e aprofunde o texto: melhore a redação, a clareza, a coesão e o vocabulário técnico-pedagógico, '+
+      'mantendo fielmente as informações originais. NÃO invente dados específicos sobre o aluno que não estejam no texto. '+
+      'Responda SOMENTE com o texto final revisado, em português do Brasil, sem introduções, comentários ou aspas.\n\n'+
+      'Texto original:\n"""\n'+original+'\n"""';
+    const resp = await puter.ai.chat(prompt);
+    const revisado = extractAIText(resp).trim();
+    if(!revisado) throw new Error('Resposta vazia');
+    textarea.value=revisado;
+    textarea.dispatchEvent(new Event('input',{bubbles:true}));
+    showToast('Texto revisado com IA.');
+  }catch(err){
+    console.error('Erro IA:',err);
+    showToast('Não foi possível revisar com IA agora. Tente novamente.');
+  }finally{
+    btn.classList.remove('loading');btn.innerHTML=prevHTML;
+  }
+}
+
+/* ========================= NAV SCROLL SPY ========================= */
+function bindNavScroll(){
+  const navButtons=[...document.querySelectorAll('#form-nav button[data-target]')];
+  navButtons.forEach(b=>{
+    b.onclick=()=>{
+      document.getElementById(b.dataset.target).scrollIntoView({behavior:'smooth',block:'start'});
+    };
+  });
+  const sections=navButtons.map(b=>document.getElementById(b.dataset.target)).filter(Boolean);
+  window.onscroll=()=>{
+    let current=sections[0];
+    for(const sec of sections){if(sec.getBoundingClientRect().top-100<=0)current=sec;}
+    navButtons.forEach(b=>b.classList.toggle('active',b.dataset.target===(current&&current.id)));
+  };
+}
+
+/* ========================= DOCX EXPORT ========================= */
+function exportDOCX(s, formato='docx'){
+  const {
+    Document, Packer, Paragraph, TextRun, HeadingLevel, Table, TableRow, TableCell,
+    WidthType, AlignmentType, BorderStyle, ShadingType, TableLayoutType, VerticalAlign, HeightRule
+  } = docx;
+
+  const MARGIN = 850; // 1,5cm em twips
+  const TABLE_W = 10205; // 18cm
+  const cellMargins = {top:60,bottom:60,left:80,right:80};
+
+  const id = s.identificacao;
+  const assr = s.assinaturas;
+
+  function uniformColW(n){
+    const base=Math.floor(TABLE_W/n);
+    const w=Array(n).fill(base);
+    w[n-1]+=TABLE_W-(base*n);
+    return w;
+  }
+
+  function bodyPara(text, opts={}){
+    return new Paragraph({
+      children:[new TextRun({text:text||'—',size:24,...opts})],
+      spacing:{before:40,after:40},
+      alignment:AlignmentType.JUSTIFIED,
+    });
+  }
+  function labeledPara(label, value){
+    return new Paragraph({
+      children:[
+        new TextRun({text:label+': ',bold:true,size:24}),
+        new TextRun({text:value||'—',size:24}),
+      ],
+      spacing:{before:40,after:40},
+      alignment:AlignmentType.JUSTIFIED,
+    });
+  }
+  function sectionTitle(text){
+    return new Paragraph({
+      children:[new TextRun({text,bold:true,size:24,color:'FFFFFF'})],
+      shading:{type:ShadingType.CLEAR,fill:'1B5E3C'},
+      spacing:{before:280,after:100},
+      indent:{left:100},
+    });
+  }
+  function areaTitle(text){
+    return new Paragraph({
+      children:[new TextRun({text,bold:true,size:24,color:'1B5E3C'})],
+      spacing:{before:140,after:40},
+    });
+  }
+  function separator(){
+    return new Paragraph({
+      border:{bottom:{style:BorderStyle.SINGLE,size:4,color:'DDE2D6',space:4}},
+      spacing:{before:120,after:120},
+    });
+  }
+
+  // Tabela 2-colunas para dados de identificação (legível no Word)
+  function idTable(rows){
+    const colW=uniformColW(2);
+    const trows = rows.map(r=>{
+      const isFullRow = r.length===1;
+      if(isFullRow){
+        return new TableRow({
+          children:[new TableCell({
+            columnSpan:2,
+            width:{size:TABLE_W,type:WidthType.DXA},
+            margins:cellMargins,
+            shading:{type:ShadingType.CLEAR,fill:'F5F6F0'},
+            children:[new Paragraph({
+              children:[
+                new TextRun({text:r[0].label+': ',bold:true,size:24}),
+                new TextRun({text:r[0].value||'—',size:24}),
+              ],spacing:{before:30,after:30},
+            })],
+          })],
+        });
+      }
+      return new TableRow({
+        children: r.map((cell,i)=>new TableCell({
+          width:{size:colW[i],type:WidthType.DXA},
+          margins:cellMargins,
+          shading:{type:ShadingType.CLEAR,fill:i===0?'F5F6F0':'FFFFFF'},
+          children:[new Paragraph({
+            children:[
+              new TextRun({text:cell.label+': ',bold:true,size:24}),
+              new TextRun({text:cell.value||'—',size:24}),
+            ],spacing:{before:30,after:30},
+          })],
+        })),
+      });
+    });
+    return new Table({
+      rows:trows,
+      width:{size:TABLE_W,type:WidthType.DXA},
+      layout:TableLayoutType.FIXED,
+    });
+  }
+
+  const children = [];
+
+  // Cabeçalho
+  children.push(new Paragraph({
+    children:[new TextRun({text:'Sala de Recursos Multifuncional',size:24,color:'555555'})],
+    alignment:AlignmentType.CENTER,spacing:{before:0,after:30},
+  }));
+  children.push(new Paragraph({
+    children:[new TextRun({text:'RELATÓRIO DE ATENDIMENTO ESPECIALIZADO',bold:true,size:28,color:'123D28'})],
+    alignment:AlignmentType.CENTER,spacing:{before:0,after:60},
+  }));
+
+  // I — Identificação
+  children.push(sectionTitle('I – DADOS DE IDENTIFICAÇÃO'));
+  children.push(idTable([
+    [{label:'Nome do aluno',value:id.nome},{label:'CGM',value:id.cgm}],
+    [{label:'Data de Nascimento',value:id.dataNascimento}],
+    [{label:'Necessidade Educacional Especial',value:id.nee}],
+    [{label:'Escola regular',value:id.escolaRegular},{label:'Ano',value:id.ano}],
+    [{label:'Período',value:id.periodo},{label:'Escola atendimento SRM',value:id.escolaSRM}],
+    [{label:'Período SRM',value:id.periodoSRM},{label:'Prof. AEE',value:id.professorSRM}],
+    [{label:'Nº de atendimentos previstos',value:String(id.atendimentosPrevistos||'—')},{label:'Nº de atendimentos realizados',value:String(id.atendimentosRealizados||'—')}],
+  ]));
+
+  // II — Áreas trabalhadas
+  children.push(sectionTitle('II – REGISTRO DAS ÁREAS TRABALHADAS'));
+  AREAS.forEach(area=>{
+    const d = s.areas[area.key];
+    const texto = d.naoAplica ? 'Não se aplica.' : (d.texto||'—');
+    children.push(areaTitle(area.label));
+    children.push(bodyPara(texto));
+  });
+
+  // III — Adaptações curriculares
+  children.push(sectionTitle('III – ADAPTAÇÕES CURRICULARES'));
+  children.push(bodyPara(s.adaptacoes));
+
+  // IV — Recursos pedagógicos
+  children.push(sectionTitle('IV – RECURSOS PEDAGÓGICOS UTILIZADOS'));
+  RECURSOS_LISTA.forEach(r=>{
+    const val = s.recursos[r.key]||'';
+    if(!val.trim()) return;
+    children.push(new Paragraph({
+      children:[
+        new TextRun({text:'• ',bold:true,size:24}),
+        new TextRun({text:r.label+': ',bold:true,size:24,color:'1B5E3C'}),
+        new TextRun({text:val,size:24}),
+      ],
+      spacing:{before:60,after:30},
+      alignment:AlignmentType.JUSTIFIED,
+    }));
+  });
+
+  // V — Parecer final
+  children.push(sectionTitle('V – PARECER FINAL'));
+  children.push(bodyPara(s.parecerFinal));
+
+  // Data/local e assinaturas
+  children.push(separator());
+  // Data e local em parágrafo
+  const dataFmt = assr.data ? new Date(assr.data+'T00:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'}) : '_____________________';
+  const localStr = (assr.local||'_________')+', '+dataFmt+'.';
+  children.push(new Paragraph({
+    children:[new TextRun({text:localStr,size:24,italics:true})],
+    alignment:AlignmentType.CENTER,
+    spacing:{before:120,after:160},
+  }));
+
+  // Duas linhas de assinatura lado a lado (tabela)
+  const signW=uniformColW(2);
+  children.push(new Table({
+    rows:[
+      new TableRow({
+        height:{value:600,rule:HeightRule.ATLEAST},
+        children:[
+          new TableCell({
+            width:{size:signW[0],type:WidthType.DXA},
+            borders:{top:{style:BorderStyle.SINGLE,size:4,color:'555555',space:4},bottom:{style:BorderStyle.NONE},left:{style:BorderStyle.NONE},right:{style:BorderStyle.NONE}},
+            margins:{top:60,bottom:30,left:0,right:40},
+            children:[
+              new Paragraph({children:[new TextRun({text:assr.nomeProfessor||'_______________________________',size:24,bold:!!assr.nomeProfessor})],spacing:{before:30,after:10}}),
+              new Paragraph({children:[new TextRun({text:assr.cargoProfessor||'Professora SRM',size:22,color:'555555'})],spacing:{before:0,after:0}}),
+            ],
+          }),
+          new TableCell({
+            width:{size:signW[1],type:WidthType.DXA},
+            borders:{top:{style:BorderStyle.SINGLE,size:4,color:'555555',space:4},bottom:{style:BorderStyle.NONE},left:{style:BorderStyle.NONE},right:{style:BorderStyle.NONE}},
+            margins:{top:60,bottom:30,left:40,right:0},
+            children:[
+              new Paragraph({children:[new TextRun({text:assr.nomeCoordenador||'_______________________________',size:24,bold:!!assr.nomeCoordenador})],spacing:{before:30,after:10}}),
+              new Paragraph({children:[new TextRun({text:assr.cargoCoordenador||'Coordenadora Pedagógica',size:22,color:'555555'})],spacing:{before:0,after:0}}),
+            ],
+          }),
+        ],
+      }),
+    ],
+    width:{size:TABLE_W,type:WidthType.DXA},
+    layout:TableLayoutType.FIXED,
+  }));
+
+  const doc = new Document({
+    styles:{
+      default:{
+        document:{
+          run:{font:'Arial',size:24},
+          paragraph:{alignment:AlignmentType.JUSTIFIED},
+        },
+      },
+    },
+    sections:[{
+      properties:{
+        page:{
+          margin:{top:MARGIN,right:MARGIN,bottom:MARGIN,left:MARGIN},
+          borders:{
+            pageBorderTop:{style:BorderStyle.SINGLE,size:8,color:'000000',space:24},
+            pageBorderRight:{style:BorderStyle.SINGLE,size:8,color:'000000',space:24},
+            pageBorderBottom:{style:BorderStyle.SINGLE,size:8,color:'000000',space:24},
+            pageBorderLeft:{style:BorderStyle.SINGLE,size:8,color:'000000',space:24},
+          },
+        },
+      },
+      children,
+    }],
+  });
+
+  Packer.toBlob(doc).then(async blob=>{
+    const nome=(s.identificacao.nome||'Relatório')
+      .normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9]+/g,'_');
+    await SRMExport.fromDocx(blob, formato, `Relatorio_SRM_${nome}`);
+    showToast(formato.toUpperCase()+' gerado com sucesso.');
+  }).catch(err=>{
+    console.error(err);
+    showToast('Erro ao gerar '+formato.toUpperCase()+': '+err.message);
+  });
+}
+
+/* ========================= ABERTURA VIA ?nome= ========================= */
+function abrirViaParametro(){
+  const params=new URLSearchParams(window.location.search);
+  const nomeParam=(params.get('nome')||'').trim();
+  if(!nomeParam) return;
+
+  function normalizar(s){
+    return (s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase().replace(/\s+/g,' ');
+  }
+  const alvo=normalizar(nomeParam);
+
+  function abrirNovo(){
+    state=novoEstado();
+    state.identificacao.nome=nomeParam;
+    document.getElementById('form-title').textContent='Novo Relatório';
+    document.getElementById('form-subtitle').textContent='Preencha as seções abaixo. Clique em Salvar para gravar na nuvem.';
+    renderForm();
+    showView('form');
+  }
+
+  function abrirExistente(doc){
+    state=deepMerge(novoEstado(),{id:doc.id,...doc.data()});
+    state.id=doc.id;
+    document.getElementById('form-title').textContent='Editar Relatório';
+    document.getElementById('form-subtitle').textContent='Este aluno já possui um relatório salvo — altere o necessário e clique em Salvar.';
+    renderForm();
+    showView('form');
+  }
+
+  if(!firebaseReady){abrirNovo();return;}
+
+  planosRef().get().then(snap=>{
+    const match=snap.docs.find(d=>normalizar((d.data().identificacao||{}).nome)===alvo);
+    if(match){abrirExistente(match);}else{abrirNovo();}
+  }).catch(err=>{
+    console.error(err);
+    abrirNovo();
+  });
+}
+
+</script>
+</body>
+</html>
