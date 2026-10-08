@@ -85,7 +85,10 @@
   }
   async function htmlDocx(root) {
     if (!window.docx) throw new Error('Biblioteca DOCX indisponível.');
-    const {Document,Paragraph,TextRun,Table,TableRow,TableCell,Packer,ImageRun} = window.docx;
+    const {Document,Paragraph,TextRun,Table,TableRow,TableCell,Packer,ImageRun,AlignmentType,WidthType,TableLayoutType,BorderStyle,ShadingType,VerticalAlign} = window.docx;
+    // Padrão compartilhado com PAEE/Relatório: Arial 12, A4 e margens de 1,5 cm.
+    const MARGIN = 850, TABLE_WIDTH = 10205;
+    const border = {style:BorderStyle.SINGLE,size:4,color:'CCCCCC'};
     function runs(node, styles = {}) {
       if (node.nodeType === 3) return [new TextRun({text:node.textContent,...styles})];
       if (node.nodeType !== 1) return [];
@@ -99,16 +102,60 @@
       }
       return Array.from(node.childNodes).flatMap(n => runs(n, {...styles,...(/^(b|strong)$/.test(tag)?{bold:true}:{}),...(/^(i|em)$/.test(tag)?{italics:true}:{})}));
     }
-    function blocks(container) {
-      return Array.from(container.childNodes).flatMap(node => {
-        if (node.nodeType === 3) return node.textContent.trim() ? [new Paragraph({children:runs(node)})] : [];
-        if (node.nodeType !== 1) return [];
-        if (node.tagName === 'TABLE') return [new Table({rows:Array.from(node.rows).map(row => new TableRow({children:Array.from(row.cells).map(cell => new TableCell({columnSpan:cell.colSpan,rowSpan:cell.rowSpan,children:blocks(cell).length?blocks(cell):[new Paragraph('')]}))}))})];
-        if (/^(DIV|SECTION|ARTICLE|UL|OL|LI)$/.test(node.tagName)) return blocks(node);
-        return [new Paragraph({children:runs(node),...(/^H[1-6]$/.test(node.tagName)?{heading:'Heading'+node.tagName[1]}:{})})];
+    function table(node) {
+      const htmlRows=Array.from(node.rows), occupied=[];
+      let columns=1;
+      const positions=htmlRows.map((row,r)=>{
+        occupied[r] ||= [];let column=0;
+        return Array.from(row.cells).map(cell=>{
+          while(occupied[r][column])column++;
+          const start=column;
+          for(let y=0;y<cell.rowSpan;y++){
+            occupied[r+y] ||= [];
+            for(let x=0;x<cell.colSpan;x++)occupied[r+y][start+x]=true;
+          }
+          column+=cell.colSpan;columns=Math.max(columns,column);
+          return {cell,start};
+        });
+      });
+      const widths=Array(columns).fill(Math.floor(TABLE_WIDTH/columns));
+      widths[columns-1]+=TABLE_WIDTH-widths.reduce((a,b)=>a+b,0);
+      return new Table({width:{size:TABLE_WIDTH,type:WidthType.DXA},columnWidths:widths,layout:TableLayoutType.FIXED,
+        rows:positions.map(cells=>new TableRow({
+          tableHeader:cells.length>0 && cells.every(({cell})=>cell.tagName==='TH'),
+          children:cells.map(({cell,start})=>{
+            const children=blocks(cell);
+            return new TableCell({columnSpan:cell.colSpan,rowSpan:cell.rowSpan,
+              width:{size:widths.slice(start,start+cell.colSpan).reduce((a,b)=>a+b,0),type:WidthType.DXA},
+              margins:{top:60,bottom:60,left:80,right:80},verticalAlign:VerticalAlign.CENTER,
+              borders:{top:border,bottom:border,left:border,right:border},
+              ...(cell.tagName==='TH'?{shading:{type:ShadingType.CLEAR,fill:'EFF3EC'}}:{}),
+              children:children.length?children:[new Paragraph('')],
+            });
+          }),
+        })),
       });
     }
-    return Packer.toBlob(new Document({sections:[{children:blocks(root)}]}));
+    function blocks(container) {
+      return Array.from(container.childNodes).flatMap(node => {
+        if (node.nodeType === 3) return node.textContent.trim() ? [new Paragraph({children:runs(node,container.tagName==='TH'?{bold:true}:{}),spacing:{before:40,after:40},alignment:container.tagName==='TH'?AlignmentType.CENTER:AlignmentType.JUSTIFIED})] : [];
+        if (node.nodeType !== 1) return [];
+        if (node.tagName === 'TABLE') return [table(node)];
+        if (/^(DIV|SECTION|ARTICLE|UL|OL|LI)$/.test(node.tagName)) return blocks(node);
+        return [new Paragraph({children:runs(node,container.tagName==='TH'?{bold:true}:{}),spacing:{before:40,after:40},alignment:container.tagName==='TH'?AlignmentType.CENTER:AlignmentType.JUSTIFIED,...(/^H[1-6]$/.test(node.tagName)?{style:'PEIHeading'+node.tagName[1],spacing:{before:200,after:60}}:{})})];
+      });
+    }
+    const pageBorder={style:BorderStyle.SINGLE,size:8,color:'000000',space:24};
+    return Packer.toBlob(new Document({
+      styles:{default:{document:{run:{font:'Arial',size:24},paragraph:{alignment:AlignmentType.JUSTIFIED}}},
+        paragraphStyles:Array.from({length:6},(_,i)=>({id:'PEIHeading'+(i+1),name:'Título PEI '+(i+1),basedOn:'Normal',next:'Normal',
+          run:{font:'Arial',size:24,bold:true,color:'1B5E3C'},paragraph:{spacing:{before:200,after:60},outlineLevel:i}})),
+      },
+      sections:[{properties:{page:{size:{width:11906,height:16838},
+        margin:{top:MARGIN,right:MARGIN,bottom:MARGIN,left:MARGIN},
+        borders:{pageBorderTop:pageBorder,pageBorderRight:pageBorder,pageBorderBottom:pageBorder,pageBorderLeft:pageBorder},
+      }},children:blocks(root)}],
+    }));
   }
   async function fromHtml(html, format, filename) {
     const root = clean(html);

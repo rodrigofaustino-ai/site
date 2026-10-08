@@ -24,6 +24,26 @@ async function validate(entry,format){
   assert.equal(bytes.readUInt16LE(8),0);assert.equal(bytes.subarray(30,38).toString(),'mimetype');
  } else {const document=await zip.file('word/document.xml').async('string');assert(document.includes('Ana'));
   if(entry.name.startsWith('Diagnostica'))assert(document.includes('<w:gridCol w:w="5102"/>'));
+  if(entry.name.startsWith('PEI')){
+    const namespace='http://schemas.openxmlformats.org/wordprocessingml/2006/main';
+    const parsed=new JSDOM(document,{contentType:'application/xml'}).window.document;
+    const find=tag=>parsed.getElementsByTagNameNS(namespace,tag)[0];
+    const attr=(node,name)=>node.getAttributeNS(namespace,name);
+    assert.equal(attr(find('pgSz'),'w'),'11906');assert.equal(attr(find('pgSz'),'h'),'16838');
+    for(const side of ['top','right','bottom','left'])assert.equal(attr(find('pgMar'),side),'850');
+    for(const side of ['top','right','bottom','left']){
+      const edge=find('pgBorders').getElementsByTagNameNS(namespace,side)[0];assert.equal(attr(edge,'val'),'single');assert.equal(attr(edge,'sz'),'8');assert.equal(attr(edge,'color'),'000000');assert.equal(attr(edge,'space'),'24');
+    }
+    const styles=await zip.file('word/styles.xml').async('string');
+    const stylesDocument=new JSDOM(styles,{contentType:'application/xml'}).window.document;
+    const defaults=stylesDocument.getElementsByTagNameNS(namespace,'docDefaults')[0];
+    assert.equal(attr(defaults.getElementsByTagNameNS(namespace,'rFonts')[0],'ascii'),'Arial');
+    assert.equal(attr(defaults.getElementsByTagNameNS(namespace,'sz')[0],'val'),'24');
+    assert.equal(attr(defaults.getElementsByTagNameNS(namespace,'jc')[0],'val'),'both');
+    assert.equal(attr(find('tblW'),'w'),'10205');
+    assert.equal(Array.from(find('tblGrid').children).reduce((total,col)=>total+Number(attr(col,'w')),0),10205);
+  }
+
  }
  fs.mkdirSync('/tmp/site-results',{recursive:true});fs.writeFileSync('/tmp/site-results/'+entry.name,bytes);total++;
 }
