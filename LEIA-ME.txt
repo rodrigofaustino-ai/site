@@ -1,0 +1,7 @@
+FERRAMENTA PESSOAL — NÃO PUBLICAR NO NETLIFY
+
+Extraia o ZIP e abra Preencher-Relatorio-DOCX.html com Chrome ou Edge. Escolha o DOCX e siga as instruções exibidas. Não substitua nenhum arquivo do site.
+
+A ferramenta processa o DOCX localmente e gera um favorito temporário com os dados. Prefira um perfil do navegador sem sincronização e apague o favorito após o uso. Nenhum dado do relatório foi incluído neste pacote.
+
+O formulário será preenchido apenas no navegador onde o favorito for acionado. Confira tudo e clique em Salvar no site para gravar normalmente.
