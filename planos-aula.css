@@ -13,6 +13,8 @@
 @media(min-width:1100px){#recursosLista,#planosLista{grid-template-columns:repeat(3,minmax(0,1fr))}}
 .plano-item{padding:18px;border:1px solid #dbe4ea;border-radius:12px;overflow-wrap:anywhere}
 .plano-item p{white-space:pre-wrap}.plano-item small{display:block;color:var(--muted);line-height:1.6}
+.recurso-abrir{display:inline-flex;align-items:center;justify-content:center;padding:8px 16px;margin:0 0 12px;border-radius:8px;background:var(--teal);color:#fff;font-size:14px;font-weight:700;text-decoration:none}
+.recurso-abrir:hover{background:#00897B}.recurso-abrir:focus-visible{outline:3px solid var(--ink,#1e293b);outline-offset:3px}
 #planoPreview{width:100%;height:70vh;border:1px solid #dbe4ea;border-radius:8px;background:#fff}
 #planosStatus{padding:8px 0;color:#334155}.planos-card [hidden]{display:none!important}
 .tabs-bar{flex-wrap:wrap}.tabs-bar .tab-btn{flex:1 1 125px}

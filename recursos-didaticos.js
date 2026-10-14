@@ -40,7 +40,8 @@
       const card = document.createElement('article'); card.className = 'plano-item'; list.appendChild(card);
       add(card, 'p', item.descricao);
       try {
-        const href = safeLink(item.link), link = add(card, 'a', item.link);
+        const href = safeLink(item.link), link = add(card, 'a', 'Abrir');
+        link.className = 'recurso-abrir';
         link.href = href; link.target = '_blank'; link.rel = 'noopener noreferrer'; link.referrerPolicy = 'no-referrer';
         link.setAttribute('aria-label', 'Abrir recurso: ' + item.descricao);
       } catch (_) { add(card, 'p', 'Link inválido. Peça ao autor para corrigir.'); }
