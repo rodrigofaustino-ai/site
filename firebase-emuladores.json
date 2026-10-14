@@ -1,5 +1,5 @@
 {
-  "firestore": {"rules": "firebase/planos-firestore.rules"},
+  "firestore": {"rules": "firebase/compartilhados-teste.rules"},
   "storage": {"rules": "firebase/planos-storage.rules"},
   "emulators": {
     "firestore": {"host": "127.0.0.1", "port": 8085},

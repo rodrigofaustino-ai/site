@@ -1,5 +1,9 @@
 # Site SRM — exportações DOCX e ODT
 
+## Recursos Didáticos
+
+A aba **Recursos Didáticos** compartilha links entre os professores do Diário. O cadastro tem breve descrição e link, com autor e data automáticos, busca e abertura em nova aba. Somente o autor edita ou exclui. Antes de publicar, acrescente as regras da nova coleção seguindo [o guia de ativação](firebase/CONFIGURAR-RECURSOS.md). Não requer alterações no Storage ou CORS.
+
 ## Banco de Planos de Aula
 
 A aba **Planos de Aula** permite cadastrar título, conteúdo/tema, breve descrição e DOCX, com autor e data automática. Usuários do Diário consultam e baixam todos os planos; somente o autor edita, substitui o DOCX ou exclui. A biblioteca é compartilhada entre turnos e usa uma coleção separada dos registros dos alunos.

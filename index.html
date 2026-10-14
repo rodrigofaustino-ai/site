@@ -579,6 +579,7 @@ hr.sep{border:none;border-top:2px dashed rgba(0,0,0,.06);margin:.2rem 0;}
       <button class="tab-btn" id="tabBtnPaee" onclick="switchTab('paee')">📘 PAEE</button>
       <button class="tab-btn" id="tabBtnPei" onclick="switchTab('pei')">📋 PEI</button>
       <button class="tab-btn" id="tabBtnRelatorio" onclick="switchTab('relatorio')">📋 Relatório</button>
+      <button class="tab-btn" id="tabBtnRecursos" onclick="switchTab('recursos')">🔗 Recursos Didáticos</button>
       <button class="tab-btn" id="tabBtnPlanos" onclick="switchTab('planos')">📚 Planos de Aula</button>
       <button class="tab-btn" id="tabBtnDiagnostica" onclick="switchTab('diagnostica')">📊 Diagnóstica</button>
     </div>
@@ -725,6 +726,23 @@ hr.sep{border:none;border-top:2px dashed rgba(0,0,0,.06);margin:.2rem 0;}
         <h3 id="planoViewerTitulo"></h3>
         <p>A prévia pode apresentar diferenças de formatação. Baixe o DOCX para abrir o documento original.</p>
         <iframe id="planoPreview" title="Prévia do plano de aula" sandbox="" referrerpolicy="no-referrer"></iframe>
+      </div>
+    </div>
+
+    <div class="tab-panel" id="tabRecursos">
+      <div class="card planos-card">
+        <div class="color-strip" style="background:linear-gradient(90deg,var(--teal),var(--purple))"></div>
+        <div class="section-head"><div class="section-badge" style="background:var(--teal-l)">🔗</div>Recursos Didáticos</div>
+        <p>Compartilhe sites e materiais com os professores do Diário. Apenas o autor pode editar ou excluir o recurso cadastrado.</p>
+        <form id="recursoForm" class="planos-form">
+          <h3 id="recursoFormTitulo">Cadastrar recurso</h3>
+          <label>Breve descrição<textarea id="recursoDescricao" required maxlength="1000" rows="3" placeholder="Descreva os materiais disponíveis neste site"></textarea></label>
+          <label>Link do site<input id="recursoLink" type="url" required maxlength="2048" placeholder="https://..."></label>
+          <div class="planos-actions"><button class="save-btn" id="recursoSalvar" type="submit">Cadastrar recurso</button><button class="back-btn" id="recursoCancelar" type="button" hidden>Cancelar edição</button></div>
+        </form>
+        <p id="recursosStatus" role="status" aria-live="polite"></p>
+        <label class="planos-search">Buscar recursos<input id="recursosBusca" type="search" placeholder="Buscar por descrição, link ou autor"></label>
+        <div class="planos-lista" id="recursosLista"></div>
       </div>
     </div>
 
@@ -1260,11 +1278,12 @@ document.addEventListener('DOMContentLoaded', () => {
    TABS
 ════════════════════════════════════════ */
 function switchTab(name){
-  ['alunos','grade','frequencia','paee','pei','relatorio','diagnostica','planner','notas','planos'].forEach(t=>{
+  ['alunos','grade','frequencia','paee','pei','relatorio','diagnostica','planner','notas','planos','recursos'].forEach(t=>{
     $('tabBtn'+t.charAt(0).toUpperCase()+t.slice(1)).classList.toggle('active',t===name);
     $('tab'+t.charAt(0).toUpperCase()+t.slice(1)).classList.toggle('active',t===name);
   });
   if(name==='planos') window.PlanosAula.activate();
+  if(name==='recursos') window.RecursosDidaticos.activate();
   if(name==='grade') renderGrade();
   if(name==='frequencia') renderFrequencia();
   if(name==='paee') renderPaeeList();
@@ -4072,5 +4091,6 @@ function exportPDF(){
 
 </script>
 <script src="planos-aula.js"></script>
+<script src="recursos-didaticos.js"></script>
 </body>
 </html>
