@@ -6,10 +6,11 @@
 .planos-actions{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
 .planos-actions button{cursor:pointer}.planos-actions button:disabled{opacity:.5;cursor:wait}
 .planos-lista{display:grid;gap:14px;margin-top:18px}
-#recursosLista{grid-template-columns:minmax(0,1fr);align-items:start}
-#recursosLista>.plano-item{min-width:0}
-#recursosLista>p{grid-column:1/-1}
-@media(min-width:800px){#recursosLista{grid-template-columns:repeat(2,minmax(0,1fr))}}
+#recursosLista,#planosLista{grid-template-columns:minmax(0,1fr);align-items:start}
+#recursosLista>.plano-item,#planosLista>.plano-item{min-width:0}
+#recursosLista>p,#planosLista>p{grid-column:1/-1}
+@media(min-width:800px){#recursosLista,#planosLista{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(min-width:1100px){#recursosLista,#planosLista{grid-template-columns:repeat(3,minmax(0,1fr))}}
 .plano-item{padding:18px;border:1px solid #dbe4ea;border-radius:12px;overflow-wrap:anywhere}
 .plano-item p{white-space:pre-wrap}.plano-item small{display:block;color:var(--muted);line-height:1.6}
 #planoPreview{width:100%;height:70vh;border:1px solid #dbe4ea;border-radius:8px;background:#fff}
