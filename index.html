@@ -9,9 +9,12 @@
 <script src="vendor/firebase-9.23.0/firebase-app-compat.js"></script>
 <script src="vendor/firebase-9.23.0/firebase-auth-compat.js"></script>
 <script src="vendor/firebase-9.23.0/firebase-firestore-compat.js"></script>
+<script src="vendor/firebase-9.23.0/firebase-database-compat.js"></script>
+<script src="firebase-realtime-config.js"></script>
 <script src="vendor/firebase-9.23.0/firebase-storage-compat.js"></script>
 <link rel="stylesheet" href="planos-aula.css">
 <link rel="stylesheet" href="chat-equipe.css">
+<link rel="stylesheet" href="registro-metas.css">
 <script src="vendor/jszip.min.js"></script>
 
 <!-- jsPDF -->
@@ -1232,6 +1235,7 @@ async function backfillProfessorEmail(user){
 /* LOGOUT — chama auth.signOut() diretamente, sem pontes */
 async function doLogout(){
   try{
+    if(window.DiarioPresenca) await window.DiarioPresenca.sair();
     await auth.signOut();
     /* onAuthStateChanged detecta e redireciona automaticamente */
   }catch(e){
@@ -2602,6 +2606,7 @@ async function openStudent(id){
       currentProfile=snap.data();fillForm(currentProfile);
     }
   }catch(e){console.error(e);}
+  if(window.RegistroMetas) window.RegistroMetas.abrir(id);
   const nome=currentProfile.nome||'Aluno';
   $('breadcrumbName').textContent=nome;$('profileTitle').textContent=nome;
   showScreen('profile');$('entryDate').value=todayStr();hideLoad();
@@ -2636,6 +2641,7 @@ async function openStudent(id){
     .orderBy('date','desc')
     .onSnapshot(snap=>{
       currentEntries=[];snap.forEach(d=>currentEntries.push({_id:d.id,...d.data()}));
+      if(window.RegistroMetas) window.RegistroMetas.historico(currentEntries);
       renderEntriesList();renderRecentDates();
     }, e=>console.error(e));
 }
@@ -3519,6 +3525,7 @@ async function melhorarObsClinicasIA(){
 
 const FIELDS={nomeAluno:'nome',dataNasc:'dataNasc',turma:'turma',escola:'escola',municipio:'municipio',periodo:'periodo',laudo:'laudo',cid:'cid',cid11:'cid11',dataLaudo:'dataLaudo',obsClinicas:'obsClinicas'};
 function clearForm(){
+  if(window.RegistroMetas) window.RegistroMetas.novo();
   Object.keys(FIELDS).forEach(f=>$(f).value='');
   ['pdfLocal','pdfProfessor','pdfCargo','entryText','registradoPor'].forEach(f=>$(f).value='');
   $('charCount').textContent='0 caracteres';
@@ -3584,7 +3591,7 @@ async function saveProfile(){
   // laudoImagens são salvas na subcoleção — nunca no doc principal (evita estouro do 1 MB)
   try{
     if(currentStudentId){await db.collection('alunos').doc(currentStudentId).set(data,{merge:true});}
-    else{const ref=await db.collection('alunos').add(data);currentStudentId=ref.id;}
+    else{const ref=await db.collection('alunos').add(data);currentStudentId=ref.id;if(window.RegistroMetas)window.RegistroMetas.abrir(currentStudentId);}
     currentProfile=data;
     $('breadcrumbName').textContent=data.nome||'Aluno';$('profileTitle').textContent=data.nome||'Aluno';
     setBadge('online','Nuvem conectada');showToast('✓ Informações salvas na nuvem!');
@@ -3599,18 +3606,26 @@ async function saveProfile(){
 ════════════════════════════════════════ */
 async function saveEntry(){
   if(!currentStudentId){showToast('Salve as informações do aluno primeiro');return;}
-  const date=val('entryDate'),text=val('entryText').trim();
+  const studentId=currentStudentId, ownerUid=professorUid;
+  const date=val('entryDate');
+  const registroRapido=window.RegistroMetas?window.RegistroMetas.coletar():null;
+  const rapidoTexto=registroRapido?window.RegistroMetas.texto(registroRapido):'';
+  const text=[val('entryText').trim(),rapidoTexto].filter(Boolean).join('\n\n');
   if(!date){showToast('Selecione a data do atendimento');return;}
   if(!text){showToast('Escreva o relato antes de salvar');return;}
   $('btnSalvarRegistro').disabled=true;setBadge('syncing','Salvando...');
   try{
-    await db.collection('alunos').doc(currentStudentId).collection('registros').add({
-      date,text,humor:val('humorVal'),por:val('registradoPor'),createdAt:new Date().toISOString()
+    await db.collection('alunos').doc(studentId).collection('registros').add({
+      date,text,humor:val('humorVal'),por:val('registradoPor'),createdAt:new Date().toISOString(),
+      ...(rapidoTexto?{registroRapido}:{} )
     });
-    await db.collection('alunos').doc(currentStudentId).set({ultimoRegistro:date},{merge:true});
-    $('entryText').value='';$('charCount').textContent='0 caracteres';
-    document.querySelectorAll('.humor-opt').forEach(o=>o.classList.remove('sel'));$('humorVal').value='';
-    $('entryDate').value=todayStr();
+    await db.collection('alunos').doc(studentId).set({ultimoRegistro:date},{merge:true});
+    if(currentStudentId===studentId && professorUid===ownerUid){
+      $('entryText').value='';$('charCount').textContent='0 caracteres';
+      if(window.RegistroMetas) window.RegistroMetas.limpar();
+      document.querySelectorAll('.humor-opt').forEach(o=>o.classList.remove('sel'));$('humorVal').value='';
+      $('entryDate').value=todayStr();
+    }
     setBadge('online','Nuvem conectada');showToast('✓ Registro salvo na nuvem!');
   }catch(e){setBadge('offline','Erro');showToast('Erro ao salvar');console.error(e);}
   $('btnSalvarRegistro').disabled=false;
@@ -4094,5 +4109,7 @@ function exportPDF(){
 <script src="planos-aula.js"></script>
 <script src="recursos-didaticos.js"></script>
 <script src="chat-equipe.js"></script>
+<script src="chat-presenca.js"></script>
+<script src="registro-metas.js"></script>
 </body>
 </html>

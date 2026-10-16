@@ -1,0 +1,22 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "presencaEquipe": {
+      ".read": "auth != null",
+      "$uid": {
+        "conexoes": {
+          "$conexao": {
+            ".write": "auth != null && auth.uid === $uid",
+            ".validate": "newData.hasChildren(['apelido','email','desde','atualizadoEm'])",
+            "apelido": {".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 200"},
+            "email": {".validate": "newData.isString() && newData.val() === auth.token.email"},
+            "desde": {".validate": "newData.isNumber() && ((!data.exists() && newData.val() === now) || (data.exists() && newData.val() === data.val()))"},
+            "atualizadoEm": {".validate": "newData.isNumber() && newData.val() === now"},
+            "$other": {".validate": false}
+          }
+        }
+      }
+    }
+  }
+}

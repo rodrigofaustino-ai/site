@@ -1,5 +1,9 @@
 # Site SRM — exportações DOCX e ODT
 
+## Online, leituras e registro rápido
+
+O chat agora tem lista online (nomes antes do `@`) e consulta de quem já leu cada mensagem. A área de atendimento tem uma ficha opcional vinculada às metas cadastradas do PAEE/PEI. Siga [a configuração desta atualização](firebase/ATUALIZAR-ONLINE-LEITURAS-METAS.md): é preciso publicar as novas regras no **Realtime Database e no Firestore**, além dos arquivos no Netlify. A URL do Realtime Database de salamulti já está configurada.
+
 ## Chat da equipe
 
 Chat coletivo no canto inferior direito do Diário, com histórico, mensagens em tempo real e indicador de mensagens recentes não lidas. Acesso somente aos usuários autenticados no Diário. Antes de usar, siga [a configuração do chat](firebase/CONFIGURAR-CHAT.md) para acrescentar suas permissões ao Firestore. Não requer mudanças no Storage ou CORS.

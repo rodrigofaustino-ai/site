@@ -1,10 +1,29 @@
 {
-  "firestore": {"rules": "firebase/compartilhados-teste.rules"},
-  "storage": {"rules": "firebase/planos-storage.rules"},
+  "firestore": {
+    "rules": "firebase/compartilhados-teste.rules"
+  },
+  "storage": {
+    "rules": "firebase/planos-storage.rules"
+  },
   "emulators": {
-    "firestore": {"host": "127.0.0.1", "port": 8085},
-    "storage": {"host": "127.0.0.1", "port": 9195},
-    "ui": {"enabled": false},
-    "singleProjectMode": true
+    "firestore": {
+      "host": "127.0.0.1",
+      "port": 8085
+    },
+    "storage": {
+      "host": "127.0.0.1",
+      "port": 9195
+    },
+    "ui": {
+      "enabled": false
+    },
+    "singleProjectMode": true,
+    "database": {
+      "host": "127.0.0.1",
+      "port": 9005
+    }
+  },
+  "database": {
+    "rules": "firebase/presenca-realtime.rules.json"
   }
 }

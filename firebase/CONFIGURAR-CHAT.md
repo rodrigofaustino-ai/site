@@ -1,6 +1,6 @@
 # Ativar o chat coletivo
 
-O chat fica no canto inferior direito do Diário. Todos os professores autenticados no projeto **salamulti** participam da mesma conversa, independentemente do turno. Não há conversas privadas ou indicador de presença nesta versão. O histórico permanece no Firestore; as mensagens não podem ser editadas ou apagadas pelos usuários.
+O chat fica no canto inferior direito do Diário. Todos os professores autenticados no projeto **salamulti** participam da mesma conversa, independentemente do turno. O histórico permanece no Firestore; as mensagens não podem ser editadas ou apagadas pelos usuários. Para a lista online, confirmações de leitura e metas de atendimento, siga também [o guia da atualização](ATUALIZAR-ONLINE-LEITURAS-METAS.md).
 
 ## Configuração inicial
 
@@ -22,7 +22,7 @@ Não há alteração no Storage ou no CORS. Publicar os arquivos não altera os 
 - O ponto de leitura é guardado por usuário neste navegador, sem armazenar o texto das mensagens no localStorage. Não sincroniza a leitura entre computadores. Ao sair ou trocar de conta, a caixa, o rascunho e os dados exibidos são limpos.
 - Se houver falha no envio, o rascunho é mantido. A repetição do mesmo envio reutiliza o identificador para evitar duplicação. O site nunca envia mensagens sozinho.
 
-O histórico e as atualizações em tempo real usam as cotas de leitura, gravação e armazenamento do Firestore do Diário. O chat não informa se um professor está online.
+O histórico e as atualizações em tempo real usam as cotas de leitura, gravação e armazenamento do Firestore do Diário. A lista online usa o Realtime Database e exige a configuração descrita no guia da atualização.
 
 ## Conferência após publicar
 

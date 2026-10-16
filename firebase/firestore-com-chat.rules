@@ -99,6 +99,45 @@ match /chatEquipe/{mensagemId} {
     && request.resource.data.autorEmail == request.auth.token.email
     && request.resource.data.createdAt == request.time;
   allow update, delete: if false;
+// Insira este bloco DENTRO de match /chatEquipe/{mensagemId}.
+match /leituras/{leitorUid} {
+  allow read: if request.auth != null;
+  allow create: if request.auth != null && request.auth.uid == leitorUid
+    && exists(/databases/$(database)/documents/chatEquipe/$(mensagemId))
+    && request.resource.data.keys().hasAll(['uid','email','lidoEm'])
+    && request.resource.data.keys().hasOnly(['uid','email','lidoEm'])
+    && request.resource.data.uid == request.auth.uid
+    && request.resource.data.email == request.auth.token.email
+    && request.resource.data.lidoEm == request.time;
+  allow update, delete: if false;
+}
+
+}
+
+// Acrescente este bloco dentro de match /databases/{database}/documents.
+match /metasAtendimento/{metaId} {
+  function metaValida(data) {
+    return data.keys().hasAll(['professorUid','alunoId','fonte','descricao','criterio','referencia','ativa','createdAt','updatedAt'])
+      && data.keys().hasOnly(['professorUid','alunoId','fonte','descricao','criterio','referencia','ativa','createdAt','updatedAt'])
+      && data.professorUid == request.auth.uid
+      && data.alunoId is string
+      && get(/databases/$(database)/documents/alunos/$(data.alunoId)).data.professorUid == request.auth.uid
+      && data.fonte in ['PAEE','PEI']
+      && data.descricao is string && data.descricao.size() > 0 && data.descricao.size() <= 1000
+      && data.criterio is string && data.criterio.size() <= 500
+      && data.referencia is string && data.referencia.size() <= 200
+      && data.ativa is bool
+      && data.createdAt is timestamp && data.updatedAt == request.time;
+  }
+  allow read: if request.auth != null && resource.data.professorUid == request.auth.uid;
+  allow create: if request.auth != null && metaValida(request.resource.data)
+    && request.resource.data.createdAt == request.time;
+  allow update: if request.auth != null && resource.data.professorUid == request.auth.uid
+    && metaValida(request.resource.data)
+    && request.resource.data.professorUid == resource.data.professorUid
+    && request.resource.data.alunoId == resource.data.alunoId
+    && request.resource.data.createdAt == resource.data.createdAt;
+  allow delete: if false;
 }
 
   }
