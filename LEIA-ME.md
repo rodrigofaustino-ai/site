@@ -1,5 +1,9 @@
 # Site SRM — exportações DOCX e ODT
 
+## Chat da equipe
+
+Chat coletivo no canto inferior direito do Diário, com histórico, mensagens em tempo real e indicador de mensagens recentes não lidas. Acesso somente aos usuários autenticados no Diário. Antes de usar, siga [a configuração do chat](firebase/CONFIGURAR-CHAT.md) para acrescentar suas permissões ao Firestore. Não requer mudanças no Storage ou CORS.
+
 ## Recursos Didáticos
 
 A aba **Recursos Didáticos** compartilha links entre os professores do Diário. O cadastro tem breve descrição e link, com autor e data automáticos, busca e abertura em nova aba. Somente o autor edita ou exclui. Antes de publicar, acrescente as regras da nova coleção seguindo [o guia de ativação](firebase/CONFIGURAR-RECURSOS.md). Não requer alterações no Storage ou CORS.

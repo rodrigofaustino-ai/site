@@ -1,0 +1,20 @@
+#chatEquipe[hidden],#chatEquipe [hidden]{display:none!important}
+#chatEquipe{position:fixed;right:20px;bottom:20px;z-index:900;font:14px Arial,sans-serif;color:#1e293b}
+#chatAbrir{border:0;border-radius:24px;background:#00897b;color:white;padding:13px 18px;font-weight:bold;cursor:pointer;box-shadow:0 3px 14px #0003}
+#chatNaoLidas{background:#b42318;color:#fff;border-radius:14px;padding:3px 7px;margin-left:7px}
+#chatPainel{display:flex;flex-direction:column;width:360px;height:530px;max-height:calc(100dvh - 100px);background:white;border:1px solid #cbd5e1;border-radius:14px;box-shadow:0 6px 28px #0003;margin-bottom:10px;overflow:hidden}
+.chat-cabecalho{background:#00897b;color:white;padding:12px;display:flex;align-items:center;justify-content:space-between}
+.chat-cabecalho button{border:0;background:transparent;color:white;padding:6px;cursor:pointer;font:inherit}
+#chatHistorico{background:white;border:0;color:#006b60;padding:8px;cursor:pointer;font:inherit}
+#chatMensagens{flex:1;min-height:0;overflow:auto;padding:12px;background:#f5faf9;overscroll-behavior:contain}
+.chat-mensagem{background:white;border:1px solid #dbe4ea;border-radius:10px;padding:10px;margin-bottom:10px;overflow-wrap:anywhere}
+.chat-mensagem.propria{background:#e0f7f5;border-color:#8bd4ca}
+.chat-mensagem strong,.chat-mensagem small{display:block}.chat-mensagem small{color:#586570;font-size:11px;margin-top:5px}
+.chat-mensagem p{white-space:pre-wrap;margin:6px 0;line-height:1.5}
+#chatStatus{padding:6px 12px;font-size:12px;line-height:1.4;color:#586570}
+#chatForm{border-top:1px solid #dbe4ea;padding:10px;display:grid;gap:6px}
+#chatTexto{resize:vertical;min-height:64px;max-height:120px;width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:8px;font:inherit}
+#chatEnviar{background:#00897b;color:white;border:0;border-radius:8px;padding:9px;font:inherit;cursor:pointer}
+#chatEquipe button:disabled{opacity:.55;cursor:wait}#chatEquipe button:focus-visible,#chatTexto:focus-visible{outline:3px solid #1e293b;outline-offset:2px}
+@media(max-width:540px){#chatEquipe{right:10px;bottom:10px;max-width:calc(100vw - 20px)}#chatPainel{width:calc(100vw - 20px);height:65dvh}}
+@media print{#chatEquipe{display:none!important}}

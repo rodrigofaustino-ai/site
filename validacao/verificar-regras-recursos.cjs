@@ -18,7 +18,7 @@ const fs=require('node:fs'),path=require('node:path');
     await fail(updateDoc(ref(a),{createdAt:serverTimestamp(),updatedAt:serverTimestamp()}));
     await fail(updateDoc(ref(a),{descricao:'x'.repeat(1001),updatedAt:serverTimestamp()}));await fail(updateDoc(ref(a),{campoExtra:true,updatedAt:serverTimestamp()}));
     for(const link of ['javascript:alert(1)','data:text/html,teste','ftp://example.org/','https://usuario:senha@example.org/','https://example.org/com espaço'])await fail(updateDoc(ref(a),{link,updatedAt:serverTimestamp()}));
-    await pass(updateDoc(ref(a),{link:'http://example.org/',descricao:'Descrição atualizada',updatedAt:serverTimestamp()}));
+    await pass(updateDoc(ref(a),{link:'https://sites.google.com/recursos',descricao:'Descrição atualizada',updatedAt:serverTimestamp()}));
     await pass(deleteDoc(ref(a)));console.log(count+' verificações de segurança de Recursos Didáticos passaram.');
   }finally{await env.cleanup();}
 })().catch(error=>{console.error(error);process.exitCode=1;});
