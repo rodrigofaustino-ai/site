@@ -28,11 +28,6 @@ function realtime(uid){
   const readRef=database=>doc(database,'chatEquipe/mensagem/leituras/b'),receipt={uid:'b',email:'b@example.test',lidoEm:serverTimestamp()};
   await fail(setDoc(readRef(fn),receipt));await fail(setDoc(readRef(fa),receipt));await pass(setDoc(readRef(fb),receipt));await pass(getDoc(readRef(fa)));
   await fail(updateDoc(readRef(fb),{lidoEm:serverTimestamp()}));await fail(deleteDoc(readRef(fb)));await fail(setDoc(doc(fb,'chatEquipe/inexistente/leituras/b'),receipt));
-  const meta={professorUid:'a',alunoId:'aluno-a',fonte:'PEI',descricao:'Expressar uma escolha',criterio:'Com comunicação alternativa',referencia:'Meta 2',ativa:true,createdAt:serverTimestamp(),updatedAt:serverTimestamp()};
-  const metaRef=database=>doc(database,'metasAtendimento/meta-a');
-  await fail(setDoc(metaRef(fn),meta));await fail(setDoc(metaRef(fb),meta));await fail(setDoc(metaRef(fa),{...meta,alunoId:'aluno-b'}));await pass(setDoc(metaRef(fa),meta));
-  await fail(getDoc(metaRef(fb)));await pass(getDocs(query(collection(fa,'metasAtendimento'),where('professorUid','==','a'),where('alunoId','==','aluno-a'))));
-  await fail(updateDoc(metaRef(fb),{ativa:false,updatedAt:serverTimestamp()}));await pass(updateDoc(metaRef(fa),{ativa:false,updatedAt:serverTimestamp()}));await fail(deleteDoc(metaRef(fa)));
-  console.log(count+' verificações de presença, leituras e privacidade das metas passaram nos emuladores.');
+  console.log(count+' verificações de presença e leituras passaram nos emuladores.');
  }finally{await env.cleanup();}
 })().catch(error=>{console.error(error);process.exitCode=1;});

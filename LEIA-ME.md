@@ -1,8 +1,8 @@
 # Site SRM — exportações DOCX e ODT
 
-## Online, leituras e registro rápido
+## Online e confirmações de leitura
 
-O chat agora tem lista online (nomes antes do `@`) e consulta de quem já leu cada mensagem. A área de atendimento tem uma ficha opcional vinculada às metas cadastradas do PAEE/PEI. Siga [a configuração desta atualização](firebase/ATUALIZAR-ONLINE-LEITURAS-METAS.md): é preciso publicar as novas regras no **Realtime Database e no Firestore**, além dos arquivos no Netlify. A URL do Realtime Database de salamulti já está configurada.
+O chat tem lista online (nomes antes do `@`) e consulta de quem já leu cada mensagem. Esta versão mantém o formulário tradicional de atendimento, sem metas ou ficha rápida. Siga [a configuração do chat](firebase/ATUALIZAR-ONLINE-LEITURAS.md) se ainda não ativou a presença e as leituras. Se já ativou, basta publicar a pasta completa no Netlify; não precisa mudar as regras do Firebase.
 
 ## Chat da equipe
 

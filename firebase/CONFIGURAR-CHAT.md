@@ -1,6 +1,6 @@
 # Ativar o chat coletivo
 
-O chat fica no canto inferior direito do Diário. Todos os professores autenticados no projeto **salamulti** participam da mesma conversa, independentemente do turno. O histórico permanece no Firestore; as mensagens não podem ser editadas ou apagadas pelos usuários. Para a lista online, confirmações de leitura e metas de atendimento, siga também [o guia da atualização](ATUALIZAR-ONLINE-LEITURAS-METAS.md).
+O chat fica no canto inferior direito do Diário. Todos os professores autenticados no projeto **salamulti** participam da mesma conversa, independentemente do turno. O histórico permanece no Firestore; as mensagens não podem ser editadas ou apagadas pelos usuários. Para a lista online, confirmações de leitura, siga também [o guia da atualização](ATUALIZAR-ONLINE-LEITURAS.md).
 
 ## Configuração inicial
 
