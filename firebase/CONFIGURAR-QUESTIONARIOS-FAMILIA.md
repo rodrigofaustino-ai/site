@@ -26,7 +26,7 @@ O link aceita **um envio**. A família pode conferir as escolhas antes de enviar
 
 São **27 perguntas adaptadas**, distribuídas pelas nove áreas da Diagnóstica: comunicação; leitura/escuta; registros e escrita; percepção; atividades da vida diária; convivência; números; formas/cores; tempo/espaço. Não é uma reprodução integral dos itens escolares nem um teste diagnóstico. A versão prioriza situações observáveis em casa, aceita diferentes meios de comunicação e considera recursos de acessibilidade.
 
-As opções são **Observo com frequência**, **Observo às vezes**, **Observo com apoio ou ajuda**, **Ainda não observo**, **Não sei informar**, **Não tive oportunidade de observar** e **Prefiro não responder**. Cada pergunta tem um campo opcional de informações adicionais (até 1.000 caracteres), além das observações gerais ao final, nome e vínculo do responsável. Respostas anteriores continuam disponíveis, mesmo sem essas informações por pergunta. A família não informa diagnósticos, notas, documentos ou imagens.
+As opções são apenas **Sim**, **Não** e **Às vezes**. Os códigos internos permanecem compatíveis com as regras existentes; esta simplificação não exige republicar as regras se você já publicou a versão com observações por pergunta. Cada pergunta tem um campo opcional de informações adicionais (até 1.000 caracteres), além das observações gerais ao final, nome e vínculo do responsável. Respostas anteriores continuam disponíveis, mesmo sem essas informações por pergunta. A família não informa diagnósticos, notas, documentos ou imagens.
 
 Os dados não enviados não são guardados no dispositivo. A família deve manter a página aberta até confirmar o envio. O envio é validado no servidor e não pode sobrescrever uma resposta anterior.
 

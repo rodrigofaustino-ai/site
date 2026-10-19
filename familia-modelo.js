@@ -1,13 +1,14 @@
 /* Perguntas adaptadas da Diagnóstica para observações da família no cotidiano. */
 window.QuestionarioFamiliaModelo = {
   versao: 1,
-  opcoes: {
+  opcoes: {observa:'Sim', ainda_nao:'Não', as_vezes:'Às vezes'},
+  opcoesAnteriores: {
     observa:'Observo com frequência', as_vezes:'Observo às vezes', apoio:'Observo com apoio ou ajuda',
     ainda_nao:'Ainda não observo', nao_sabe:'Não sei informar', nao_observou:'Não tive oportunidade de observar', nao_informar:'Prefiro não responder'
   },
   grupos: [
     {key:'oralidade',titulo:'Comunicação',perguntas:[
-      ['comunica_escolha','Como expressa desejos, necessidades ou escolhas? Você observa essa comunicação por fala, gestos, figuras ou outro recurso?'],
+      ['comunica_escolha','Expressa desejos, necessidades ou escolhas por fala, gestos, figuras ou outro recurso?'],
       ['comunica_chamado','Responde quando alguém chama ou procura sua atenção, usando a forma de comunicação habitual da criança?'],
       ['comunica_fatos','Conta ou mostra algo que aconteceu no dia, pela fala, gestos, imagens ou outros recursos?']
     ]},

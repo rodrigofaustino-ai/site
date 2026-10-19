@@ -25,7 +25,7 @@
     event.preventDefault();if(busy||!convite)return;
     const nome=el('familiaResponsavel').value.trim(),vinculo=el('familiaVinculo').value.trim();
     if(!nome||!vinculo||!el('familiaCiencia').checked){status('Preencha seu nome, vínculo e a confirmação antes de enviar.');return;}
-    const respostas={},observacoesPerguntas={};for(const group of model.grupos)for(const [id] of group.perguntas){const answer=el('f_'+id).value;if(!Object.hasOwn(model.opcoes,answer)){status('Escolha uma resposta para cada pergunta. Você pode selecionar Não sei informar ou Prefiro não responder.');return;}respostas[id]=answer;const note=el('nota_'+id).value.trim();if(note)observacoesPerguntas[id]=note;}
+    const respostas={},observacoesPerguntas={};for(const group of model.grupos)for(const [id] of group.perguntas){const answer=el('f_'+id).value;if(!Object.hasOwn(model.opcoes,answer)){status('Escolha Sim, Não ou Às vezes para cada pergunta.');return;}respostas[id]=answer;const note=el('nota_'+id).value.trim();if(note)observacoesPerguntas[id]=note;}
     busy=true;el('familiaEnviar').disabled=true;status('Enviando respostas…');
     try{
       const now=firebase.firestore.FieldValue.serverTimestamp(),batch=db.batch();
