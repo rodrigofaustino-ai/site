@@ -26,7 +26,7 @@ O link aceita **um envio**. A família pode conferir as escolhas antes de enviar
 
 São **27 perguntas adaptadas**, distribuídas pelas nove áreas da Diagnóstica: comunicação; leitura/escuta; registros e escrita; percepção; atividades da vida diária; convivência; números; formas/cores; tempo/espaço. Não é uma reprodução integral dos itens escolares nem um teste diagnóstico. A versão prioriza situações observáveis em casa, aceita diferentes meios de comunicação e considera recursos de acessibilidade.
 
-As opções são **Observo com frequência**, **Observo às vezes**, **Observo com apoio ou ajuda**, **Ainda não observo**, **Não sei informar**, **Não tive oportunidade de observar** e **Prefiro não responder**. Há campo livre para informações adicionais, nome e vínculo do responsável. A família não informa diagnósticos, notas, documentos ou imagens.
+As opções são **Observo com frequência**, **Observo às vezes**, **Observo com apoio ou ajuda**, **Ainda não observo**, **Não sei informar**, **Não tive oportunidade de observar** e **Prefiro não responder**. Cada pergunta tem um campo opcional de informações adicionais (até 1.000 caracteres), além das observações gerais ao final, nome e vínculo do responsável. Respostas anteriores continuam disponíveis, mesmo sem essas informações por pergunta. A família não informa diagnósticos, notas, documentos ou imagens.
 
 Os dados não enviados não são guardados no dispositivo. A família deve manter a página aberta até confirmar o envio. O envio é validado no servidor e não pode sobrescrever uma resposta anterior.
 
@@ -34,12 +34,12 @@ Os dados não enviados não são guardados no dispositivo. A família deve mante
 
 1. No aluno que respondeu, clique em **Ver respostas**. Se houver vários envios, escolha a data desejada.
 2. Todas as respostas e as observações adicionais aparecem para consulta. Não há alteração automática da Diagnóstica.
-3. Marque apenas as perguntas que deseja aproveitar e clique em **Abrir Diagnóstica para conferência**.
+3. As informações adicionais de cada pergunta acompanham a resposta quando selecionada. Marque apenas as perguntas que deseja aproveitar e clique em **Abrir Diagnóstica para conferência**.
 4. A Diagnóstica abre em outra aba. Entre no formulário como de costume e abra o diagnóstico desse aluno, ou crie um novo preenchendo a identificação. Mantenha a aba de Questionários da Família aberta durante a transferência inicial.
 5. No painel **Conferir relato familiar**, confira novamente as áreas desejadas e clique em **Acrescentar informações selecionadas**.
 6. O nome do aluno deve corresponder; datas de nascimento divergentes, quando preenchidas em ambos os lados, também bloqueiam a operação. Confira a identificação em casos de homônimos.
 7. As informações são **acrescentadas** nas observações gerais de cada área, com identificação de relato familiar, responsável e data. Textos existentes e marcações Sim/Não/Parcial dos semestres são preservados. O mesmo bloco não é duplicado se aplicado novamente.
-8. Revise o formulário e clique em **Salvar** somente quando desejar gravá-lo. As observações adicionais livres ficam na consulta; o professor pode escolher e copiar trechos manualmente, sem classificação automática em uma área.
+8. Revise o formulário e clique em **Salvar** somente quando desejar gravá-lo. As observações gerais livres ao final ficam na consulta; o professor pode escolher e copiar trechos manualmente, sem classificação automática em uma área.
 
 A transferência entre abas usa somente a memória do navegador e um canal temporário do próprio site, válido por até dez minutos. Não copia respostas para o localStorage. Caso o navegador bloqueie a nova aba ou a transferência, reabra a conferência ou consulte e copie as informações manualmente. Os arquivos precisam estar publicados no mesmo domínio.
 

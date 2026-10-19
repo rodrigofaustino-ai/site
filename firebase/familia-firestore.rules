@@ -48,11 +48,75 @@ match /enviosFamilia/{token} {
     && getAfter(/databases/$(database)/documents/respostasFamilia/$(token)).data.enviadoEm == request.time;
   allow update, delete: if false;
 }
+function familiaNotaValida(texto) { return texto is string && texto.size() <= 1000; }
+function familiaNotasValidas(notas) {
+  return notas is map && notas.keys().hasOnly(['comunica_escolha','comunica_chamado','comunica_fatos','leitura_nome','leitura_imagens','leitura_historia','escrita_registro','escrita_nome','escrita_palavras','percepcao_comando','percepcao_textura','percepcao_objeto','avd_alimentacao','avd_higiene','avd_vestir','social_interacao','social_emocoes','social_combinados','numeros_uso','numeros_quantidade','numeros_compara','formas_iguais','formas_reconhece','formas_cores','medidas_rotina','medidas_sequencia','medidas_espaco'])
+    && familiaNotaValida(notas.get('comunica_escolha', ''))
+    && familiaNotaValida(notas.get('comunica_chamado', ''))
+    && familiaNotaValida(notas.get('comunica_fatos', ''))
+    && familiaNotaValida(notas.get('leitura_nome', ''))
+    && familiaNotaValida(notas.get('leitura_imagens', ''))
+    && familiaNotaValida(notas.get('leitura_historia', ''))
+    && familiaNotaValida(notas.get('escrita_registro', ''))
+    && familiaNotaValida(notas.get('escrita_nome', ''))
+    && familiaNotaValida(notas.get('escrita_palavras', ''))
+    && familiaNotaValida(notas.get('percepcao_comando', ''))
+    && familiaNotaValida(notas.get('percepcao_textura', ''))
+    && familiaNotaValida(notas.get('percepcao_objeto', ''))
+    && familiaNotaValida(notas.get('avd_alimentacao', ''))
+    && familiaNotaValida(notas.get('avd_higiene', ''))
+    && familiaNotaValida(notas.get('avd_vestir', ''))
+    && familiaNotaValida(notas.get('social_interacao', ''))
+    && familiaNotaValida(notas.get('social_emocoes', ''))
+    && familiaNotaValida(notas.get('social_combinados', ''))
+    && familiaNotaValida(notas.get('numeros_uso', ''))
+    && familiaNotaValida(notas.get('numeros_quantidade', ''))
+    && familiaNotaValida(notas.get('numeros_compara', ''))
+    && familiaNotaValida(notas.get('formas_iguais', ''))
+    && familiaNotaValida(notas.get('formas_reconhece', ''))
+    && familiaNotaValida(notas.get('formas_cores', ''))
+    && familiaNotaValida(notas.get('medidas_rotina', ''))
+    && familiaNotaValida(notas.get('medidas_sequencia', ''))
+    && familiaNotaValida(notas.get('medidas_espaco', ''));
+}
+function familiaRespostasValidas(respostas) {
+  let opcoes = ['observa','as_vezes','apoio','ainda_nao','nao_sabe','nao_observou','nao_informar'];
+  return respostas is map
+    && respostas.keys().hasAll(['comunica_escolha','comunica_chamado','comunica_fatos','leitura_nome','leitura_imagens','leitura_historia','escrita_registro','escrita_nome','escrita_palavras','percepcao_comando','percepcao_textura','percepcao_objeto','avd_alimentacao','avd_higiene','avd_vestir','social_interacao','social_emocoes','social_combinados','numeros_uso','numeros_quantidade','numeros_compara','formas_iguais','formas_reconhece','formas_cores','medidas_rotina','medidas_sequencia','medidas_espaco'])
+    && respostas.keys().hasOnly(['comunica_escolha','comunica_chamado','comunica_fatos','leitura_nome','leitura_imagens','leitura_historia','escrita_registro','escrita_nome','escrita_palavras','percepcao_comando','percepcao_textura','percepcao_objeto','avd_alimentacao','avd_higiene','avd_vestir','social_interacao','social_emocoes','social_combinados','numeros_uso','numeros_quantidade','numeros_compara','formas_iguais','formas_reconhece','formas_cores','medidas_rotina','medidas_sequencia','medidas_espaco'])
+    && respostas.comunica_escolha in opcoes
+    && respostas.comunica_chamado in opcoes
+    && respostas.comunica_fatos in opcoes
+    && respostas.leitura_nome in opcoes
+    && respostas.leitura_imagens in opcoes
+    && respostas.leitura_historia in opcoes
+    && respostas.escrita_registro in opcoes
+    && respostas.escrita_nome in opcoes
+    && respostas.escrita_palavras in opcoes
+    && respostas.percepcao_comando in opcoes
+    && respostas.percepcao_textura in opcoes
+    && respostas.percepcao_objeto in opcoes
+    && respostas.avd_alimentacao in opcoes
+    && respostas.avd_higiene in opcoes
+    && respostas.avd_vestir in opcoes
+    && respostas.social_interacao in opcoes
+    && respostas.social_emocoes in opcoes
+    && respostas.social_combinados in opcoes
+    && respostas.numeros_uso in opcoes
+    && respostas.numeros_quantidade in opcoes
+    && respostas.numeros_compara in opcoes
+    && respostas.formas_iguais in opcoes
+    && respostas.formas_reconhece in opcoes
+    && respostas.formas_cores in opcoes
+    && respostas.medidas_rotina in opcoes
+    && respostas.medidas_sequencia in opcoes
+    && respostas.medidas_espaco in opcoes;
+}
 match /respostasFamilia/{token} {
   allow read: if request.auth != null && resource.data.professorUid == request.auth.uid;
   allow create: if familiaLinkAtivo(token)
     && request.resource.data.keys().hasAll(['professorUid','alunoId','versao','responsavel','vinculo','respostas','observacoes','ciencia','enviadoEm'])
-    && request.resource.data.keys().hasOnly(['professorUid','alunoId','versao','responsavel','vinculo','respostas','observacoes','ciencia','enviadoEm'])
+    && request.resource.data.keys().hasOnly(['professorUid','alunoId','versao','responsavel','vinculo','respostas','observacoes','ciencia','enviadoEm','observacoesPerguntas'])
     && request.resource.data.professorUid == get(/databases/$(database)/documents/convitesFamilia/$(token)).data.professorUid
     && request.resource.data.alunoId == get(/databases/$(database)/documents/convitesFamilia/$(token)).data.alunoId
     && request.resource.data.versao == 1 && request.resource.data.ciencia == true
@@ -61,35 +125,7 @@ match /respostasFamilia/{token} {
     && request.resource.data.observacoes is string && request.resource.data.observacoes.size() <= 2000
     && request.resource.data.enviadoEm == request.time
     && getAfter(/databases/$(database)/documents/enviosFamilia/$(token)).data.enviadoEm == request.time
-    && request.resource.data.respostas is map
-    && request.resource.data.respostas.keys().hasAll(['comunica_escolha','comunica_chamado','comunica_fatos','leitura_nome','leitura_imagens','leitura_historia','escrita_registro','escrita_nome','escrita_palavras','percepcao_comando','percepcao_textura','percepcao_objeto','avd_alimentacao','avd_higiene','avd_vestir','social_interacao','social_emocoes','social_combinados','numeros_uso','numeros_quantidade','numeros_compara','formas_iguais','formas_reconhece','formas_cores','medidas_rotina','medidas_sequencia','medidas_espaco'])
-    && request.resource.data.respostas.keys().hasOnly(['comunica_escolha','comunica_chamado','comunica_fatos','leitura_nome','leitura_imagens','leitura_historia','escrita_registro','escrita_nome','escrita_palavras','percepcao_comando','percepcao_textura','percepcao_objeto','avd_alimentacao','avd_higiene','avd_vestir','social_interacao','social_emocoes','social_combinados','numeros_uso','numeros_quantidade','numeros_compara','formas_iguais','formas_reconhece','formas_cores','medidas_rotina','medidas_sequencia','medidas_espaco'])
-    && request.resource.data.respostas.comunica_escolha in ['observa','as_vezes','apoio','ainda_nao','nao_sabe','nao_observou','nao_informar']
-    && request.resource.data.respostas.comunica_chamado in ['observa','as_vezes','apoio','ainda_nao','nao_sabe','nao_observou','nao_informar']
-    && request.resource.data.respostas.comunica_fatos in ['observa','as_vezes','apoio','ainda_nao','nao_sabe','nao_observou','nao_informar']
-    && request.resource.data.respostas.leitura_nome in ['observa','as_vezes','apoio','ainda_nao','nao_sabe','nao_observou','nao_informar']
-    && request.resource.data.respostas.leitura_imagens in ['observa','as_vezes','apoio','ainda_nao','nao_sabe','nao_observou','nao_informar']
-    && request.resource.data.respostas.leitura_historia in ['observa','as_vezes','apoio','ainda_nao','nao_sabe','nao_observou','nao_informar']
-    && request.resource.data.respostas.escrita_registro in ['observa','as_vezes','apoio','ainda_nao','nao_sabe','nao_observou','nao_informar']
-    && request.resource.data.respostas.escrita_nome in ['observa','as_vezes','apoio','ainda_nao','nao_sabe','nao_observou','nao_informar']
-    && request.resource.data.respostas.escrita_palavras in ['observa','as_vezes','apoio','ainda_nao','nao_sabe','nao_observou','nao_informar']
-    && request.resource.data.respostas.percepcao_comando in ['observa','as_vezes','apoio','ainda_nao','nao_sabe','nao_observou','nao_informar']
-    && request.resource.data.respostas.percepcao_textura in ['observa','as_vezes','apoio','ainda_nao','nao_sabe','nao_observou','nao_informar']
-    && request.resource.data.respostas.percepcao_objeto in ['observa','as_vezes','apoio','ainda_nao','nao_sabe','nao_observou','nao_informar']
-    && request.resource.data.respostas.avd_alimentacao in ['observa','as_vezes','apoio','ainda_nao','nao_sabe','nao_observou','nao_informar']
-    && request.resource.data.respostas.avd_higiene in ['observa','as_vezes','apoio','ainda_nao','nao_sabe','nao_observou','nao_informar']
-    && request.resource.data.respostas.avd_vestir in ['observa','as_vezes','apoio','ainda_nao','nao_sabe','nao_observou','nao_informar']
-    && request.resource.data.respostas.social_interacao in ['observa','as_vezes','apoio','ainda_nao','nao_sabe','nao_observou','nao_informar']
-    && request.resource.data.respostas.social_emocoes in ['observa','as_vezes','apoio','ainda_nao','nao_sabe','nao_observou','nao_informar']
-    && request.resource.data.respostas.social_combinados in ['observa','as_vezes','apoio','ainda_nao','nao_sabe','nao_observou','nao_informar']
-    && request.resource.data.respostas.numeros_uso in ['observa','as_vezes','apoio','ainda_nao','nao_sabe','nao_observou','nao_informar']
-    && request.resource.data.respostas.numeros_quantidade in ['observa','as_vezes','apoio','ainda_nao','nao_sabe','nao_observou','nao_informar']
-    && request.resource.data.respostas.numeros_compara in ['observa','as_vezes','apoio','ainda_nao','nao_sabe','nao_observou','nao_informar']
-    && request.resource.data.respostas.formas_iguais in ['observa','as_vezes','apoio','ainda_nao','nao_sabe','nao_observou','nao_informar']
-    && request.resource.data.respostas.formas_reconhece in ['observa','as_vezes','apoio','ainda_nao','nao_sabe','nao_observou','nao_informar']
-    && request.resource.data.respostas.formas_cores in ['observa','as_vezes','apoio','ainda_nao','nao_sabe','nao_observou','nao_informar']
-    && request.resource.data.respostas.medidas_rotina in ['observa','as_vezes','apoio','ainda_nao','nao_sabe','nao_observou','nao_informar']
-    && request.resource.data.respostas.medidas_sequencia in ['observa','as_vezes','apoio','ainda_nao','nao_sabe','nao_observou','nao_informar']
-    && request.resource.data.respostas.medidas_espaco in ['observa','as_vezes','apoio','ainda_nao','nao_sabe','nao_observou','nao_informar'];
+    && familiaNotasValidas(request.resource.data.get('observacoesPerguntas', {}))
+    && familiaRespostasValidas(request.resource.data.respostas);
   allow update, delete: if false;
 }
