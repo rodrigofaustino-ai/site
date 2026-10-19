@@ -714,9 +714,8 @@ hr.sep{border:none;border-top:2px dashed rgba(0,0,0,.06);margin:.2rem 0;}
         <p>Compartilhe planos com a equipe. Todos os usuários do Diário podem consultar e baixar; apenas o autor pode modificar ou excluir.</p>
         <form id="planoForm" class="planos-form">
           <h3 id="planoFormTitulo">Cadastrar plano de aula</h3>
-          <label>Título<input id="planoTitulo" required maxlength="150"></label>
-          <label>Conteúdo/tema<input id="planoTema" required maxlength="200"></label>
-          <label>Breve descrição<textarea id="planoDescricao" required maxlength="1000" rows="3"></textarea></label>
+          <label>Título (até 20 palavras)<input id="planoTitulo" required aria-describedby="planoTituloContagem"><small id="planoTituloContagem" aria-live="polite">0/20 palavras</small></label>
+          <label>Conteúdo/tema e breve descrição (até 40 palavras)<textarea id="planoDescricao" required rows="3" aria-describedby="planoDescricaoContagem"></textarea><small id="planoDescricaoContagem" aria-live="polite">0/40 palavras</small></label>
           <label id="planoArquivoLabel">Arquivo DOCX (até 10 MB)<input id="planoArquivo" type="file" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" required></label>
           <div class="planos-actions"><button class="save-btn" id="planoSalvar" type="submit">Cadastrar plano</button><button class="back-btn" id="planoCancelar" type="button" hidden>Cancelar edição</button></div>
         </form>

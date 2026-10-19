@@ -35,9 +35,10 @@ service cloud.firestore {
       function valid(data) {
         return data.keys().hasAll(['titulo', 'tema', 'descricao', 'autorUid', 'autorNome', 'uploadedAt', 'updatedAt', 'storagePath', 'fileName', 'fileSize'])
           && data.keys().hasOnly(['titulo', 'tema', 'descricao', 'autorUid', 'autorNome', 'uploadedAt', 'updatedAt', 'storagePath', 'fileName', 'fileSize'])
-          && data.titulo is string && data.titulo.size() > 0 && data.titulo.size() <= 150
-          && data.tema is string && data.tema.size() > 0 && data.tema.size() <= 200
-          && data.descricao is string && data.descricao.size() > 0 && data.descricao.size() <= 1000
+          && data.titulo is string && data.titulo.matches('\\s*\\S+(\\s+\\S+){0,19}\\s*')
+          && data.tema is string && data.tema.size() <= 200
+          && data.descricao is string && data.descricao.size() > 0
+          && ((data.tema == '' && data.descricao.matches('\\s*\\S+(\\s+\\S+){0,39}\\s*')) || (data.tema != '' && data.descricao.size() <= 1000))
           && data.autorUid == request.auth.uid
           && data.autorNome is string && data.autorNome.size() > 0 && data.autorNome.size() <= 200
           && data.uploadedAt is timestamp && data.updatedAt == request.time

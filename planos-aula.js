@@ -7,6 +7,15 @@
   const MIME = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
   const MAX = 10 * 1024 * 1024;
   let user = null, unsubscribe = null, items = [], editing = null, active = false, busy = false, generation = 0;
+  const words = text => String(text || '').trim().split(/\s+/u).filter(Boolean).length;
+  const combined = item => [item.tema, item.descricao].filter(Boolean).join('\n');
+  function updateCounts() {
+    [['planoTitulo',20],['planoDescricao',40]].forEach(([id,limit]) => {
+      const field=el(id),count=words(field.value);
+      el(id+'Contagem').textContent=count+'/'+limit+' palavras';
+      field.setCustomValidity(count>limit?'Use no máximo '+limit+' palavras.':'');
+    });
+  }
   function status(message) { el('planosStatus').textContent = message; }
   function requireUser(expected = user && user.uid) {
     if (!user || !auth.currentUser || auth.currentUser.uid !== expected) throw new Error('Entre novamente no Diário para continuar.');
@@ -19,7 +28,7 @@
     return error.message || 'Não foi possível concluir. Verifique a conexão e tente novamente.';
   }
   function resetForm() {
-    editing = null; el('planoForm').reset(); el('planoArquivo').required = true;
+    editing = null; el('planoForm').reset(); updateCounts(); el('planoArquivo').required = true;
     el('planoArquivoLabel').firstChild.textContent = 'Arquivo DOCX (até 10 MB)';
     el('planoFormTitulo').textContent = 'Cadastrar plano de aula';
     el('planoSalvar').textContent = 'Cadastrar plano'; el('planoCancelar').hidden = true;
@@ -39,7 +48,7 @@
     if (!visible.length) { textNode('p', query ? 'Nenhum plano encontrado para esta busca.' : 'Nenhum plano cadastrado. Compartilhe o primeiro!', list); return; }
     visible.forEach(item => {
       const card = document.createElement('article'); card.className = 'plano-item'; list.appendChild(card);
-      textNode('h3', item.titulo, card); textNode('p', 'Conteúdo/tema: ' + item.tema, card); textNode('p', item.descricao, card);
+      textNode('h3', item.titulo, card); textNode('p', combined(item), card);
       textNode('small', 'Autor: ' + item.autorNome + ' • Upload: ' + date(item.uploadedAt), card);
       if (item.updatedAt && item.uploadedAt && item.updatedAt.toMillis() !== item.uploadedAt.toMillis()) textNode('small', 'Atualizado: ' + date(item.updatedAt), card);
       textNode('small', item.fileName, card);
@@ -71,7 +80,7 @@
   function edit(item) {
     if (busy) return;
     requireUser(item.autorUid); editing = item;
-    el('planoTitulo').value = item.titulo; el('planoTema').value = item.tema; el('planoDescricao').value = item.descricao;
+    el('planoTitulo').value = item.titulo; el('planoDescricao').value = combined(item); updateCounts();
     el('planoArquivo').value = ''; el('planoArquivo').required = false;
     el('planoArquivoLabel').firstChild.textContent = 'Substituir DOCX (opcional, até 10 MB)';
     el('planoFormTitulo').textContent = 'Editar plano de aula'; el('planoSalvar').textContent = 'Salvar alterações'; el('planoCancelar').hidden = false;
@@ -80,8 +89,10 @@
   async function save(event) {
     event.preventDefault(); if (busy) return;
     const epoch = generation, owner = requireUser(), previous = editing;
-    const metadata = { titulo: el('planoTitulo').value.trim(), tema: el('planoTema').value.trim(), descricao: el('planoDescricao').value.trim() };
-    if (Object.values(metadata).some(value => !value)) { status('Preencha título, conteúdo/tema e descrição.'); return; }
+    const metadata = { titulo: el('planoTitulo').value.trim().replace(/\s+/gu, ' '), tema: '', descricao: el('planoDescricao').value.trim().replace(/\s+/gu, ' ') };
+    if (!metadata.titulo || !metadata.descricao) { status('Preencha o título e o conteúdo/tema e breve descrição.'); return; }
+    updateCounts();
+    if (words(metadata.titulo)>20 || words(metadata.descricao)>40) { status('Use até 20 palavras no título e até 40 palavras no conteúdo/tema e breve descrição.'); return; }
     const file = el('planoArquivo').files[0];
     const ref = previous ? collection.doc(previous.id) : collection.doc();
     let newPath = null, committed = false;
@@ -169,6 +180,7 @@
     } catch (error) { if (epoch === generation) status(errorMessage(error)); }
     finally { if (epoch === generation) setBusy(false); }
   }
+  ['planoTitulo','planoDescricao'].forEach(id=>el(id).addEventListener('input',updateCounts));
   el('planoForm').addEventListener('submit', save);
   el('planoCancelar').addEventListener('click', () => { resetForm(); status(''); });
   el('planosBusca').addEventListener('input', render); el('planoFechar').addEventListener('click', closePreview);

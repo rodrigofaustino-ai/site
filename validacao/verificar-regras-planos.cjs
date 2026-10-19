@@ -27,7 +27,7 @@ const {ref, uploadBytes, getBytes, deleteObject} = require('firebase/storage');
     await fails(updateDoc(target(a), {autorUid:'professor-b', updatedAt:serverTimestamp()}));
     await fails(updateDoc(target(a), {uploadedAt:serverTimestamp(), updatedAt:serverTimestamp()}));
     await fails(updateDoc(target(a), {storagePath:'planosAula/professor-b/plano-1/arquivo.docx', updatedAt:serverTimestamp()}));
-    await fails(updateDoc(target(a), {titulo:'x'.repeat(151), updatedAt:serverTimestamp()}));
+    await fails(updateDoc(target(a), {titulo:Array(21).fill('palavra').join(' '), updatedAt:serverTimestamp()}));
     await fails(updateDoc(target(a), {campoExtra:true, updatedAt:serverTimestamp()}));
     await succeeds(updateDoc(target(a), {titulo:'Leitura em grupo', updatedAt:serverTimestamp()}));
     const mime = {contentType:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'};
