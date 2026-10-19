@@ -14,6 +14,7 @@
 <script src="vendor/firebase-9.23.0/firebase-storage-compat.js"></script>
 <link rel="stylesheet" href="planos-aula.css">
 <link rel="stylesheet" href="chat-equipe.css">
+<link rel="stylesheet" href="familia.css">
 <script src="vendor/jszip.min.js"></script>
 
 <!-- jsPDF -->
@@ -583,6 +584,7 @@ hr.sep{border:none;border-top:2px dashed rgba(0,0,0,.06);margin:.2rem 0;}
       <button class="tab-btn" id="tabBtnPei" onclick="switchTab('pei')">📋 PEI</button>
       <button class="tab-btn" id="tabBtnRelatorio" onclick="switchTab('relatorio')">📋 Relatório</button>
       <button class="tab-btn" id="tabBtnDiagnostica" onclick="switchTab('diagnostica')">📊 Diagnóstica</button>
+      <button class="tab-btn" id="tabBtnFamilia" onclick="switchTab('familia')">👪 Questionários da Família</button>
       <button class="tab-btn" id="tabBtnPlanos" onclick="switchTab('planos')">📚 Planos de Aula</button>
       <button class="tab-btn" id="tabBtnRecursos" onclick="switchTab('recursos')">🔗 Recursos Didáticos</button>
     </div>
@@ -749,6 +751,7 @@ hr.sep{border:none;border-top:2px dashed rgba(0,0,0,.06);margin:.2rem 0;}
       </div>
     </div>
 
+    <div class="tab-panel" id="tabFamilia"><div class="card planos-card"><div class="color-strip" style="background:linear-gradient(90deg,var(--teal),var(--purple))"></div><div class="section-head">👪 Questionários da Família</div><p>Gere um link individual para o responsável responder no celular. Confira as respostas antes de escolher o que aproveitar na Diagnóstica. Não há incorporação automática.</p><label class="planos-search">Buscar aluno<input type="search" id="familiaBusca" placeholder="Nome ou turma"></label><p id="familiaProfessorStatus" role="status"></p><div id="familiaAlunos" class="planos-lista"></div></div></div>
     <!-- ABA PLANNER -->
     <div class="tab-panel" id="tabPlanner">
       <div class="card">
@@ -1282,12 +1285,13 @@ document.addEventListener('DOMContentLoaded', () => {
    TABS
 ════════════════════════════════════════ */
 function switchTab(name){
-  ['alunos','grade','frequencia','paee','pei','relatorio','diagnostica','planner','notas','planos','recursos'].forEach(t=>{
+  ['alunos','grade','frequencia','paee','pei','relatorio','diagnostica','planner','notas','planos','recursos','familia'].forEach(t=>{
     $('tabBtn'+t.charAt(0).toUpperCase()+t.slice(1)).classList.toggle('active',t===name);
     $('tab'+t.charAt(0).toUpperCase()+t.slice(1)).classList.toggle('active',t===name);
   });
   if(name==='planos') window.PlanosAula.activate();
   if(name==='recursos') window.RecursosDidaticos.activate();
+  if(name==='familia') window.QuestionariosFamilia.activate();
   if(name==='grade') renderGrade();
   if(name==='frequencia') renderFrequencia();
   if(name==='paee') renderPaeeList();
@@ -4102,5 +4106,7 @@ function exportPDF(){
 <script src="recursos-didaticos.js"></script>
 <script src="chat-equipe.js"></script>
 <script src="chat-presenca.js"></script>
+<script src="familia-modelo.js"></script>
+<script src="familia-professor.js"></script>
 </body>
 </html>

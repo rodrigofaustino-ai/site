@@ -1,5 +1,9 @@
 # Site SRM — exportações DOCX e ODT
 
+## Questionários da Família
+
+A nova aba lista os alunos do professor e permite gerar um link individual, acompanhar a resposta em tempo real, consultar todos os envios e selecionar informações para conferência na Diagnóstica. O formulário para celular tem 27 perguntas adaptadas das nove áreas, sem login para os responsáveis. Nada é incorporado ou salvo automaticamente na Diagnóstica. Siga [o guia de ativação e uso](firebase/CONFIGURAR-QUESTIONARIOS-FAMILIA.md): é necessário acrescentar as permissões do Firestore e publicar a pasta completa no Netlify.
+
 ## Online e confirmações de leitura
 
 O chat tem lista online (nomes antes do `@`) e consulta de quem já leu cada mensagem. Esta versão mantém o formulário tradicional de atendimento, sem metas ou ficha rápida. Siga [a configuração do chat](firebase/ATUALIZAR-ONLINE-LEITURAS.md) se ainda não ativou a presença e as leituras. Se já ativou, basta publicar a pasta completa no Netlify; não precisa mudar as regras do Firebase.

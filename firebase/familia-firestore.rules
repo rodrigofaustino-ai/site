@@ -1,0 +1,95 @@
+// Acrescente dentro de match /databases/{database}/documents.
+function familiaTokenValido(token) { return token.matches('[A-Za-z0-9_-]{43}'); }
+function familiaLinkAtivo(token) {
+  let convite = get(/databases/$(database)/documents/convitesFamilia/$(token)).data;
+  return familiaTokenValido(token) && convite.ativa == true && convite.expiraEm > request.time && convite.versao == 1;
+}
+function familiaDonoAluno(data) {
+  return request.auth != null && data.professorUid == request.auth.uid
+    && get(/databases/$(database)/documents/alunos/$(data.alunoId)).data.professorUid == request.auth.uid;
+}
+match /questionariosFamilia/{alunoId} {
+  function valid(data) {
+    return data.keys().hasAll(['professorUid','alunoId','token','ativa','criadoEm','expiraEm'])
+      && data.keys().hasOnly(['professorUid','alunoId','token','ativa','criadoEm','expiraEm'])
+      && familiaDonoAluno(data) && data.alunoId == alunoId && familiaTokenValido(data.token)
+      && data.ativa is bool && data.criadoEm is timestamp && data.expiraEm is timestamp;
+  }
+  allow read: if request.auth != null && (resource == null || resource.data.professorUid == request.auth.uid);
+  allow create: if valid(request.resource.data) && request.resource.data.criadoEm == request.time
+    && getAfter(/databases/$(database)/documents/convitesFamilia/$(request.resource.data.token)).data.alunoId == alunoId;
+  allow update: if request.auth != null && resource.data.professorUid == request.auth.uid && valid(request.resource.data)
+    && request.resource.data.professorUid == resource.data.professorUid
+    && (request.resource.data.criadoEm == resource.data.criadoEm || request.resource.data.criadoEm == request.time)
+    && getAfter(/databases/$(database)/documents/convitesFamilia/$(request.resource.data.token)).data.alunoId == alunoId;
+  allow delete: if false;
+}
+match /convitesFamilia/{token} {
+  allow get: if (request.auth != null && resource.data.professorUid == request.auth.uid)
+    || (familiaTokenValido(token) && resource.data.ativa == true && resource.data.expiraEm > request.time && resource.data.versao == 1);
+  allow list: if request.auth != null && resource.data.professorUid == request.auth.uid;
+  allow create: if familiaTokenValido(token) && familiaDonoAluno(request.resource.data)
+    && request.resource.data.keys().hasAll(['professorUid','alunoId','apelido','versao','ativa','criadoEm','expiraEm'])
+    && request.resource.data.keys().hasOnly(['professorUid','alunoId','apelido','versao','ativa','criadoEm','expiraEm'])
+    && request.resource.data.apelido is string && request.resource.data.apelido.size() > 0 && request.resource.data.apelido.size() <= 80
+    && request.resource.data.versao == 1 && request.resource.data.ativa == true
+    && request.resource.data.criadoEm == request.time && request.resource.data.expiraEm > request.time
+    && request.resource.data.expiraEm <= request.time + duration.value(90,'d');
+  allow update: if request.auth != null && resource.data.professorUid == request.auth.uid
+    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['ativa']) && request.resource.data.ativa is bool;
+  allow delete: if false;
+}
+match /enviosFamilia/{token} {
+  allow get: if familiaLinkAtivo(token) || (request.auth != null && get(/databases/$(database)/documents/convitesFamilia/$(token)).data.professorUid == request.auth.uid);
+  allow list: if false;
+  allow create: if familiaLinkAtivo(token)
+    && request.resource.data.keys().hasAll(['enviadoEm']) && request.resource.data.keys().hasOnly(['enviadoEm'])
+    && request.resource.data.enviadoEm == request.time
+    && getAfter(/databases/$(database)/documents/respostasFamilia/$(token)).data.enviadoEm == request.time;
+  allow update, delete: if false;
+}
+match /respostasFamilia/{token} {
+  allow read: if request.auth != null && resource.data.professorUid == request.auth.uid;
+  allow create: if familiaLinkAtivo(token)
+    && request.resource.data.keys().hasAll(['professorUid','alunoId','versao','responsavel','vinculo','respostas','observacoes','ciencia','enviadoEm'])
+    && request.resource.data.keys().hasOnly(['professorUid','alunoId','versao','responsavel','vinculo','respostas','observacoes','ciencia','enviadoEm'])
+    && request.resource.data.professorUid == get(/databases/$(database)/documents/convitesFamilia/$(token)).data.professorUid
+    && request.resource.data.alunoId == get(/databases/$(database)/documents/convitesFamilia/$(token)).data.alunoId
+    && request.resource.data.versao == 1 && request.resource.data.ciencia == true
+    && request.resource.data.responsavel is string && request.resource.data.responsavel.size() > 0 && request.resource.data.responsavel.size() <= 120
+    && request.resource.data.vinculo is string && request.resource.data.vinculo.size() > 0 && request.resource.data.vinculo.size() <= 80
+    && request.resource.data.observacoes is string && request.resource.data.observacoes.size() <= 2000
+    && request.resource.data.enviadoEm == request.time
+    && getAfter(/databases/$(database)/documents/enviosFamilia/$(token)).data.enviadoEm == request.time
+    && request.resource.data.respostas is map
+    && request.resource.data.respostas.keys().hasAll(['comunica_escolha','comunica_chamado','comunica_fatos','leitura_nome','leitura_imagens','leitura_historia','escrita_registro','escrita_nome','escrita_palavras','percepcao_comando','percepcao_textura','percepcao_objeto','avd_alimentacao','avd_higiene','avd_vestir','social_interacao','social_emocoes','social_combinados','numeros_uso','numeros_quantidade','numeros_compara','formas_iguais','formas_reconhece','formas_cores','medidas_rotina','medidas_sequencia','medidas_espaco'])
+    && request.resource.data.respostas.keys().hasOnly(['comunica_escolha','comunica_chamado','comunica_fatos','leitura_nome','leitura_imagens','leitura_historia','escrita_registro','escrita_nome','escrita_palavras','percepcao_comando','percepcao_textura','percepcao_objeto','avd_alimentacao','avd_higiene','avd_vestir','social_interacao','social_emocoes','social_combinados','numeros_uso','numeros_quantidade','numeros_compara','formas_iguais','formas_reconhece','formas_cores','medidas_rotina','medidas_sequencia','medidas_espaco'])
+    && request.resource.data.respostas.comunica_escolha in ['observa','as_vezes','apoio','ainda_nao','nao_sabe','nao_observou','nao_informar']
+    && request.resource.data.respostas.comunica_chamado in ['observa','as_vezes','apoio','ainda_nao','nao_sabe','nao_observou','nao_informar']
+    && request.resource.data.respostas.comunica_fatos in ['observa','as_vezes','apoio','ainda_nao','nao_sabe','nao_observou','nao_informar']
+    && request.resource.data.respostas.leitura_nome in ['observa','as_vezes','apoio','ainda_nao','nao_sabe','nao_observou','nao_informar']
+    && request.resource.data.respostas.leitura_imagens in ['observa','as_vezes','apoio','ainda_nao','nao_sabe','nao_observou','nao_informar']
+    && request.resource.data.respostas.leitura_historia in ['observa','as_vezes','apoio','ainda_nao','nao_sabe','nao_observou','nao_informar']
+    && request.resource.data.respostas.escrita_registro in ['observa','as_vezes','apoio','ainda_nao','nao_sabe','nao_observou','nao_informar']
+    && request.resource.data.respostas.escrita_nome in ['observa','as_vezes','apoio','ainda_nao','nao_sabe','nao_observou','nao_informar']
+    && request.resource.data.respostas.escrita_palavras in ['observa','as_vezes','apoio','ainda_nao','nao_sabe','nao_observou','nao_informar']
+    && request.resource.data.respostas.percepcao_comando in ['observa','as_vezes','apoio','ainda_nao','nao_sabe','nao_observou','nao_informar']
+    && request.resource.data.respostas.percepcao_textura in ['observa','as_vezes','apoio','ainda_nao','nao_sabe','nao_observou','nao_informar']
+    && request.resource.data.respostas.percepcao_objeto in ['observa','as_vezes','apoio','ainda_nao','nao_sabe','nao_observou','nao_informar']
+    && request.resource.data.respostas.avd_alimentacao in ['observa','as_vezes','apoio','ainda_nao','nao_sabe','nao_observou','nao_informar']
+    && request.resource.data.respostas.avd_higiene in ['observa','as_vezes','apoio','ainda_nao','nao_sabe','nao_observou','nao_informar']
+    && request.resource.data.respostas.avd_vestir in ['observa','as_vezes','apoio','ainda_nao','nao_sabe','nao_observou','nao_informar']
+    && request.resource.data.respostas.social_interacao in ['observa','as_vezes','apoio','ainda_nao','nao_sabe','nao_observou','nao_informar']
+    && request.resource.data.respostas.social_emocoes in ['observa','as_vezes','apoio','ainda_nao','nao_sabe','nao_observou','nao_informar']
+    && request.resource.data.respostas.social_combinados in ['observa','as_vezes','apoio','ainda_nao','nao_sabe','nao_observou','nao_informar']
+    && request.resource.data.respostas.numeros_uso in ['observa','as_vezes','apoio','ainda_nao','nao_sabe','nao_observou','nao_informar']
+    && request.resource.data.respostas.numeros_quantidade in ['observa','as_vezes','apoio','ainda_nao','nao_sabe','nao_observou','nao_informar']
+    && request.resource.data.respostas.numeros_compara in ['observa','as_vezes','apoio','ainda_nao','nao_sabe','nao_observou','nao_informar']
+    && request.resource.data.respostas.formas_iguais in ['observa','as_vezes','apoio','ainda_nao','nao_sabe','nao_observou','nao_informar']
+    && request.resource.data.respostas.formas_reconhece in ['observa','as_vezes','apoio','ainda_nao','nao_sabe','nao_observou','nao_informar']
+    && request.resource.data.respostas.formas_cores in ['observa','as_vezes','apoio','ainda_nao','nao_sabe','nao_observou','nao_informar']
+    && request.resource.data.respostas.medidas_rotina in ['observa','as_vezes','apoio','ainda_nao','nao_sabe','nao_observou','nao_informar']
+    && request.resource.data.respostas.medidas_sequencia in ['observa','as_vezes','apoio','ainda_nao','nao_sabe','nao_observou','nao_informar']
+    && request.resource.data.respostas.medidas_espaco in ['observa','as_vezes','apoio','ainda_nao','nao_sabe','nao_observou','nao_informar'];
+  allow update, delete: if false;
+}
