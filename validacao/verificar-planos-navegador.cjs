@@ -63,6 +63,13 @@ function mockFirebase() {
     await page.evaluate(()=>{__test.login('professor-b');selecionarTurno('Matutino');switchTab('planos');});await page.waitForFunction(()=>document.querySelectorAll('.plano-item').length===1);
     assert.equal(await page.getByRole('button',{name:'Editar',exact:true}).count(),0);assert.equal(await page.getByRole('button',{name:'Excluir',exact:true}).count(),0);
     await page.getByRole('button',{name:'Visualizar',exact:true}).click();await page.waitForFunction(()=>!document.getElementById('planoViewer').hidden);
+    await page.evaluate(()=>{const record=[...__test.records.values()][0];record.tema='Tema';record.descricao=Array.from({length:50},(_,i)=>'palavra'+i).join(' ');__test.login('professor-a');selecionarTurno('Vespertino');switchTab('planos');});
+    assert.equal((await page.locator('.plano-item>p').first().textContent()).split(/\s+/).length,40);
+    await page.getByRole('button',{name:'Editar',exact:true}).click();
+    assert.equal((await page.locator('#planoDescricao').inputValue()).split(/\s+/).length,40);
+    assert.match(await page.locator('#planosStatus').textContent(),/primeiras 40 palavras/);
+    assert.equal(await page.evaluate(()=>[...__test.records.values()][0].descricao.split(' ').length),50);
+    await page.locator('#planoCancelar').click();
     await page.evaluate(()=>{const record=[...__test.records.values()][0];record.tema='Tema antigo';record.descricao='Descrição antiga';__test.login('professor-a');selecionarTurno('Vespertino');switchTab('planos');});await page.getByRole('button',{name:'Editar',exact:true}).click();assert.equal(await page.locator('#planoDescricao').inputValue(),'Tema antigo\nDescrição antiga');assert.equal(await page.locator('#planoTema').count(),0);await page.locator('#planoTitulo').fill('Leitura revisada');await page.locator('#planoSalvar').click();await page.waitForFunction(()=>document.getElementById('planosStatus').textContent.includes('Alterações salvas'));
     assert.match(await page.locator('.plano-item h3').textContent(),/revisada/);
     await page.getByRole('button',{name:'Editar',exact:true}).click();await page.locator('#planoArquivo').setInputFiles({name:'revisado.docx',mimeType:'application/vnd.openxmlformats-officedocument.wordprocessingml.document',buffer:bytes});await page.locator('#planoSalvar').click();await page.waitForFunction(()=>document.getElementById('planosStatus').textContent.includes('Alterações salvas'));

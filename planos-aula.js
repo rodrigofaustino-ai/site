@@ -9,6 +9,7 @@
   let user = null, unsubscribe = null, items = [], editing = null, active = false, busy = false, generation = 0;
   const words = text => String(text || '').trim().split(/\s+/u).filter(Boolean).length;
   const combined = item => [item.tema, item.descricao].filter(Boolean).join('\n');
+  const shortened = text => words(text)>40 ? text.trim().split(/\s+/u).slice(0,40).join(' ') : text;
   function updateCounts() {
     [['planoTitulo',20],['planoDescricao',40]].forEach(([id,limit]) => {
       const field=el(id),count=words(field.value);
@@ -48,7 +49,7 @@
     if (!visible.length) { textNode('p', query ? 'Nenhum plano encontrado para esta busca.' : 'Nenhum plano cadastrado. Compartilhe o primeiro!', list); return; }
     visible.forEach(item => {
       const card = document.createElement('article'); card.className = 'plano-item'; list.appendChild(card);
-      textNode('h3', item.titulo, card); textNode('p', combined(item), card);
+      textNode('h3', item.titulo, card); textNode('p', shortened(combined(item)), card);
       textNode('small', 'Autor: ' + item.autorNome + ' • Upload: ' + date(item.uploadedAt), card);
       if (item.updatedAt && item.uploadedAt && item.updatedAt.toMillis() !== item.uploadedAt.toMillis()) textNode('small', 'Atualizado: ' + date(item.updatedAt), card);
       textNode('small', item.fileName, card);
@@ -80,7 +81,8 @@
   function edit(item) {
     if (busy) return;
     requireUser(item.autorUid); editing = item;
-    el('planoTitulo').value = item.titulo; el('planoDescricao').value = combined(item); updateCounts();
+    el('planoTitulo').value = item.titulo; el('planoDescricao').value = shortened(combined(item)); updateCounts();
+    status(words(combined(item))>40 ? 'O texto antigo foi reduzido às primeiras 40 palavras. Confira antes de salvar. O texto original no banco será mantido até você salvar as alterações.' : '');
     el('planoArquivo').value = ''; el('planoArquivo').required = false;
     el('planoArquivoLabel').firstChild.textContent = 'Substituir DOCX (opcional, até 10 MB)';
     el('planoFormTitulo').textContent = 'Editar plano de aula'; el('planoSalvar').textContent = 'Salvar alterações'; el('planoCancelar').hidden = false;
