@@ -273,7 +273,7 @@
       if(!parsed.body.textContent.trim()&&!parsed.body.querySelector('img'))throw new Error('Não há conteúdo disponível para visualização nesta versão.');
       // Uma nova moldura evita que o carregamento da versão anterior interfira na atual.
       const frame=anterior.cloneNode(false);
-      frame.srcdoc='<meta http-equiv="Content-Security-Policy" content="default-src &#39;none&#39;; style-src &#39;unsafe-inline&#39;; img-src data:;"><style>body{font-family:Arial;padding:16px;line-height:1.5;overflow-wrap:anywhere;}img{max-width:100%;}</style>'+parsed.body.innerHTML;
+      frame.srcdoc='<meta http-equiv="Content-Security-Policy" content="default-src &#39;none&#39;; style-src &#39;unsafe-inline&#39;; img-src data:;"><style>'+PEIVisualizacao.css+'</style><article id="peiConteudo">'+parsed.body.innerHTML+'</article>';
       frame.hidden=false;
       anterior.replaceWith(frame);
       status.textContent='Visualizando: '+label+'. Esta consulta não altera o PEI salvo.';

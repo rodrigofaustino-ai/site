@@ -152,3 +152,16 @@ chamadas ao serviço.
 repetição persistente, preservação do texto e ausência de gravação automática.
 A IA foi simulada; a qualidade da resposta do serviço real não foi avaliada
 nesta execução e precisa ser conferida com texto fictício no site de teste.
+
+### Formatação do histórico igual ao visualizador anterior
+
+O histórico passou a aplicar, dentro da moldura isolada, os mesmos estilos do
+visualizador original do Diário. Isso evita negritos e alinhamentos padrão do
+navegador em títulos, rótulos e tabelas. O conteúdo armazenado e a exportação
+não foram modificados por este ajuste.
+
+O teste compara os estilos computados de títulos, negritos, parágrafos,
+cabeçalhos e células de tabela entre o visualizador original e o histórico.
+Foram conferidos peso da fonte, alinhamento, família e tamanho da fonte, altura
+de linha e cor. A versão atual passou em 77 verificações do formulário PEI.
+Inclua o novo arquivo pei-visualizacao.js ao publicar a pasta no Netlify de teste.

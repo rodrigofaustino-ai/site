@@ -5,7 +5,7 @@ const fs=require('node:fs'),path=require('node:path'),http=require('node:http');
 const root=path.resolve(__dirname,'..');
 const mock=`
 window.mockWrites=[];window.mockDeny=false;
-window.mockOriginal={peiHtml:'<h1>PEI anterior</h1><p>Texto original preservado.</p><script>parent.executou=true</script>',peiComprimido:false,peiData:'2026-10-20T12:00:00.000Z',professorUid:'prof-teste',peiNomeArquivo:'original.docx'};
+window.mockOriginal={peiHtml:'<h1>PEI anterior</h1><p><strong>Rótulo anterior:</strong></p><p>Texto original preservado.</p><table><tr><th>Cabeçalho</th><th>Descrição</th></tr><tr><td>Aspecto</td><td>Observação fictícia.</td></tr></table><script>parent.executou=true</script>',peiComprimido:false,peiData:'2026-10-20T12:00:00.000Z',professorUid:'prof-teste',peiNomeArquivo:'original.docx'};
 window.mockStore={
  'alunos/a':{nome:'Ana Teste',dataNasc:'2015-03-14',escola:'Escola Horizonte',turma:'3º A',periodo:'Matutino',professorUid:'prof-teste'},
  'alunos/b':{nome:'Aluno de outro professor',professorUid:'outro'},
@@ -77,6 +77,18 @@ let total=0;function check(a,b){assert.deepEqual(a,b);total++;}
   await page.frameLocator('#pei-legacy-preview').getByText('Texto original preservado.',{exact:true}).waitFor({state:'visible'});
   check(await page.locator('#pei-legacy-preview').isVisible(),true);
   check(await page.frameLocator('#pei-legacy-preview').getByText('Texto original preservado.',{exact:true}).isVisible(),true);
+  // O histórico deve reproduzir a formatação do visualizador original do Diário.
+  const reference=await context.newPage();
+  await reference.route(/\/(chat-equipe|chat-presenca|planos-aula|recursos-didaticos)\.js$/,route=>route.fulfill({contentType:'application/javascript',body:''}));
+  await reference.goto(origin+'/index.html',{waitUntil:'networkidle'});
+  const originalHTML=await page.evaluate(()=>LZString.decompressFromUTF16(mockOriginal.peiHtml));
+  await reference.evaluate(html=>{showScreen('home');document.querySelector('#tabPei').classList.add('active');abrirPei('a','Ana Teste',html);},originalHTML);
+  const formatting=root=>['h1','strong','p','th','td'].map(selector=>{
+    const css=getComputedStyle(root.querySelector(selector));
+    return [selector,css.fontWeight,css.textAlign,css.fontFamily,css.fontSize,css.lineHeight,css.color];
+  });
+  check(await page.frameLocator('#pei-legacy-preview').locator('#peiConteudo').evaluate(formatting),await reference.locator('#peiConteudo').evaluate(formatting));
+  await reference.close();
   await page.locator('#pei-history-list button').first().click();
   check((await page.locator('#pei-legacy-preview').getAttribute('srcdoc')).includes('Texto original preservado.'),true);
   check((await page.locator('#pei-legacy-preview').getAttribute('srcdoc')).includes('<script>'),false);
