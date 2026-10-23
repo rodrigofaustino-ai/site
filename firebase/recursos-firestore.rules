@@ -1,0 +1,23 @@
+// Acrescente somente o bloco match abaixo dentro de
+// match /databases/{database}/documents nas regras EXISTENTES.
+match /recursosDidaticos/{recursoId} {
+  function validRecurso(data) {
+    return data.keys().hasAll(['descricao', 'link', 'autorUid', 'autorNome', 'createdAt', 'updatedAt'])
+      && data.keys().hasOnly(['descricao', 'link', 'autorUid', 'autorNome', 'createdAt', 'updatedAt'])
+      && data.descricao is string && data.descricao.size() > 0 && data.descricao.size() <= 1000
+      && data.link is string && data.link.size() <= 2048
+      && data.link.matches('https?://[^/@\\s]+(/[^\\s]*)?')
+      && data.autorUid == request.auth.uid
+      && data.autorNome is string && data.autorNome.size() > 0 && data.autorNome.size() <= 200
+      && data.createdAt is timestamp && data.updatedAt == request.time;
+  }
+  allow read: if request.auth != null;
+  allow create: if request.auth != null && validRecurso(request.resource.data)
+    && request.resource.data.createdAt == request.time;
+  allow update: if request.auth != null && resource.data.autorUid == request.auth.uid
+    && validRecurso(request.resource.data)
+    && request.resource.data.autorUid == resource.data.autorUid
+    && request.resource.data.autorNome == resource.data.autorNome
+    && request.resource.data.createdAt == resource.data.createdAt;
+  allow delete: if request.auth != null && resource.data.autorUid == request.auth.uid;
+}

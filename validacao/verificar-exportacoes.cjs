@@ -1,0 +1,83 @@
+const fs=require('fs'),path=require('path'),assert=require('assert'),acorn=require('acorn');
+const {JSDOM}=require('jsdom');const docx=require('docx'),JSZip=require('jszip');
+
+const base=path.resolve(__dirname,'..');let total=0;
+function context(file){
+ const html=fs.readFileSync(path.join(base,file),'utf8');
+ const dom=new JSDOM(html,{runScripts:'outside-only',url:'http://localhost/'+file});const w=dom.window;
+ w.docx=docx;w.JSZip=JSZip;w.mammoth={convertToHtml:args=>require('mammoth').convertToHtml({buffer:Buffer.from(args.arrayBuffer)})};w.Blob=Blob;
+ const saved=[];w.URL.createObjectURL=blob=>{saved.push({blob});return 'blob:test'};w.URL.revokeObjectURL=()=>{};
+ w.HTMLAnchorElement.prototype.click=function(){saved.at(-1).name=this.download};
+ w.showToast=message=>{if(message.startsWith('Erro'))throw new Error(message)};w.hideLoad=()=>{};w.showLoad=()=>{};w.hideModal=()=>{};
+ w.eval(fs.readFileSync(path.join(base,'exportacao.js'),'utf8'));
+ const scripts=Array.from(w.document.querySelectorAll('script:not([src])')).map(s=>s.textContent).join('\n');
+ const ast=acorn.parse(scripts,{ecmaVersion:'latest'});
+ const code=ast.body.filter(n=>n.type==='FunctionDeclaration'||(n.type==='VariableDeclaration'&&n.declarations.every(d=>/^[A-Z_]+$/.test(d.id.name)&&['ArrayExpression','ObjectExpression','Literal'].includes(d.init?.type)))).map(n=>scripts.slice(n.start,n.end)).join('\n');
+ w.eval(code);w.showToast=message=>{if(message.startsWith('Erro'))throw Error(message)};w.hideLoad=()=>{};w.showLoad=()=>{};w.hideModal=()=>{};return {w,saved,dom};
+}
+async function waitFile(saved,count){const end=Date.now()+25000;while(saved.length<count){if(Date.now()>end)throw new Error('Exportação não concluiu');await new Promise(r=>setTimeout(r,30));}return saved[count-1];}
+async function validate(entry,format){
+ const bytes=Buffer.from(await entry.blob.arrayBuffer());assert(bytes.length>100);assert(entry.name.endsWith('.'+format));
+ const zip=await JSZip.loadAsync(bytes);if(format==='odt'){
+  assert.equal(await zip.file('mimetype').async('string'),'application/vnd.oasis.opendocument.text');
+  const xml=await zip.file('content.xml').async('string');assert(xml.includes('Ana'));if(entry.name.startsWith('PEI'))assert(!xml.includes('<table:table '));else assert(xml.includes('table:table'));assert(zip.file('META-INF/manifest.xml'));
+  assert.equal(bytes.readUInt16LE(8),0);assert.equal(bytes.subarray(30,38).toString(),'mimetype');
+ } else {const document=await zip.file('word/document.xml').async('string');assert(document.includes('Ana'));
+  if(entry.name.startsWith('Diagnostica'))assert(document.includes('<w:gridCol w:w="5102"/>'));
+  if(entry.name.startsWith('PEI')){
+    const namespace='http://schemas.openxmlformats.org/wordprocessingml/2006/main';
+    const parsed=new JSDOM(document,{contentType:'application/xml'}).window.document;
+    const find=tag=>parsed.getElementsByTagNameNS(namespace,tag)[0];
+    const attr=(node,name)=>node.getAttributeNS(namespace,name);
+    assert.equal(attr(find('pgSz'),'w'),'11906');assert.equal(attr(find('pgSz'),'h'),'16838');
+    for(const side of ['top','right','bottom','left'])assert.equal(attr(find('pgMar'),side),'850');
+    for(const side of ['top','right','bottom','left']){
+      const edge=find('pgBorders').getElementsByTagNameNS(namespace,side)[0];assert.equal(attr(edge,'val'),'single');assert.equal(attr(edge,'sz'),'8');assert.equal(attr(edge,'color'),'000000');assert.equal(attr(edge,'space'),'24');
+    }
+    const styles=await zip.file('word/styles.xml').async('string');
+    const stylesDocument=new JSDOM(styles,{contentType:'application/xml'}).window.document;
+    const defaults=stylesDocument.getElementsByTagNameNS(namespace,'docDefaults')[0];
+    assert.equal(attr(defaults.getElementsByTagNameNS(namespace,'rFonts')[0],'ascii'),'Arial');
+    assert.equal(attr(defaults.getElementsByTagNameNS(namespace,'sz')[0],'val'),'24');
+    assert.equal(attr(defaults.getElementsByTagNameNS(namespace,'jc')[0],'val'),'both');
+    for(const alignment of parsed.getElementsByTagNameNS(namespace,'jc'))assert.equal(attr(alignment,'val'),'both','Todos os textos do PEI devem estar justificados, inclusive cabeçalhos');
+    assert.equal(parsed.getElementsByTagNameNS(namespace,'tbl').length,0);
+    const boldText=[];const normalText=[];
+    for(const run of parsed.getElementsByTagNameNS(namespace,'r')){
+      const text=Array.from(run.getElementsByTagNameNS(namespace,'t')).map(node=>node.textContent).join('');
+      const bold=Array.from(run.getElementsByTagNameNS(namespace,'b')).some(node=>!['false','0'].includes(attr(node,'val')));
+      (bold?boldText:normalText).push(text);
+    }
+    assert(boldText.join('').includes('IDENTIFICAÇÃO'));
+    assert(boldText.join('').includes('Metas:'));
+    assert(boldText.join('').includes('II.CARACTERÍSTICAS DO ALUNO NO CONTEXTO ESCOLAR'));
+    assert(boldText.join('').includes('1) Lembrar (Reconhecer/Identificar): Desenvolver a capacidade de reconhecer informações básicas do cotidiano escolar.'));
+    assert(!boldText.join('').includes('Ana'));
+    assert(!boldText.join('').includes('Texto comum'));
+    assert(normalText.join('').includes('Texto comum'));
+    assert(normalText.join('').includes('Apoio visual'));
+  }
+
+ }
+ fs.mkdirSync('/tmp/site-results',{recursive:true});fs.writeFileSync('/tmp/site-results/'+entry.name,bytes);total++;
+}
+(async()=>{
+ for(const file of ['diagnostica_formulario.html','paee_formulario_02.html','relatorio_formulario.html']){
+  const {w,saved,dom}=context(file);const state=w.novoEstado();state.identificacao.nome='Ana São & Teste';
+  for(const fmt of ['docx','odt']){w.exportDOCX(state,fmt);const result=await waitFile(saved,saved.length+1);await validate(result,fmt);console.log(file,fmt,'OK',result.blob.size);}
+  dom.window.close();
+ }
+ const {w,saved,dom}=context('index.html');
+ w.document.getElementById('peiConteudo').innerHTML='<h1>PEI — Ana São</h1><table><tr><td><p><span>IDENTI</span><span>FICAÇÃO</span></p><p>Nome: <strong>Ana São</strong></p><p><strong>Texto comum</strong></p><p><span>II.</span><span>CARACTERÍSTICAS DO ALUNO NO CONTEXTO ESCOLAR</span></p><p><span>1) Lembrar (Reconhecer/Identificar): </span><span>Desenvolver a capacidade de reconhecer informações básicas do cotidiano escolar.</span></p><p>Metas: Apoio visual</p></td></tr></table>';
+ w.document.getElementById('peiNomeAluno').textContent='PEI Ana São';
+ for(const fmt of ['docx','odt']){await w.exportarPei(fmt);await validate(saved.at(-1),fmt);console.log('PEI',fmt,'OK');}
+ // Frequency exporter with local fixtures; no remote writes or authentication.
+ const alunos=[{id:'aluno1',nome:'Ana São',turma:'3º ano'}];const semanas=[{id:'s1',dataInicio:'2026-10-01',label:'Semana 1',registros:{}}];
+ const snapshot=items=>({forEach:fn=>items.forEach(d=>fn({id:d.id,data:()=>d}))});
+ w.alunosRef=()=>({get:async()=>snapshot(alunos)});w.semanasRef=()=>({get:async()=>snapshot(semanas)});
+ w.filtrarAlunosPorTurno=items=>items;w.filtrarSemanasPorTurno=items=>items;w.showToast=message=>{if(message.startsWith('Erro'))throw Error(message)};
+ w.val=id=>id==='freqRelDe'?'2026-10-01':'2026-10-08';
+ for(const fmt of ['docx','odt']){const count=saved.length+1;await w.gerarRelatorioFrequencia(fmt);await validate(await waitFile(saved,count),fmt);console.log('Frequência',fmt,'OK');}
+ await assert.rejects(w.SRMExport.fromHtml('<p></p>','docx','vazio'),/vazio/);
+ dom.window.close();console.log('TOTAL:',total,'arquivos DOCX/ODT validados');
+})().catch(e=>{console.error(e);process.exit(1)});

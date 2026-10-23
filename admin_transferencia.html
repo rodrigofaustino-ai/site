@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — Transferência de Alunos · SRM</title>
+<script src="vendor/firebase-9.23.0/firebase-app-compat.js"></script>
+<script src="vendor/firebase-9.23.0/firebase-auth-compat.js"></script>
+<script src="vendor/firebase-9.23.0/firebase-firestore-compat.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --teal:#00B4A2;--teal-d:#00897B;
+  --ink:#1E1E2E;--muted:#6B7280;
+  --surface:#F8F9FA;--surface2:#fff;
+  --border:#E5E7EB;--radius:12px;
+  --font:'Segoe UI',system-ui,sans-serif;
+  --red:#B93A2E;--green:#1A7A3F;--green-l:#E8F8EE;
+  --shadow:0 2px 12px rgba(0,0,0,.08);
+}
+body{font-family:var(--font);background:var(--surface);color:var(--ink);min-height:100vh;}
+.topbar{background:linear-gradient(135deg,#1E1E2E,#2D2D44);padding:1rem 1.5rem;display:flex;align-items:center;gap:12px;}
+.topbar h1{color:#fff;font-size:18px;font-weight:600;}
+.topbar .badge{background:#B93A2E;color:#fff;font-size:11px;font-weight:700;padding:3px 8px;border-radius:20px;}
+.container{max-width:860px;margin:2rem auto;padding:0 1rem;}
+.card{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem;margin-bottom:1rem;box-shadow:var(--shadow);}
+.card h2{font-size:16px;font-weight:600;margin-bottom:.5rem;color:var(--ink);}
+.card p{font-size:13px;color:var(--muted);margin-bottom:1rem;line-height:1.6;}
+.warning{background:#FEF3C7;border:1px solid #F59E0B;border-radius:8px;padding:.75rem 1rem;font-size:13px;color:#92400E;margin-bottom:1rem;}
+.warning strong{font-weight:700;}
+
+/* Login */
+#loginSection{display:flex;flex-direction:column;gap:12px;}
+.field label{display:block;font-size:12px;font-weight:600;margin-bottom:4px;color:var(--muted);}
+.field input{width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;font-family:var(--font);transition:border-color .15s;}
+.field input:focus{outline:none;border-color:var(--teal);}
+.btn{border:none;border-radius:8px;padding:10px 20px;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--font);transition:all .15s;}
+.btn-primary{background:var(--teal);color:#fff;width:100%;}
+.btn-primary:hover{background:var(--teal-d);}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed;}
+.btn-danger{background:#B93A2E;color:#fff;}
+.btn-danger:hover{background:#991B1B;}
+.btn-outline{background:#fff;color:var(--ink);border:1.5px solid var(--border);}
+.btn-outline:hover{border-color:var(--teal);color:var(--teal);}
+.btn-sm{padding:7px 14px;font-size:13px;}
+
+/* Seções */
+.section{display:none;}
+.section.active{display:block;}
+
+/* Professores */
+.prof-grid{display:flex;flex-direction:column;gap:8px;margin-top:12px;}
+.prof-card{display:flex;align-items:center;gap:12px;padding:12px 14px;border:1.5px solid var(--border);border-radius:10px;background:#fff;cursor:pointer;transition:all .15s;}
+.prof-card:hover{border-color:var(--teal);background:rgba(0,180,162,.04);}
+.prof-card.selected{border-color:var(--teal);background:rgba(0,180,162,.08);}
+.prof-avatar{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--teal),#7C3AED);display:flex;align-items:center;justify-content:center;color:#fff;font-size:16px;font-weight:700;flex-shrink:0;}
+.prof-info{flex:1;}
+.prof-info strong{display:block;font-size:14px;font-weight:600;}
+.prof-info span{font-size:12px;color:var(--muted);}
+.prof-check{color:var(--teal);font-size:18px;display:none;}
+.prof-card.selected .prof-check{display:block;}
+
+/* Alunos */
+.aluno-list{display:flex;flex-direction:column;gap:6px;margin-top:10px;max-height:300px;overflow-y:auto;}
+.aluno-item{display:flex;align-items:center;gap:10px;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;}
+.aluno-item input[type=checkbox]{width:16px;height:16px;accent-color:var(--teal);cursor:pointer;flex-shrink:0;}
+.aluno-item label{cursor:pointer;flex:1;}
+.aluno-item .turma{font-size:11px;color:var(--muted);margin-left:4px;}
+
+/* Progresso */
+.progress-bar{height:8px;background:var(--border);border-radius:4px;overflow:hidden;margin:8px 0;}
+.progress-fill{height:100%;background:var(--teal);border-radius:4px;transition:width .3s;}
+.log{background:#F8F9FA;border:1px solid var(--border);border-radius:8px;padding:12px;font-size:12px;font-family:monospace;max-height:200px;overflow-y:auto;margin-top:8px;}
+.log .ok{color:var(--green);}
+.log .err{color:var(--red);}
+.log .info{color:var(--muted);}
+
+.steps{display:flex;gap:0;margin-bottom:1.5rem;}
+.step{flex:1;text-align:center;position:relative;}
+.step-num{width:28px;height:28px;border-radius:50%;background:var(--border);color:var(--muted);font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;margin:0 auto 4px;}
+.step.active .step-num{background:var(--teal);color:#fff;}
+.step.done .step-num{background:var(--green);color:#fff;}
+.step-label{font-size:11px;color:var(--muted);}
+.step.active .step-label{color:var(--teal);font-weight:600;}
+.step-line{position:absolute;top:14px;left:50%;width:100%;height:2px;background:var(--border);z-index:0;}
+.step:last-child .step-line{display:none;}
+
+.select-all-row{display:flex;align-items:center;gap:8px;padding:6px 12px;font-size:12px;color:var(--muted);cursor:pointer;}
+.select-all-row input{width:15px;height:15px;accent-color:var(--teal);cursor:pointer;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div>🔐</div>
+  <h1>Transferência de Alunos — SRM</h1>
+  <span class="badge">ADMIN</span>
+</div>
+
+<div class="container">
+
+  <!-- LOGIN ADMIN -->
+  <div id="senhaSection" class="card">
+    <h2>🔒 Acesso restrito</h2>
+    <p>Esta ferramenta permite transferir todos os dados de um professor para outro. Entre com a conta de administrador para continuar.</p>
+    <div id="loginSection">
+      <div class="field">
+        <label>E-mail</label>
+        <input type="email" id="adminEmailInput" placeholder="admin@exemplo.com" autocomplete="username">
+      </div>
+      <div class="field">
+        <label>Senha</label>
+        <input type="password" id="senhaInput" placeholder="••••••••" autocomplete="current-password">
+      </div>
+      <button class="btn btn-primary" id="btnEntrar" onclick="verificarSenha()">Entrar</button>
+      <div id="senhaErro" style="color:var(--red);font-size:13px;text-align:center;display:none;">Senha incorreta.</div>
+    </div>
+  </div>
+
+  <!-- FERRAMENTA PRINCIPAL -->
+  <div id="adminSection" style="display:none;">
+
+    <div class="warning">
+      <strong>⚠️ Atenção:</strong> Esta operação é irreversível. Todos os alunos selecionados e seus dados (frequência, planner, registros, PAEE, relatórios, diagnóstica) serão transferidos para o professor destino. Verifique cuidadosamente antes de confirmar.
+    </div>
+
+    <!-- STEPS -->
+    <div class="steps">
+      <div class="step active" id="step1"><div class="step-line"></div><div class="step-num">1</div><div class="step-label">Origem</div></div>
+      <div class="step" id="step2"><div class="step-line"></div><div class="step-num">2</div><div class="step-label">Alunos</div></div>
+      <div class="step" id="step3"><div class="step-line"></div><div class="step-num">3</div><div class="step-label">Destino</div></div>
+      <div class="step" id="step4"><div class="step-num">4</div><div class="step-label">Confirmar</div></div>
+    </div>
+
+    <!-- PASSO 1: Professor origem -->
+    <div id="passo1" class="section active card">
+      <h2>Passo 1 — Professor de origem</h2>
+      <p>Selecione o professor cujos alunos serão transferidos (o professor que saiu).</p>
+      <div id="profOrigem" class="prof-grid">
+        <div style="text-align:center;padding:20px;color:var(--muted);font-size:13px;">Carregando professores…</div>
+      </div>
+      <div style="margin-top:12px;display:flex;justify-content:flex-end;">
+        <button class="btn btn-primary" onclick="irPasso2()" id="btnPasso2" disabled>Próximo →</button>
+      </div>
+    </div>
+
+    <!-- PASSO 2: Selecionar alunos -->
+    <div id="passo2" class="section card">
+      <h2>Passo 2 — Selecionar alunos</h2>
+      <p>Escolha quais alunos transferir. Por padrão todos estão selecionados.</p>
+      <div class="select-all-row">
+        <input type="checkbox" id="selectAll" checked onchange="toggleSelectAll()">
+        <label for="selectAll">Selecionar todos</label>
+      </div>
+      <div id="alunosList" class="aluno-list"></div>
+      <div style="margin-top:12px;display:flex;gap:8px;justify-content:space-between;">
+        <button class="btn btn-outline btn-sm" onclick="irPasso(1)">← Voltar</button>
+        <button class="btn btn-primary" onclick="irPasso3()" id="btnPasso3">Próximo →</button>
+      </div>
+    </div>
+
+    <!-- PASSO 3: Professor destino -->
+    <div id="passo3" class="section card">
+      <h2>Passo 3 — Professor de destino</h2>
+      <p>Selecione o professor que receberá os alunos.</p>
+      <div id="profDestino" class="prof-grid"></div>
+      <div style="margin-top:12px;display:flex;gap:8px;justify-content:space-between;">
+        <button class="btn btn-outline btn-sm" onclick="irPasso(2)">← Voltar</button>
+        <button class="btn btn-primary" onclick="irPasso4()" id="btnPasso4" disabled>Próximo →</button>
+      </div>
+    </div>
+
+    <!-- PASSO 4: Confirmar -->
+    <div id="passo4" class="section card">
+      <h2>Passo 4 — Confirmar transferência</h2>
+      <div id="resumo" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px;font-size:13px;margin-bottom:14px;line-height:2;"></div>
+      <div style="display:flex;gap:8px;justify-content:space-between;">
+        <button class="btn btn-outline btn-sm" onclick="irPasso(3)">← Voltar</button>
+        <button class="btn btn-danger" onclick="confirmarTransferencia()" id="btnConfirmar">✓ Confirmar e Transferir</button>
+      </div>
+    </div>
+
+    <!-- PROGRESSO -->
+    <div id="progressSection" class="card" style="display:none;">
+      <h2>Transferindo dados…</h2>
+      <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+      <div id="progressText" style="font-size:13px;color:var(--muted);margin-top:6px;">Iniciando…</div>
+      <div id="logBox" class="log"></div>
+    </div>
+
+    <!-- RESULTADO -->
+    <div id="resultSection" class="card" style="display:none;">
+      <div id="resultContent"></div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ── Config Firebase (salamulti — Diário de Bordo) ──
+const fbConfig = {
+  apiKey:"AIzaSyCUpAIWuF6RAI2PhvziozIUZdzHRXf9Dl8",
+  authDomain:"salamulti.firebaseapp.com",
+  projectId:"salamulti",
+  storageBucket:"salamulti.firebasestorage.app",
+  messagingSenderId:"489820296240",
+  appId:"1:489820296240:web:8a29c187320c14f04e49f5"
+};
+// ── Config Firebase (paee-3fea6 — PAEE/Relatório/Diagnóstica) ──
+const fbConfigPaee = {
+  apiKey:"AIzaSyBWvVhqLf2UEz2-02clHwnvsSF4eDUMPjA",
+  authDomain:"paee-3fea6.firebaseapp.com",
+  projectId:"paee-3fea6",
+  storageBucket:"paee-3fea6.firebasestorage.app",
+  messagingSenderId:"466630982073",
+  appId:"1:466630982073:web:0109116a083d1a395f9e68"
+};
+
+let db, dbPaee, authSrm, authPaee;
+let todosProfs = [];
+let profOrigem = null, profDestino = null;
+let alunosOrigem = [];
+let alunosSelecionados = [];
+
+// ── Inicializar Firebase (uma vez, os dois projetos) ──
+const app  = firebase.initializeApp(fbConfig, 'srm');
+const appP = firebase.initializeApp(fbConfigPaee,'paee');
+db      = firebase.firestore(app);
+dbPaee  = firebase.firestore(appP);
+authSrm  = firebase.auth(app);
+authPaee = firebase.auth(appP);
+
+// ── Login admin — precisa ser uma conta cadastrada no Authentication
+//    de AMBOS os projetos (salamulti e paee-3fea6), com o mesmo
+//    e-mail/senha, e cujo UID esteja liberado em isAdmin() nas
+//    regras do Firestore dos dois projetos. ──
+async function verificarSenha(){
+  const email = document.getElementById('adminEmailInput').value.trim();
+  const senha = document.getElementById('senhaInput').value;
+  const erroEl = document.getElementById('senhaErro');
+  const btn = document.getElementById('btnEntrar');
+  erroEl.style.display='none';
+  if(!email || !senha){
+    erroEl.textContent = 'Preencha e-mail e senha.';
+    erroEl.style.display='block';
+    return;
+  }
+  btn.disabled = true; btn.textContent = 'Entrando…';
+  try{
+    await Promise.all([
+      authSrm.signInWithEmailAndPassword(email, senha),
+      authPaee.signInWithEmailAndPassword(email, senha)
+    ]);
+    document.getElementById('senhaSection').style.display='none';
+    document.getElementById('adminSection').style.display='block';
+    carregarProfessores();
+  }catch(e){
+    console.error('Erro de login admin:', e);
+    erroEl.textContent = 'Login inválido: ' + (e.message || e.code || e);
+    erroEl.style.display='block';
+  }finally{
+    btn.disabled = false; btn.textContent = 'Entrar';
+  }
+}
+document.getElementById('senhaInput').addEventListener('keydown',e=>{if(e.key==='Enter')verificarSenha();});
+document.getElementById('adminEmailInput').addEventListener('keydown',e=>{if(e.key==='Enter')verificarSenha();});
+
+// ── Carregar todos os professors únicos via alunos ──
+async function carregarProfessores(){
+  try{
+    const snap = await db.collection('alunos').get();
+    const mapa = {};
+    snap.forEach(d=>{
+      const uid = d.data().professorUid;
+      const email = d.data().professorEmail || '';
+      if(uid && !mapa[uid]) mapa[uid]={uid, email, qtd:0};
+      if(uid) mapa[uid].qtd++;
+    });
+    todosProfs = Object.values(mapa);
+    renderProfessores('profOrigem', todosProfs, selecionarOrigem);
+  }catch(e){
+    console.error('Erro ao carregar professores:', e);
+    document.getElementById('profOrigem').innerHTML = `
+      <div style="text-align:center;padding:20px;color:var(--red);font-size:13px;">
+        <strong>Erro ao carregar professores:</strong><br>${e.code||''} ${e.message||e}<br><br>
+        Se o erro for de permissão ("Missing or insufficient permissions"), esta ferramenta
+        precisa autenticar no Firebase antes de consultar — ela carrega o SDK de Auth mas
+        nunca faz login, e as regras do Firestore provavelmente exigem um usuário autenticado.
+      </div>`;
+  }
+}
+
+function inicialLetra(email){ return (email||'?')[0].toUpperCase(); }
+
+function renderProfessores(containerId, profs, onSelect){
+  const c = document.getElementById(containerId);
+  if(!profs.length){
+    c.innerHTML='<div style="text-align:center;padding:20px;color:var(--muted);font-size:13px;">Nenhum professor encontrado.</div>';
+    return;
+  }
+  c.innerHTML = profs.map(p=>`
+    <div class="prof-card" id="pcard_${containerId}_${p.uid}" onclick="${onSelect.name}('${p.uid}','${containerId}')">
+      <div class="prof-avatar">${inicialLetra(p.email)}</div>
+      <div class="prof-info">
+        <strong>${p.email||'(sem e-mail registrado)'}</strong>
+        <span>${p.qtd} aluno(s) cadastrado(s)</span>
+      </div>
+      <div class="prof-check">✓</div>
+    </div>`).join('');
+}
+
+function selecionarOrigem(uid, containerId){
+  document.querySelectorAll(`#${containerId} .prof-card`).forEach(c=>c.classList.remove('selected'));
+  document.getElementById(`pcard_${containerId}_${uid}`)?.classList.add('selected');
+  profOrigem = todosProfs.find(p=>p.uid===uid);
+  document.getElementById('btnPasso2').disabled = false;
+}
+
+function selecionarDestino(uid, containerId){
+  document.querySelectorAll(`#${containerId} .prof-card`).forEach(c=>c.classList.remove('selected'));
+  document.getElementById(`pcard_${containerId}_${uid}`)?.classList.add('selected');
+  profDestino = todosProfs.find(p=>p.uid===uid);
+  document.getElementById('btnPasso4').disabled = (profDestino?.uid === profOrigem?.uid);
+}
+
+// ── Navegação entre passos ──
+function irPasso(n){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.getElementById('passo'+n).classList.add('active');
+  for(let i=1;i<=4;i++){
+    const s=document.getElementById('step'+i);
+    s.classList.remove('active','done');
+    if(i<n) s.classList.add('done');
+    if(i===n) s.classList.add('active');
+  }
+}
+
+async function irPasso2(){
+  irPasso(2);
+  const lista = document.getElementById('alunosList');
+  lista.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted);font-size:13px;">Carregando alunos…</div>';
+  // Carregar alunos do prof origem
+  try{
+    const snap = await db.collection('alunos').where('professorUid','==',profOrigem.uid).get();
+    alunosOrigem = [];
+    snap.forEach(d=>alunosOrigem.push({id:d.id,...d.data()}));
+    alunosOrigem.sort((a,b)=>(a.nome||'').localeCompare(b.nome||'','pt-BR'));
+  }catch(e){
+    console.error('Erro ao carregar alunos:', e);
+    lista.innerHTML = `<div style="text-align:center;padding:20px;color:var(--red);font-size:13px;">Erro ao carregar alunos: ${e.code||''} ${e.message||e}</div>`;
+    return;
+  }
+
+  lista.innerHTML = alunosOrigem.map(a=>`
+    <div class="aluno-item">
+      <input type="checkbox" id="al_${a.id}" value="${a.id}" checked>
+      <label for="al_${a.id}">${a.nome||'Sem nome'}<span class="turma">${a.turma?'· '+a.turma:''}</span></label>
+    </div>`).join('');
+}
+
+function toggleSelectAll(){
+  const v = document.getElementById('selectAll').checked;
+  document.querySelectorAll('#alunosList input[type=checkbox]').forEach(c=>c.checked=v);
+}
+
+function irPasso3(){
+  alunosSelecionados = [...document.querySelectorAll('#alunosList input:checked')].map(c=>c.value);
+  if(!alunosSelecionados.length){alert('Selecione ao menos um aluno.');return;}
+  irPasso(3);
+  // Montar lista de destino (excluir o próprio prof origem)
+  const destProfs = todosProfs.filter(p=>p.uid!==profOrigem.uid);
+  renderProfessores('profDestino', destProfs, selecionarDestino);
+}
+
+function irPasso4(){
+  if(!profDestino){alert('Selecione o professor de destino.');return;}
+  irPasso(4);
+  document.getElementById('resumo').innerHTML = `
+    <div>📤 <strong>Origem:</strong> ${profOrigem.email}</div>
+    <div>📥 <strong>Destino:</strong> ${profDestino.email}</div>
+    <div>👦 <strong>Alunos:</strong> ${alunosSelecionados.length} selecionado(s)</div>
+    <div style="margin-top:8px;font-size:12px;color:var(--muted);">
+      Dados transferidos: perfil do aluno, registros de atendimento, frequência, planner, notas, PAEE, relatórios e diagnóstica.
+    </div>`;
+}
+
+// ── Transferência ──
+function log(msg, tipo='info'){
+  const box = document.getElementById('logBox');
+  box.innerHTML += `<div class="${tipo}">${msg}</div>`;
+  box.scrollTop = box.scrollHeight;
+}
+
+function setProgress(pct, texto){
+  document.getElementById('progressFill').style.width = pct+'%';
+  document.getElementById('progressText').textContent = texto;
+}
+
+async function confirmarTransferencia(){
+  document.getElementById('passo4').classList.remove('active');
+  document.getElementById('progressSection').style.display='block';
+  document.getElementById('btnConfirmar').disabled=true;
+
+  const novoUid = profDestino.uid;
+  const novoEmail = profDestino.email;
+  const total = alunosSelecionados.length;
+  let ok=0, erros=0;
+
+  for(let idx=0; idx<alunosSelecionados.length; idx++){
+    const alunoId = alunosSelecionados[idx];
+    const aluno = alunosOrigem.find(a=>a.id===alunoId);
+    const nome = aluno?.nome || alunoId;
+    setProgress(Math.round((idx/total)*90), `Transferindo ${nome}… (${idx+1}/${total})`);
+
+    try{
+      // 1. Atualizar doc principal do aluno (salamulti)
+      await db.collection('alunos').doc(alunoId).update({
+        professorUid: novoUid,
+        professorEmail: novoEmail,
+      });
+      log(`✓ ${nome} — perfil atualizado`, 'ok');
+
+      // 2. Subcoleção registros (salamulti) — não precisa alterar (herdam pelo alunoId)
+
+      // 3. frequenciaSemanas — buscar por uid antigo e alunoId
+      const semSnap = await db.collection('frequenciaSemanas')
+        .where('professorUid','==',profOrigem.uid).get();
+      // Frequência é por professor, não por aluno — transferir todas se o aluno está selecionado
+      // Nota: frequência é global do professor, não por aluno — apenas registrar no log
+      log(`  · frequência: pertence ao professor (transferida em bloco ao final)`, 'info');
+
+      // 4. PAEE (paee-3fea6)
+      const paeeSnap = await dbPaee.collection('paee_alunos')
+        .where('professorUid','==',profOrigem.uid)
+        .where('identificacao.nome','==',aluno?.nome||'').get();
+      for(const doc of paeeSnap.docs){
+        await dbPaee.collection('paee_alunos').doc(doc.id).update({professorUid:novoUid});
+      }
+      if(paeeSnap.size) log(`  · PAEE: ${paeeSnap.size} registro(s) transferido(s)`, 'ok');
+
+      // 5. Relatórios (paee-3fea6)
+      const relSnap = await dbPaee.collection('relatorios_srm')
+        .where('professorUid','==',profOrigem.uid)
+        .where('identificacao.nomeAluno','==',aluno?.nome||'').get();
+      for(const doc of relSnap.docs){
+        await dbPaee.collection('relatorios_srm').doc(doc.id).update({professorUid:novoUid});
+      }
+      if(relSnap.size) log(`  · Relatório: ${relSnap.size} registro(s) transferido(s)`, 'ok');
+
+      // 6. Diagnóstica (paee-3fea6)
+      const diagSnap = await dbPaee.collection('diagnostica_srm')
+        .where('professorUid','==',profOrigem.uid)
+        .where('identificacao.nome','==',aluno?.nome||'').get();
+      for(const doc of diagSnap.docs){
+        await dbPaee.collection('diagnostica_srm').doc(doc.id).update({professorUid:novoUid});
+      }
+      if(diagSnap.size) log(`  · Diagnóstica: ${diagSnap.size} registro(s) transferido(s)`, 'ok');
+
+      ok++;
+    }catch(e){
+      log(`✗ ${nome} — erro: ${e.message}`, 'err');
+      erros++;
+    }
+  }
+
+  // Transferir frequência e planner (são do professor, não do aluno)
+  // Só transferir se TODOS os alunos foram selecionados
+  if(alunosSelecionados.length === alunosOrigem.length){
+    setProgress(92,'Transferindo frequência e planner…');
+    try{
+      const semSnap = await db.collection('frequenciaSemanas')
+        .where('professorUid','==',profOrigem.uid).get();
+      const batch1 = db.batch();
+      semSnap.forEach(d=>batch1.update(d.ref,{professorUid:novoUid}));
+      await batch1.commit();
+      log(`✓ Frequência: ${semSnap.size} semana(s) transferida(s)`, 'ok');
+
+      const planSnap = await db.collection('plannerMensal')
+        .where('professorUid','==',profOrigem.uid).get();
+      const batch2 = db.batch();
+      planSnap.forEach(d=>batch2.update(d.ref,{professorUid:novoUid}));
+      await batch2.commit();
+      log(`✓ Planner: ${planSnap.size} mês/meses transferido(s)`, 'ok');
+
+      const notasSnap = await db.collection('notas')
+        .where('professorUid','==',profOrigem.uid).get();
+      const batch3 = db.batch();
+      notasSnap.forEach(d=>batch3.update(d.ref,{professorUid:novoUid}));
+      await batch3.commit();
+      log(`✓ Notas: ${notasSnap.size} nota(s) transferida(s)`, 'ok');
+    }catch(e){
+      log(`⚠ Frequência/Planner/Notas: ${e.message}`, 'err');
+    }
+  }else{
+    log('ℹ Frequência, planner e notas não transferidos (apenas alunos parciais selecionados)', 'info');
+  }
+
+  setProgress(100,'Concluído!');
+  document.getElementById('progressSection').style.display='none';
+  document.getElementById('resultSection').style.display='block';
+  document.getElementById('resultContent').innerHTML = erros===0
+    ? `<div style="text-align:center;padding:1rem;">
+        <div style="font-size:40px;">✅</div>
+        <h2 style="margin:.5rem 0;color:var(--green);">Transferência concluída!</h2>
+        <p style="color:var(--muted);font-size:13px;">${ok} aluno(s) transferido(s) com sucesso para <strong>${profDestino.email}</strong>.</p>
+        <button class="btn btn-outline" style="margin-top:1rem;" onclick="location.reload()">Nova transferência</button>
+      </div>`
+    : `<div style="text-align:center;padding:1rem;">
+        <div style="font-size:40px;">⚠️</div>
+        <h2 style="margin:.5rem 0;">Transferência com erros</h2>
+        <p style="color:var(--muted);font-size:13px;">${ok} transferido(s) com sucesso, ${erros} com erro. Verifique o log acima.</p>
+        <button class="btn btn-outline" style="margin-top:1rem;" onclick="location.reload()">Tentar novamente</button>
+      </div>`;
+}
+</script>
+</body>
+</html>
