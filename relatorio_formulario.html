@@ -260,6 +260,7 @@
 </style>
 <script src="exportacao.js"></script>
 <script src="vinculo-aluno.js"></script>
+<script src="firebase-ambiente-teste.js"></script>
 </head>
 <body>
 
@@ -372,24 +373,15 @@
 <script>
 /* =========================================================================
    CONFIGURAÇÃO DO FIREBASE
-   Use o mesmo projeto do PAEE (paee-3fea6) ou outro de sua preferência.
+   Nesta cópia, utilize somente a configuração central do ambiente de teste.
    A coleção "relatorios_srm" é separada da "paee_alunos".
    ========================================================================= */
-const firebaseConfig = {
-  apiKey: "AIzaSyBWvVhqLf2UEz2-02clHwnvsSF4eDUMPjA",
-  authDomain: "paee-3fea6.firebaseapp.com",
-  databaseURL: "https://paee-3fea6-default-rtdb.firebaseio.com",
-  projectId: "paee-3fea6",
-  storageBucket: "paee-3fea6.firebasestorage.app",
-  messagingSenderId: "466630982073",
-  appId: "1:466630982073:web:0109116a083d1a395f9e68"
-};
 
 const COLLECTION = 'relatorios_srm';
 
 let db = null, auth = null, firebaseReady = false, professorUid = null;
 try{
-  firebase.initializeApp(firebaseConfig);
+  window.SRMInicializarFirebase();
   db = firebase.firestore();
   auth = firebase.auth();
   firebaseReady = true;

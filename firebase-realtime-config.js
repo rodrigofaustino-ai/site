@@ -1,3 +1,3 @@
-// Cole aqui somente a URL exibida em Firebase > salamulti > Realtime Database.
-// A URL é pública; não coloque senhas ou chaves de administrador neste arquivo.
-window.DIARIO_REALTIME_DATABASE_URL = 'https://salamulti-default-rtdb.firebaseio.com';
+// Presença suspensa até configurar o Realtime Database do projeto de teste.
+// Não reutilizar a URL do banco oficial.
+window.DIARIO_REALTIME_DATABASE_URL = "";

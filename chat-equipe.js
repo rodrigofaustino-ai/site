@@ -19,7 +19,7 @@
   let receiptUnsubscribe = null, observer = null, readTimers = new Map(), acknowledged = new Set(), readScanTimer = null;
   let messages = new Map(), latest = [], cursor = null, more = false, historyLoaded = false, lastRead = 0, pendingSend = null;
   const millis = message => message.createdAt && message.createdAt.toMillis ? message.createdAt.toMillis() : 0;
-  const key = () => 'salamulti_chat_lido_' + user.uid;
+  const key = () => 'ambienteteste-e368e_chat_lido_' + user.uid;
   function status(text) { el('chatStatus').textContent = text; }
   function errorText(error) {
     return /permission-denied/.test(error.code || '') ? 'O chat precisa de permissão no Firestore. Confira a configuração com o administrador.' : 'Não foi possível conectar ao chat. Confira sua conexão e tente novamente.';

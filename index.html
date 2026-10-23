@@ -504,6 +504,7 @@ hr.sep{border:none;border-top:2px dashed rgba(0,0,0,.06);margin:.2rem 0;}
 <script src="central-aluno.js"></script>
 <link rel="stylesheet" href="metas-aluno.css">
 <script src="metas-aluno.js"></script>
+<script src="firebase-ambiente-teste.js"></script>
 </head>
 <body>
 <div class="shape s1"></div><div class="shape s2"></div>
@@ -998,14 +999,7 @@ function atualizarIdade() {
     display.style.display = 'none';
   }
 }
-firebase.initializeApp({
-  apiKey:"AIzaSyCUpAIWuF6RAI2PhvziozIUZdzHRXf9Dl8",
-  authDomain:"salamulti.firebaseapp.com",
-  projectId:"salamulti",
-  storageBucket:"salamulti.firebasestorage.app",
-  messagingSenderId:"489820296240",
-  appId:"1:489820296240:web:8a29c187320c14f04e49f5"
-});
+window.SRMInicializarFirebase();
 const auth = firebase.auth();
 const db   = firebase.firestore();
 

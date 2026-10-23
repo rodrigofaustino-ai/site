@@ -209,6 +209,7 @@
 </style>
 <script src="exportacao.js"></script>
 <script src="vinculo-aluno.js"></script>
+<script src="firebase-ambiente-teste.js"></script>
 </head>
 <body>
 
@@ -307,20 +308,11 @@
    FIREBASE — mesmo projeto do PAEE / Relatório
    Coleção: diagnostica_srm (separada das demais)
    ========================================================================= */
-const firebaseConfig = {
-  apiKey: "AIzaSyBWvVhqLf2UEz2-02clHwnvsSF4eDUMPjA",
-  authDomain: "paee-3fea6.firebaseapp.com",
-  databaseURL: "https://paee-3fea6-default-rtdb.firebaseio.com",
-  projectId: "paee-3fea6",
-  storageBucket: "paee-3fea6.firebasestorage.app",
-  messagingSenderId: "466630982073",
-  appId: "1:466630982073:web:0109116a083d1a395f9e68"
-};
 const COLLECTION = 'diagnostica_srm';
 
 let db=null, auth=null, firebaseReady=false, professorUid=null;
 try{
-  firebase.initializeApp(firebaseConfig);
+  window.SRMInicializarFirebase();
   db=firebase.firestore();
   auth=firebase.auth();
   firebaseReady=true;
@@ -1361,23 +1353,12 @@ function abrirViaParametro(){
 }
 
 /* ════════════════════════════════════════════════════════════
-   INTEGRAÇÃO COM O DIÁRIO DE BORDO (projeto salamulti)
+   INTEGRAÇÃO COM O DIÁRIO DE BORDO (mesmo projeto de teste)
 ════════════════════════════════════════════════════════════ */
 let dbDiario = null;
 (function iniciarDiario(){
-  try{
-    const cfg = {
-      apiKey:"AIzaSyCUpAIWuF6RAI2PhvziozIUZdzHRXf9Dl8",
-      authDomain:"salamulti.firebaseapp.com",
-      projectId:"salamulti",
-      storageBucket:"salamulti.firebasestorage.app",
-      messagingSenderId:"489820296240",
-      appId:"1:489820296240:web:8a29c187320c14f04e49f5"
-    };
-    const existing = firebase.apps.find(a=>a.name==='diario');
-    const app = existing || firebase.initializeApp(cfg,'diario');
-    dbDiario = firebase.firestore(app);
-  }catch(e){ console.warn('Diário Firebase não iniciado:',e); }
+  // Neste ambiente, formulários e Diário compartilham projeto e autenticação.
+  dbDiario = db;
 })();
 
 function normNomeDiario(s){

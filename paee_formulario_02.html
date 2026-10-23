@@ -310,6 +310,7 @@
 </style>
 <script src="exportacao.js"></script>
 <script src="vinculo-aluno.js"></script>
+<script src="firebase-ambiente-teste.js"></script>
 </head>
 <body>
 
@@ -433,21 +434,12 @@
    coleção "paee_alunos" tenha regras de leitura/escrita liberadas para
    quem for usar o site.
    ========================================================================= */
-const firebaseConfig = {
-  apiKey: "AIzaSyBWvVhqLf2UEz2-02clHwnvsSF4eDUMPjA",
-  authDomain: "paee-3fea6.firebaseapp.com",
-  databaseURL: "https://paee-3fea6-default-rtdb.firebaseio.com",
-  projectId: "paee-3fea6",
-  storageBucket: "paee-3fea6.firebasestorage.app",
-  messagingSenderId: "466630982073",
-  appId: "1:466630982073:web:0109116a083d1a395f9e68"
-};
 
 let db = null;
 let firebaseReady = false;
 let auth = null;
 try{
-  firebase.initializeApp(firebaseConfig);
+  window.SRMInicializarFirebase();
   db = firebase.firestore();
   auth = firebase.auth();
   firebaseReady = true;

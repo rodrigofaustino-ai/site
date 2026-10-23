@@ -8,11 +8,12 @@ const { doc, getDoc, getDocs, collection, query, where, setDoc, updateDoc, delet
 setLogLevel('silent'); // Negações esperadas são verificadas por assertFails.
 
 async function main() {
+  const isolado = process.env.SRM_REGRAS_TESTE === '1';
   assert.equal(process.env.FIRESTORE_EMULATOR_HOST, '127.0.0.1:8087', 'Use o emulador configurado na porta 8087.');
   const env = await initializeTestEnvironment({
     projectId: 'demo-colaboracao',
     firestore: { host: '127.0.0.1', port: 8087,
-      rules: fs.readFileSync(path.join(__dirname, '../firebase/colaboracao-etapa-06.rules'), 'utf8') }
+      rules: fs.readFileSync(path.join(__dirname, isolado ? '../firebase/ambiente-teste.rules' : '../firebase/colaboracao-etapa-06.rules'), 'utf8') }
   });
   let checks = 0;
   const yes = async promise => { await assertSucceeds(promise); checks++; };
@@ -64,7 +65,7 @@ async function main() {
       await no(deleteDoc(doc(b, item)));
       await no(getDoc(doc(anon, item)));
       await no(getDocs(collection(b, `alunos/aluno-a/${sub}`)));
-      await yes(getDoc(doc(admin, item)));
+      await (isolado ? no : yes)(getDoc(doc(admin, item)));
       await no(setDoc(doc(b, `alunos/inexistente/${sub}/novo`), { texto: 'Sem aluno' }));
     }
     for (const root of ['frequenciaSemanas', 'plannerMensal', 'notas']) {
@@ -144,8 +145,28 @@ async function main() {
     await no(setDoc(doc(anon, `respostasFamilia/${token}`), resposta));
     await yes(updateDoc(doc(a, `convitesFamilia/${token}`), { ativa: false }));
     await no(getDoc(doc(anon, `convitesFamilia/${token}`)));
-    // A transferência administrativa deve retirar o acesso do antigo dono.
-    await yes(updateDoc(doc(admin, 'alunos/aluno-a'), { professorUid: 'b' }));
+    if (isolado) {
+      // As coleções antes separadas em outro projeto também ficam privadas.
+      for (const root of ['paee_alunos', 'diagnostica_srm', 'relatorios_srm']) {
+        await yes(setDoc(doc(a, `${root}/formulario`), { professorUid: 'a', alunoId: 'aluno-a', texto: 'Fictício' }));
+        await yes(getDocs(query(collection(a, root), where('professorUid', '==', 'a'))));
+        await no(getDocs(collection(b, root)));
+        await no(getDoc(doc(b, `${root}/formulario`)));
+        await no(getDoc(doc(anon, `${root}/formulario`)));
+        await no(updateDoc(doc(b, `${root}/formulario`), { professorUid: 'b' }));
+        await no(updateDoc(doc(a, `${root}/formulario`), { professorUid: 'b' }));
+        await no(setDoc(doc(b, `${root}/forjado`), { professorUid: 'a' }));
+        await yes(updateDoc(doc(a, `${root}/formulario`), { texto: 'Revisado' }));
+        await no(deleteDoc(doc(b, `${root}/formulario`)));
+        await yes(deleteDoc(doc(a, `${root}/formulario`)));
+      }
+      await no(updateDoc(doc(admin, 'alunos/aluno-a'), { professorUid: 'b' }));
+      // Simula uma futura transferência por serviço confiável, fora do cliente.
+      await env.withSecurityRulesDisabled(context => updateDoc(doc(context.firestore(), 'alunos/aluno-a'), { professorUid: 'b' }));
+    } else {
+      // A transferência administrativa deve retirar o acesso do antigo dono.
+      await yes(updateDoc(doc(admin, 'alunos/aluno-a'), { professorUid: 'b' }));
+    }
     await no(getDoc(doc(a, 'alunos/aluno-a/pei/exemplo')));
     await yes(getDoc(doc(b, 'alunos/aluno-a/pei/exemplo')));
     console.log(`${checks} verificações de autorização passaram no emulador.`);
