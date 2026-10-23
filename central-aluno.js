@@ -42,6 +42,7 @@
     const actions = node('div', 'central-actions');
     actions.append(button('Registrar atendimento', () => navegar('atendimento'), !alunoId, true),
       button('Editar cadastro', () => navegar('cadastro')),
+      button('Metas e acompanhamento', () => navegar('metas'), !alunoId),
       button('Ver histórico completo', () => navegar('historico'), !alunoId));
     root.append(actions, node('h3', '', 'Documentos do aluno'));
     const docs = node('div', 'central-docs');

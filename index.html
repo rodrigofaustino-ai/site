@@ -502,6 +502,8 @@ hr.sep{border:none;border-top:2px dashed rgba(0,0,0,.06);margin:.2rem 0;}
 <script src="exportacao.js"></script>
 <link rel="stylesheet" href="central-aluno.css">
 <script src="central-aluno.js"></script>
+<link rel="stylesheet" href="metas-aluno.css">
+<script src="metas-aluno.js"></script>
 </head>
 <body>
 <div class="shape s1"></div><div class="shape s2"></div>
@@ -795,6 +797,7 @@ hr.sep{border:none;border-top:2px dashed rgba(0,0,0,.06);margin:.2rem 0;}
     </div>
 
     <section class="central-aluno" id="centralAluno"></section>
+    <section id="metasAluno" class="card metas-aluno"></section>
 
     <div class="card">
       <div class="color-strip" style="background:linear-gradient(90deg,var(--coral),var(--orange),var(--yellow))"></div>
@@ -912,6 +915,7 @@ hr.sep{border:none;border-top:2px dashed rgba(0,0,0,.06);margin:.2rem 0;}
         </div>
         <div class="date-tags" id="recentDates"></div>
       </div>
+      <div id="metasVinculoAtendimento"></div>
       <div class="field">
         <label>🗒️ Relato do atendimento</label>
         <textarea class="entry-text" id="entryText" placeholder="Descreva os acontecimentos do atendimento: atividades realizadas, comportamentos, avanços, dificuldades, interações, respostas aos estímulos..."></textarea>
@@ -1157,6 +1161,7 @@ auth.onAuthStateChanged(async user => {
     perfilLoadVersion++;
     hideLoad();
     $('centralAluno').replaceChildren();
+    window.MetasAluno.ativar(null);
     currentStudentId=null;currentProfile={};currentEntries=[];currentPhotoB64=null;contacts=[];
     $('loginEmail').value='';
     $('loginPassword').value='';
@@ -1242,6 +1247,7 @@ async function backfillProfessorEmail(user){
 
 /* LOGOUT — chama auth.signOut() diretamente, sem pontes */
 async function doLogout(){
+  if (!window.MetasAluno.podeSair()) return;
   try{
     if(window.DiarioPresenca) await window.DiarioPresenca.sair();
     await auth.signOut();
@@ -2599,6 +2605,8 @@ async function deleteStudent(id,nome){
    NAVIGATION
 ════════════════════════════════════════ */
 async function goHome(){
+  if (!window.MetasAluno.podeSair()) return;
+  window.MetasAluno.ativar(null);
   perfilLoadVersion++;
   hideLoad();
   if(unsubEntries){unsubEntries();unsubEntries=null;}
@@ -2609,6 +2617,8 @@ async function goHome(){
 }
 
 function goNewStudent(){
+  if (!window.MetasAluno.podeSair()) return;
+  window.MetasAluno.ativar(null);
   perfilLoadVersion++;
   hideLoad();
   centralRegistrosStatus = 'pronto';
@@ -2623,6 +2633,8 @@ function goNewStudent(){
 }
 
 async function openStudent(id){
+  if (!window.MetasAluno.podeSair()) return;
+  window.MetasAluno.ativar(null);
   const versao = ++perfilLoadVersion, ownerUid = professorUid;
   centralRegistrosStatus = 'carregando';
   if(unsubEntries){unsubEntries();unsubEntries=null;}
@@ -2640,6 +2652,7 @@ async function openStudent(id){
     hideLoad(); showToast('Não foi possível abrir o aluno. Tente novamente pela lista.');
     showScreen('home'); return;
   }
+  configurarMetasAluno(id);
   renderCentralAluno();
   const nome=currentProfile.nome||'Aluno';
   $('breadcrumbName').textContent=nome;$('profileTitle').textContent=nome;
@@ -3638,6 +3651,7 @@ async function saveProfile(){
     currentProfile=data;
     if (eraNovo) {
       centralRegistrosStatus = 'carregando';
+      configurarMetasAluno(currentStudentId);
       acompanharRegistrosAluno(currentStudentId);
     }
     renderCentralAluno();
@@ -3657,18 +3671,21 @@ async function saveEntry(){
   const studentId=currentStudentId, ownerUid=professorUid;
   const date=val('entryDate');
   const text=val('entryText').trim();
+  const metaVinculos=window.MetasAluno.vinculosSelecionados();
+  const metaIds=metaVinculos.map(meta=>meta.id);
   if(!date){showToast('Selecione a data do atendimento');return;}
   if(!text){showToast('Escreva o relato antes de salvar');return;}
   $('btnSalvarRegistro').disabled=true;setBadge('syncing','Salvando...');
   try{
     await db.collection('alunos').doc(studentId).collection('registros').add({
-      date,text,humor:val('humorVal'),por:val('registradoPor'),createdAt:new Date().toISOString()
+      date,text,humor:val('humorVal'),por:val('registradoPor'),createdAt:new Date().toISOString(),...(metaIds.length?{metaIds,metaVinculos}:{})
     });
     await db.collection('alunos').doc(studentId).set({ultimoRegistro:date},{merge:true});
     if(currentStudentId===studentId && professorUid===ownerUid){
       $('entryText').value='';$('charCount').textContent='0 caracteres';
       document.querySelectorAll('.humor-opt').forEach(o=>o.classList.remove('sel'));$('humorVal').value='';
       $('entryDate').value=todayStr();
+      window.MetasAluno.limparSelecao();
     }
     setBadge('online','Nuvem conectada');showToast('✓ Registro salvo na nuvem!');
   }catch(e){setBadge('offline','Erro');showToast('Erro ao salvar');console.error(e);}
@@ -3700,6 +3717,7 @@ function renderEntriesList(){
         ${e.por?`<span class="entry-by">👤 ${esc(e.por)}</span>`:''}
         <button class="del-entry-btn" data-eid="${e._id}">🗑️</button>
       </div>
+      ${Array.isArray(e.metaIds)?e.metaIds.filter(id=>typeof id==='string').map(id=>`<span class="meta-entry-tag">${esc((Array.isArray(e.metaVinculos)?e.metaVinculos.find(meta=>meta.id===id)?.objetivo:null)||window.MetasAluno.rotulo(id))}</span>`).join(''):''}
       <div class="entry-body${long?' collapsed':''}" id="eb${i}">${esc(e.text)}</div>
       ${long?`<button class="entry-expand" data-idx="${i}">▼ Ler mais</button>`:''}
     </div>`;
@@ -3708,16 +3726,25 @@ function renderEntriesList(){
   list.querySelectorAll('[data-idx]').forEach(btn=>btn.addEventListener('click',()=>toggleEntry(+btn.dataset.idx)));
 }
 
+function configurarMetasAluno(id){
+  const uid=professorUid;
+  window.MetasAluno.ativar({alunoId:id,uid,db,
+    vigente:()=>currentStudentId===id && professorUid===uid,
+    alterou:()=>{if(currentStudentId===id && professorUid===uid)renderEntriesList();}
+  });
+}
+
 function renderCentralAluno(){
+  window.MetasAluno.atualizarRegistros(currentEntries,centralRegistrosStatus);
   window.CentralAluno.render({
     alunoId: currentStudentId,
     perfil: {...currentProfile, atendimentos: getAtendimentos(currentProfile)},
     registros: currentEntries,
     status: centralRegistrosStatus,
     navegar: destino => {
-      const campo = $(destino === 'cadastro' ? 'nomeAluno' : destino === 'atendimento' ? 'entryText' : 'entriesList');
-      if (destino === 'historico') campo.tabIndex = -1;
-      (destino === 'historico' ? campo : campo.closest('.card')).scrollIntoView({block:'start'});
+      const campo = $(destino === 'metas' ? 'metasAluno' : destino === 'cadastro' ? 'nomeAluno' : destino === 'atendimento' ? 'entryText' : 'entriesList');
+      if (destino === 'historico' || destino === 'metas') campo.tabIndex = -1;
+      (destino === 'historico' || destino === 'metas' ? campo : campo.closest('.card')).scrollIntoView({block:'start'});
       campo.focus({preventScroll:true});
     },
     documento: abrirDocumentoCentral
