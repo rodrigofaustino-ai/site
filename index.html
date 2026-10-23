@@ -500,6 +500,8 @@ hr.sep{border:none;border-top:2px dashed rgba(0,0,0,.06);margin:.2rem 0;}
 }
 </style>
 <script src="exportacao.js"></script>
+<link rel="stylesheet" href="central-aluno.css">
+<script src="central-aluno.js"></script>
 </head>
 <body>
 <div class="shape s1"></div><div class="shape s2"></div>
@@ -664,6 +666,7 @@ hr.sep{border:none;border-top:2px dashed rgba(0,0,0,.06);margin:.2rem 0;}
         <div class="color-strip" style="background:linear-gradient(90deg,var(--blue),var(--teal),var(--green))"></div>
         <div class="section-head"><div class="section-badge" style="background:var(--blue-l)">📋</div>Plano Educacional Individualizado — PEI</div>
         <p style="font-size:13px;color:var(--muted);margin:0 0 12px;">Selecione um aluno para visualizar ou enviar o PEI. O arquivo DOCX é convertido automaticamente e salvo na nuvem.</p>
+        <button class="back-btn" id="btnCentralVoltarAluno" type="button" hidden style="margin-bottom:12px;">← Voltar ao aluno</button>
         <div id="peiListaAlunos" class="students-grid"></div>
       </div>
       <!-- Visualizador do PEI -->
@@ -788,8 +791,10 @@ hr.sep{border:none;border-top:2px dashed rgba(0,0,0,.06);margin:.2rem 0;}
     </div>
     <div class="topbar" style="background:linear-gradient(135deg,var(--coral),#c0392b)">
       <div class="topbar-icon">⭐</div>
-      <div><h1 id="profileTitle">Informações do Aluno</h1><p>Dados pessoais, escola, laudo e responsáveis</p></div>
+      <div><h1 id="profileTitle">Informações do Aluno</h1><p>Visão geral, documentos e acompanhamento do aluno</p></div>
     </div>
+
+    <section class="central-aluno" id="centralAluno"></section>
 
     <div class="card">
       <div class="color-strip" style="background:linear-gradient(90deg,var(--coral),var(--orange),var(--yellow))"></div>
@@ -1033,6 +1038,8 @@ let currentEntries   = [];
 let currentProfile   = {};
 let currentPhotoB64  = null;
 let unsubEntries     = null;
+let centralRegistrosStatus = 'carregando';
+let perfilLoadVersion = 0;
 
 /* ════════════════════════════════════════
    HELPERS
@@ -1147,6 +1154,9 @@ auth.onAuthStateChanged(async user => {
     professorUid = null;
     turnoAtual = null;
     if(unsubEntries){unsubEntries();unsubEntries=null;}
+    perfilLoadVersion++;
+    hideLoad();
+    $('centralAluno').replaceChildren();
     currentStudentId=null;currentProfile={};currentEntries=[];currentPhotoB64=null;contacts=[];
     $('loginEmail').value='';
     $('loginPassword').value='';
@@ -1268,6 +1278,12 @@ document.addEventListener('DOMContentLoaded', () => {
   $('btnPlannerPrev').addEventListener('click', plannerPrevMonth);
   $('btnPlannerNext').addEventListener('click', plannerNextMonth);
   $('btnPeiVoltar').addEventListener('click', voltarPeiLista);
+  $('btnCentralVoltarAluno').addEventListener('click', () => {
+    if (!currentStudentId || $('btnCentralVoltarAluno').dataset.alunoId !== currentStudentId) return;
+    showScreen('profile');
+    $('centralAlunoTitulo').tabIndex = -1;
+    $('centralAlunoTitulo').focus();
+  });
   document.querySelectorAll('.humor-opt').forEach(el=>{
     el.addEventListener('click', ()=>{
       document.querySelectorAll('.humor-opt').forEach(o=>o.classList.remove('sel'));
@@ -1294,7 +1310,10 @@ function switchTab(name){
   if(name==='diagnostica') renderDiagnosticaList();
   if(name==='planner') renderPlanner();
   if(name==='notas') renderNotas();
-  if(name==='pei') renderPeiList();
+  if(name==='pei') {
+    $('btnCentralVoltarAluno').hidden = true;
+    return renderPeiList();
+  }
 }
 
 /* ════════════════════════════════════════
@@ -2576,6 +2595,8 @@ async function deleteStudent(id,nome){
    NAVIGATION
 ════════════════════════════════════════ */
 async function goHome(){
+  perfilLoadVersion++;
+  hideLoad();
   if(unsubEntries){unsubEntries();unsubEntries=null;}
   showScreen('home');
   await renderStudentList();
@@ -2584,6 +2605,9 @@ async function goHome(){
 }
 
 function goNewStudent(){
+  perfilLoadVersion++;
+  hideLoad();
+  centralRegistrosStatus = 'pronto';
   if(unsubEntries){unsubEntries();unsubEntries=null;}
   currentStudentId=null;currentProfile={};currentEntries=[];currentPhotoB64=null;contacts=[];turnoAlunoSelecionado='';
   clearForm();
@@ -2591,19 +2615,28 @@ function goNewStudent(){
   showScreen('profile');$('entryDate').value=todayStr();
   renderContacts();renderEntriesList();renderRecentDates();
   if(!contacts.length)addContact();
+  renderCentralAluno();
 }
 
 async function openStudent(id){
+  const versao = ++perfilLoadVersion, ownerUid = professorUid;
+  centralRegistrosStatus = 'carregando';
   if(unsubEntries){unsubEntries();unsubEntries=null;}
   showLoad('Carregando aluno...');
-  currentStudentId=id;currentEntries=[];currentPhotoB64=null;contacts=[];clearForm();
+  currentStudentId=id;currentProfile={};currentEntries=[];currentPhotoB64=null;contacts=[];clearForm();
   laudoImagens=[];
   try{
     const snap=await db.collection('alunos').doc(id).get();
-    if(snap.exists){
-      currentProfile=snap.data();fillForm(currentProfile);
-    }
-  }catch(e){console.error(e);}
+    if (versao !== perfilLoadVersion || professorUid !== ownerUid) return;
+    if (!snap.exists) throw new Error('Aluno não encontrado');
+    currentProfile=snap.data();fillForm(currentProfile);
+  }catch(e){
+    if (versao !== perfilLoadVersion || professorUid !== ownerUid) return;
+    console.error(e); currentStudentId=null; currentProfile={};
+    hideLoad(); showToast('Não foi possível abrir o aluno. Tente novamente pela lista.');
+    showScreen('home'); return;
+  }
+  renderCentralAluno();
   const nome=currentProfile.nome||'Aluno';
   $('breadcrumbName').textContent=nome;$('profileTitle').textContent=nome;
   showScreen('profile');$('entryDate').value=todayStr();hideLoad();
@@ -2634,12 +2667,22 @@ async function openStudent(id){
   // Botão IA Observações clínicas
   const btnIaObs=document.getElementById('btnIaObsClinicas');
   if(btnIaObs){ btnIaObs.addEventListener('click',melhorarObsClinicasIA); }
+  acompanharRegistrosAluno(id, versao, ownerUid);
+}
+
+function acompanharRegistrosAluno(id, versao = perfilLoadVersion, ownerUid = professorUid){
+  if (unsubEntries) {unsubEntries(); unsubEntries=null;}
   unsubEntries=db.collection('alunos').doc(id).collection('registros')
     .orderBy('date','desc')
     .onSnapshot(snap=>{
+      if (versao !== perfilLoadVersion || professorUid !== ownerUid || currentStudentId !== id) return;
       currentEntries=[];snap.forEach(d=>currentEntries.push({_id:d.id,...d.data()}));
-      renderEntriesList();renderRecentDates();
-    }, e=>console.error(e));
+      centralRegistrosStatus = 'pronto';
+      renderEntriesList();renderRecentDates();renderCentralAluno();
+    }, e=>{
+      if (versao !== perfilLoadVersion || professorUid !== ownerUid || currentStudentId !== id) return;
+      console.error(e); centralRegistrosStatus = 'erro'; renderCentralAluno();
+    });
 }
 
 /* ════════════════════════════════════════
@@ -3570,6 +3613,7 @@ function selecionarTurnoAluno(turno){
 }
 
 async function saveProfile(){
+  const eraNovo = !currentStudentId;
   setBadge('syncing','Salvando...');$('btnSalvarPerfil').disabled=true;showLoad('Salvando...');
   const data={
     nome:val('nomeAluno'),dataNasc:val('dataNasc'),turma:val('turma'),escola:val('escola'),
@@ -3588,6 +3632,11 @@ async function saveProfile(){
     if(currentStudentId){await db.collection('alunos').doc(currentStudentId).set(data,{merge:true});}
     else{const ref=await db.collection('alunos').add(data);currentStudentId=ref.id;}
     currentProfile=data;
+    if (eraNovo) {
+      centralRegistrosStatus = 'carregando';
+      acompanharRegistrosAluno(currentStudentId);
+    }
+    renderCentralAluno();
     $('breadcrumbName').textContent=data.nome||'Aluno';$('profileTitle').textContent=data.nome||'Aluno';
     setBadge('online','Nuvem conectada');showToast('✓ Informações salvas na nuvem!');
     // Recarrega a lista para que o filtro de turno reflita a mudança imediatamente
@@ -3655,6 +3704,46 @@ function renderEntriesList(){
   list.querySelectorAll('[data-idx]').forEach(btn=>btn.addEventListener('click',()=>toggleEntry(+btn.dataset.idx)));
 }
 
+function renderCentralAluno(){
+  window.CentralAluno.render({
+    alunoId: currentStudentId,
+    perfil: {...currentProfile, atendimentos: getAtendimentos(currentProfile)},
+    registros: currentEntries,
+    status: centralRegistrosStatus,
+    navegar: destino => {
+      const campo = $(destino === 'cadastro' ? 'nomeAluno' : destino === 'atendimento' ? 'entryText' : 'entriesList');
+      if (destino === 'historico') campo.tabIndex = -1;
+      (destino === 'historico' ? campo : campo.closest('.card')).scrollIntoView({block:'start'});
+      campo.focus({preventScroll:true});
+    },
+    documento: abrirDocumentoCentral
+  });
+}
+
+async function abrirDocumentoCentral(tipo){
+  if (!currentStudentId) {showToast('Salve o cadastro do aluno primeiro.'); return;}
+  const id = currentStudentId, perfil = {...currentProfile}, ownerUid = professorUid;
+  const lista = [{id, ...perfil}];
+  if (tipo === 'paee') return abrirPaeeDoAluno(perfil.nome, id, lista);
+  if (tipo === 'relatorio') return abrirRelatorioDoAluno(perfil.nome, id, lista);
+  if (tipo === 'diagnostica') return abrirDiagnosticaDoAluno(perfil.nome, id, lista);
+  if (tipo === 'pei') {
+    voltarPeiLista();
+    showScreen('home');
+    await switchTab('pei');
+    if (professorUid !== ownerUid || currentStudentId !== id || !$('tabPei').classList.contains('active') || !$('screen-home').classList.contains('active')) return;
+    const item = Array.from($('peiListaAlunos').querySelectorAll('.pei-item')).find(el => el.dataset.alunoId === id);
+    if (item) {
+      const voltar = $('btnCentralVoltarAluno');
+      voltar.dataset.alunoId = id;
+      voltar.textContent = '← Voltar a ' + (perfil.nome || 'este aluno');
+      voltar.hidden = false;
+      item.classList.add('central-spotlight'); item.tabIndex = -1;
+      item.scrollIntoView({block:'center'}); item.focus({preventScroll:true});
+    } else showToast('Aluno não localizado na lista de PEI. Confira o turno e tente novamente.');
+  }
+}
+
 function renderRecentDates(){
   const dates=[...new Set(currentEntries.map(e=>e.date))].slice(0,6);
   $('recentDates').innerHTML=dates.map(d=>`<div class="date-tag" data-d="${d}">${fmtShort(d)}</div>`).join('');
@@ -3692,6 +3781,7 @@ async function renderPeiList(){
       const peiMeta = temPei ? peiDoc.data() : null;
       const item = document.createElement('div');
       item.className = 'pei-item';
+      item.dataset.alunoId = a.id;
       const info = document.createElement('div');
       info.className = 'pei-item-info';
       const nomeEl = document.createElement('strong');
