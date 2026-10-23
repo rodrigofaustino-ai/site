@@ -4,12 +4,17 @@ const assert=require('node:assert/strict');
 const fs=require('node:fs'),path=require('node:path'),http=require('node:http');
 const root=path.resolve(__dirname,'..');
 const mock=`
-window.mockWrites=[];window.mockDeny=false;
+window.mockWrites=[];window.mockDeny=false;window.mockMetaError=false;window.mockPendingMetas=null;
 window.mockOriginal={peiHtml:'<h1>PEI anterior</h1><p><strong>Rótulo anterior:</strong></p><p>Texto original preservado.</p><table><tr><th>Cabeçalho</th><th>Descrição</th></tr><tr><td>Aspecto</td><td>Observação fictícia.</td></tr></table><script>parent.executou=true</script>',peiComprimido:false,peiData:'2026-10-20T12:00:00.000Z',professorUid:'prof-teste',peiNomeArquivo:'original.docx'};
 window.mockStore={
  'alunos/a':{nome:'Ana Teste',dataNasc:'2015-03-14',escola:'Escola Horizonte',turma:'3º A',periodo:'Matutino',professorUid:'prof-teste'},
  'alunos/b':{nome:'Aluno de outro professor',professorUid:'outro'},
  'alunos/c':{nome:'Aluno Novo',professorUid:'prof-teste'},
+ 'alunos/a/metas/meta-a':{objetivo:'Participar de atividades coletivas com apoio visual.',criterio:'Registrar a participação e os apoios oferecidos.',apoios:'Sequência visual.',revisao:'2026-11-23',responsavel:'Professora fictícia',status:'ativa',revision:1},
+ 'alunos/a/metas/meta-b':{objetivo:'Ampliar a comunicação de preferências.',criterio:'Observar as escolhas durante as atividades.',status:'em_revisao',revision:2},
+ 'alunos/a/metas/meta-c':{objetivo:'META ARQUIVADA NÃO IMPORTAR',status:'arquivada'},
+ 'alunos/a/metas/meta-d':{objetivo:'META CONCLUÍDA NÃO IMPORTAR',status:'concluida'},
+ 'alunos/b/metas/meta-outro':{objetivo:'META DE OUTRO ALUNO NÃO IMPORTAR',status:'ativa'},
  'alunos/a/pei/atual':mockOriginal
 };
 const clone=data=>data==null?data:JSON.parse(JSON.stringify(data));
@@ -18,6 +23,10 @@ function ref(parts){return {
  doc(id){return ref([...parts,id]);},collection(name){return ref([...parts,name]);},where(key,op,value){return {...this,filter:{key,value}};},
  async get(){
   const name=parts.join('/');
+  if(parts.at(-1)==='metas'){
+    if(mockMetaError)throw new Error('Falha simulada na leitura das metas');
+    if(mockPendingMetas)return await mockPendingMetas;
+  }
   if(parts.length%2===0)return {id:parts.at(-1),exists:!!mockStore[name],data:()=>clone(mockStore[name])};
   const docs=Object.entries(mockStore).filter(([key,data])=>key.startsWith(name+'/')&&key.split('/').length===parts.length+1&&(!this.filter||data[this.filter.key]===this.filter.value)).map(([key,data])=>({id:key.split('/').at(-1),data:()=>clone(data)}));
   return {docs};
@@ -253,6 +262,65 @@ let total=0;function check(a,b){assert.deepEqual(a,b);total++;}
   check(await ai.locator('[data-path]').count(),0);
   check(await ai.locator('#app-shell').isVisible(),false);
   check(aiErrors,[]);
+  // As metas são selecionadas e acrescentadas ao PEI sem sobrescrever seu texto.
+  const bridge=await context.newPage();const bridgeErrors=[];bridge.on('pageerror',e=>bridgeErrors.push(e.message));
+  await bridge.goto(origin+'/pei_formulario.html?alunoId=a',{waitUntil:'networkidle'});
+  const objetivo=bridge.locator('[data-path="estrategias.objetivosMetas"]');
+  const metasBox=bridge.locator('.pei-metas');
+  check(await metasBox.locator('input[type=checkbox]').count(),0);
+  await objetivo.fill('Objetivos já escritos pelo professor.');
+  await bridge.getByRole('button',{name:'Consultar metas do acompanhamento',exact:true}).click();
+  check(await metasBox.locator('input[type=checkbox]').count(),2);
+  check((await metasBox.textContent()).includes('NÃO IMPORTAR'),false);
+  check(await objetivo.inputValue(),'Objetivos já escritos pelo professor.');
+  check(await bridge.evaluate(()=>mockWrites.length),0);
+  await metasBox.locator('input[value="meta-a"]').check();
+  check((await bridge.locator('#pei-metas-previa').inputValue()).includes('Revisar em: 23/11/2026'),true);
+  check(await bridge.locator('#pei-metas-previa').evaluate(n=>n.readOnly),true);
+  await bridge.getByRole('button',{name:'Acrescentar metas selecionadas',exact:true}).click();
+  const primeiroTexto=await objetivo.inputValue();
+  check(primeiroTexto.startsWith('Objetivos já escritos pelo professor.\n\n'),true);
+  check(primeiroTexto.includes('Objetivo: Participar de atividades coletivas com apoio visual.'),true);
+  check(await bridge.evaluate(()=>mockWrites.length),0);
+  await bridge.getByRole('button',{name:'Acrescentar metas selecionadas',exact:true}).click();
+  check(await objetivo.inputValue(),primeiroTexto);
+  check((await metasBox.locator('.pei-metas-status').textContent()).includes('Nada foi acrescentado'),true);
+  await metasBox.locator('input[value="meta-b"]').check();
+  await objetivo.fill('Texto ajustado pelo professor.\n'+primeiroTexto);
+  await bridge.getByRole('button',{name:'Acrescentar metas selecionadas',exact:true}).click();
+  const textoCompleto=await objetivo.inputValue();
+  check(textoCompleto.startsWith('Texto ajustado pelo professor.\n'+primeiroTexto),true);
+  check(textoCompleto.split('Objetivo: Participar de atividades coletivas com apoio visual.').length-1,1);
+  check(textoCompleto.split('Objetivo: Ampliar a comunicação de preferências.').length-1,1);
+  await bridge.locator('#btn-save').click();await bridge.waitForFunction(()=>document.querySelector('#save-note').textContent.startsWith('PEI salvo'));
+  check(await bridge.evaluate(()=>mockStore['alunos/a/pei/atual'].peiFormulario.estrategias.objetivosMetas),textoCompleto);
+  check(await bridge.evaluate(()=>mockWrites.some(w=>w.path.includes('/metas/'))),false);
+  await bridge.evaluate(()=>{mockStore['alunos/a/metas/meta-a'].objetivo='Meta alterada depois do PEI salvo.';});
+  check(await objetivo.inputValue(),textoCompleto);
+  await bridge.locator('#btn-back-list').click();await bridge.locator('#student-grid .student-card').filter({hasText:'Ana Teste'}).getByRole('button',{name:'Abrir PEI',exact:true}).click();
+  check(await objetivo.inputValue(),textoCompleto);
+  for(const format of ['docx','odt']){
+    const [download]=await Promise.all([bridge.waitForEvent('download',{timeout:60000}),bridge.locator('#btn-export-'+format).click()]);
+    await download.saveAs('/tmp/site-results/pei-com-metas.'+format);
+  }
+  for(const width of [390,320]){await bridge.setViewportSize({width,height:844});check(await bridge.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);}
+  // Uma resposta tardia não repovoa o formulário depois de sair da conta.
+  await bridge.evaluate(()=>{mockPendingMetas=new Promise(resolve=>window.concluirConsultaMetas=resolve);});
+  await bridge.getByRole('button',{name:'Consultar metas do acompanhamento',exact:true}).click();
+  await bridge.locator('#btn-logout').click();
+  await bridge.evaluate(()=>concluirConsultaMetas({docs:[{id:'tardia',data:()=>({objetivo:'NÃO EXIBIR',status:'ativa'})}]}));
+  check(await bridge.locator('.pei-metas').count(),0);
+  check(await bridge.locator('#app-shell').isVisible(),false);
+  const semMetas=await context.newPage();
+  await semMetas.goto(origin+'/pei_formulario.html?alunoId=c',{waitUntil:'networkidle'});
+  await semMetas.getByRole('button',{name:'Consultar metas do acompanhamento',exact:true}).click();
+  check((await semMetas.locator('.pei-metas-status').textContent()).includes('Não há metas ativas'),true);
+  await semMetas.locator('[data-path="estrategias.objetivosMetas"]').fill('Texto que deve ser preservado.');
+  await semMetas.evaluate(()=>{mockMetaError=true;});
+  await semMetas.getByRole('button',{name:'Consultar metas do acompanhamento',exact:true}).click();
+  check((await semMetas.locator('.pei-metas-status').textContent()).includes('Não foi possível consultar'),true);
+  check(await semMetas.locator('[data-path="estrategias.objetivosMetas"]').inputValue(),'Texto que deve ser preservado.');
+  check(bridgeErrors,[]);
   check(errors,[]);
   console.log(total+' verificações do formulário PEI aprovadas; DOCX/ODT baixados; Firebase simulado.');
  }finally{if(browser)await browser.close();await new Promise(resolve=>server.close(resolve));}

@@ -65,7 +65,65 @@
   function setBusy(value) {
     busy=value;
     for(const id of ['btn-save','btn-back-list','btn-export-docx','btn-export-odt','btn-history'])$(id).disabled=value;
-    $('form-sections').querySelectorAll('input,textarea,.pei-ai button').forEach(field=>field.disabled=value||field.dataset.loading==='true');
+    $('form-sections').querySelectorAll('input,textarea,.pei-ai button,.pei-metas button').forEach(field=>field.disabled=value||field.dataset.loading==='true');
+  }
+  function adicionarMetasAoPei(wrap,input) {
+    const token=generation,formState=estado,id=alunoId;
+    const valido=()=>generation===token&&estado===formState&&input.isConnected&&!!user&&alunoId===id;
+    const box=el('section');box.className='pei-metas';
+    box.append(el('h3','Metas cadastradas no acompanhamento'));
+    const hint=el('p','Consulte as metas ativas e em revisão deste aluno e escolha quais acrescentar. O texto existente será mantido. Alterações futuras nas metas não atualizam este PEI automaticamente.');box.append(hint);
+    const consultar=el('button','Consultar metas do acompanhamento');consultar.type='button';consultar.className='btn secondary';
+    const status=el('p');status.className='pei-metas-status';status.setAttribute('role','status');
+    const list=el('div');list.className='pei-metas-lista';
+    const previewWrap=el('div');previewWrap.hidden=true;
+    const label=el('label','Prévia das metas selecionadas');label.htmlFor='pei-metas-previa';
+    const preview=el('textarea');preview.id='pei-metas-previa';preview.readOnly=true;preview.rows=10;
+    const inserir=el('button','Acrescentar metas selecionadas');inserir.type='button';inserir.className='btn';
+    previewWrap.append(label,preview,inserir);box.append(consultar,status,list,previewWrap);wrap.append(box);
+    let metas=[],selected=new Set(),loading=false;
+    const textoMeta=meta=>[
+      ['Objetivo',meta.objetivo],['Ponto de partida',meta.situacaoInicial],['Como acompanhar',meta.criterio],
+      ['Estratégias e recursos',meta.estrategias],['Apoios previstos',meta.apoios],['Responsável',meta.responsavel],
+      ['Revisar em',/^\d{4}-\d{2}-\d{2}$/.test(meta.revisao||'')?meta.revisao.split('-').reverse().join('/'):'']
+    ].filter(([,text])=>typeof text==='string'&&text.trim()).map(([label,text])=>label+': '+text.trim()).join('\n');
+    const escolhidas=()=>metas.filter(meta=>selected.has(meta.id));
+    function atualizarPrevia(){
+      preview.value=escolhidas().map(textoMeta).join('\n\n');previewWrap.hidden=!selected.size;
+    }
+    consultar.addEventListener('click',async()=>{
+      if(busy||loading||!valido())return;
+      loading=true;consultar.dataset.loading='true';consultar.disabled=true;status.textContent='Carregando metas…';
+      list.replaceChildren();selected.clear();metas=[];atualizarPrevia();
+      try{
+        const snapshot=await db.collection('alunos').doc(id).collection('metas').get();
+        if(!valido())return;
+        metas=snapshot.docs.map(doc=>({...doc.data(),id:doc.id})).filter(meta=>['ativa','em_revisao'].includes(meta.status)&&typeof meta.objetivo==='string'&&meta.objetivo.trim());
+        metas.sort((a,b)=>String(a.revisao||'').localeCompare(String(b.revisao||''))||a.objetivo.localeCompare(b.objetivo,'pt-BR'));
+        status.textContent=metas.length?'Selecione as metas e confira a prévia antes de acrescentar. Nenhuma alteração foi salva.':'Não há metas ativas ou em revisão neste cadastro. Cadastre-as em Metas e acompanhamento no Diário.';
+        for(const meta of metas){
+          const row=el('label');const check=el('input');check.type='checkbox';check.value=meta.id;
+          check.addEventListener('change',()=>{if(check.checked)selected.add(meta.id);else selected.delete(meta.id);atualizarPrevia();});
+          row.append(check,el('span',meta.objetivo+' — '+(meta.status==='ativa'?'Ativa':'Em revisão')));list.append(row);
+        }
+      }catch(error){if(valido())status.textContent='Não foi possível consultar as metas. Seu texto foi mantido. Confira a conexão e as permissões e tente novamente.';}
+      finally{loading=false;delete consultar.dataset.loading;consultar.disabled=busy;}
+    });
+    inserir.addEventListener('click',()=>{
+      if(busy||loading||!valido())return;
+      const normalizar=text=>text.normalize('NFKC').replace(/\s+/g,' ').trim().toLocaleLowerCase('pt-BR');
+      let existente=normalizar(input.value);
+      const blocos=escolhidas().map(textoMeta).filter(text=>{
+        const normalizado=normalizar(text);
+        if(existente.includes(normalizado))return false;
+        existente+=' '+normalizado;return true;
+      });
+      if(!blocos.length){status.textContent='As metas selecionadas já constam no texto com estas informações. Nada foi acrescentado.';return;}
+      input.value+=(input.value.trim()?'\n\n':'')+blocos.join('\n\n');
+      input.dispatchEvent(new Event('input',{bubbles:true}));
+      status.textContent=blocos.length+' meta(s) acrescentada(s). Revise o texto e clique em Salvar para gravar o PEI.';
+      input.focus();input.setSelectionRange(input.value.length,input.value.length);input.scrollTop=input.scrollHeight;
+    });
   }
   function textoIA(response) {
     if(typeof response==='string')return response;
@@ -169,6 +227,7 @@
           $('save-note').textContent='Alterações ainda não salvas.';
         });
         wrap.append(input);
+        if(path==='estrategias.objetivosMetas')adicionarMetasAoPei(wrap,input);
         if(guide)adicionarIA(wrap,input,path,label);
         body.append(wrap);
       }
