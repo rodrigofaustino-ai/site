@@ -17,6 +17,12 @@ body{text-align:left;}
 .pei-field input,.pei-field select,.pei-field textarea{width:100%;min-width:0;padding:10px;border:1px solid #bdc9b6;border-radius:7px;background:white;}
 .pei-field textarea{min-height:150px;resize:vertical;line-height:1.6;}
 .pei-field textarea::placeholder{color:#586257;opacity:1;font-size:14px;}
+.pei-ai{margin-top:10px;padding:12px;border:1px solid #d9e2d2;border-radius:8px;background:#f8faf5;}
+.pei-ai .btn{white-space:normal;}
+.pei-ai-hint,.pei-ai-status{font-size:13px;color:#586257;line-height:1.5;margin:8px 0;}
+.pei-ai-preview{margin-top:12px;border-top:1px solid #d9e2d2;padding-top:12px;}
+.pei-ai-preview textarea{background:#fff;}
+.pei-ai-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;}
 .form-actions{flex-wrap:wrap;}
 button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,summary:focus-visible{outline:3px solid #7155a6;outline-offset:3px;}
 #peiError:empty{display:none;}

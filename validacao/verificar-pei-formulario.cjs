@@ -65,7 +65,7 @@ let total=0;function check(a,b){assert.deepEqual(a,b);total++;}
   check(await field('identificacao.anoEscolar').inputValue(),'3º A');
   check(await field('identificacao.turno').inputValue(),'Matutino');
   check(await page.locator('[data-path]').count(),23);
-  check(await page.locator('textarea').count(),10);
+  check(await page.locator('textarea[data-path]').count(),10);
   check(await page.evaluate(()=>mockWrites.length),0);
   check(await page.locator('#legacy-note').isVisible(),true);
   // Orientações originais estão disponíveis sem virar respostas fictícias.
@@ -169,6 +169,55 @@ let total=0;function check(a,b){assert.deepEqual(a,b);total++;}
   await fresh.locator('#btn-save').click();
   await fresh.waitForFunction(()=>document.querySelector('#save-note').textContent.startsWith('PEI salvo'));
   check(await fresh.evaluate(()=>mockWrites.map(w=>w.path)),['alunos/c/pei/atual']);
+  // A IA não envia dados automaticamente nem substitui ou salva sem escolha.
+  const ai=await context.newPage();const aiErrors=[];ai.on('pageerror',e=>aiErrors.push(e.message));
+  await ai.goto(origin+'/pei_formulario.html?alunoId=a',{waitUntil:'networkidle'});
+  const socio=ai.locator('[data-path="contextoEscolar.socioafetivos"]');
+  const area=ai.locator('.pei-field').filter({has:socio});
+  const ask=area.getByRole('button',{name:'Melhorar Aspectos socioafetivos com IA',exact:true});
+  check(await ai.locator('.pei-ai').count(),10);
+  await ask.click();
+  check((await area.locator('.pei-ai-status').textContent()).includes('Escreva seu texto'),true);
+  await socio.fill('Participa das atividades com apoio visual.');await ask.click();
+  check((await area.locator('.pei-ai-status').textContent()).includes('indisponível'),true);
+  await ai.evaluate(()=>{
+    window.aiPrompts=[];
+    window.puter={ai:{chat:async prompt=>{aiPrompts.push(prompt);return {message:{content:[{text:'Participa das atividades propostas com apoio visual.'}]}};}}};
+  });
+  await ai.locator('[data-path="contextoEscolar.academicos"]').fill('OUTRO_CAMPO_NAO_ENVIAR');
+  await ask.click();await area.locator('.pei-ai-preview').waitFor({state:'visible'});
+  check(await socio.inputValue(),'Participa das atividades com apoio visual.');
+  check(await ai.evaluate(()=>[aiPrompts.length,aiPrompts[0].includes('OUTRO_CAMPO_NAO_ENVIAR'),aiPrompts[0].includes('Ana Teste'),mockWrites.length]),[1,false,false,0]);
+  await area.getByRole('button',{name:'Manter meu texto original',exact:true}).click();
+  check(await socio.inputValue(),'Participa das atividades com apoio visual.');
+  await ask.click();await area.getByRole('button',{name:'Aplicar sugestão',exact:true}).click();
+  check(await socio.inputValue(),'Participa das atividades propostas com apoio visual.');
+  check(await ai.evaluate(()=>mockWrites.length),0);
+  await ai.locator('#btn-save').click();await ai.waitForFunction(()=>document.querySelector('#save-note').textContent.startsWith('PEI salvo'));
+  check(await ai.evaluate(()=>mockStore['alunos/a/pei/atual'].peiFormulario.contextoEscolar.socioafetivos),'Participa das atividades propostas com apoio visual.');
+  // Uma edição feita depois da sugestão não pode ser substituída por engano.
+  await ask.click();await area.locator('.pei-ai-preview').waitFor({state:'visible'});
+  await socio.fill('Texto alterado depois da sugestão.');
+  await area.getByRole('button',{name:'Aplicar sugestão',exact:true}).click();
+  check(await socio.inputValue(),'Texto alterado depois da sugestão.');
+  // Resposta atrasada não apaga o texto digitado durante a solicitação.
+  await ai.evaluate(()=>{puter.ai.chat=()=>new Promise(resolve=>window.resolverIA=resolve);});
+  await ask.click();await socio.fill('Edição durante a solicitação.');
+  await ai.evaluate(()=>resolverIA('Texto antigo revisado.'));
+  await ai.waitForFunction(()=>document.querySelector('[data-path="contextoEscolar.socioafetivos"]').closest('.pei-field').querySelector('.pei-ai-status').textContent.includes('durante a revisão'));
+  check(await socio.inputValue(),'Edição durante a solicitação.');
+  check(await area.locator('.pei-ai-preview').isVisible(),false);
+  await ai.evaluate(()=>{puter.ai.chat=async()=>{throw new Error('Falha simulada');};});
+  await ask.click();
+  check((await area.locator('.pei-ai-status').textContent()).includes('Não foi possível obter'),true);
+  check(await socio.inputValue(),'Edição durante a solicitação.');
+  // Troca de sessão durante a solicitação descarta a resposta da IA.
+  await ai.evaluate(()=>{puter.ai.chat=()=>new Promise(resolve=>window.resolverIA=resolve);});await ask.click();
+  ai.once('dialog',d=>d.accept());await ai.locator('#btn-logout').click();
+  await ai.evaluate(()=>resolverIA('Não deve aparecer após sair.'));
+  check(await ai.locator('[data-path]').count(),0);
+  check(await ai.locator('#app-shell').isVisible(),false);
+  check(aiErrors,[]);
   check(errors,[]);
   console.log(total+' verificações do formulário PEI aprovadas; DOCX/ODT baixados; Firebase simulado.');
  }finally{if(browser)await browser.close();await new Promise(resolve=>server.close(resolve));}

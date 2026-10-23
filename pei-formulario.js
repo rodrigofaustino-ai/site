@@ -65,7 +65,66 @@
   function setBusy(value) {
     busy=value;
     for(const id of ['btn-save','btn-back-list','btn-export-docx','btn-export-odt','btn-history'])$(id).disabled=value;
-    $('form-sections').querySelectorAll('input,textarea').forEach(field=>field.disabled=value);
+    $('form-sections').querySelectorAll('input,textarea,.pei-ai button').forEach(field=>field.disabled=value||field.dataset.loading==='true');
+  }
+  function textoIA(response) {
+    if(typeof response==='string')return response;
+    if(Array.isArray(response))return response.map(textoIA).join('\n');
+    if(response?.message?.content!==undefined)return textoIA(response.message.content);
+    if(typeof response?.text==='string')return response.text;
+    return '';
+  }
+  function adicionarIA(wrap,input,path,label) {
+    const formState=estado,formToken=generation;
+    const area=el('div');area.className='pei-ai';
+    const request=el('button','✨ Melhorar texto com IA');request.type='button';request.className='btn secondary';
+    request.setAttribute('aria-label','Melhorar '+label+' com IA');
+    const hint=el('p','Envia apenas o texto deste campo ao serviço de IA. Revise a sugestão antes de aplicar.');hint.className='pei-ai-hint';
+    const status=el('p');status.className='pei-ai-status';status.setAttribute('role','status');
+    const preview=el('div');preview.className='pei-ai-preview';preview.hidden=true;
+    const previewLabel=el('label','Sugestão da IA — revise antes de aplicar');
+    const suggestion=el('textarea');suggestion.readOnly=true;suggestion.rows=8;suggestion.id='sugestao-'+path.replace('.','-');previewLabel.htmlFor=suggestion.id;
+    const actions=el('div');actions.className='pei-ai-actions';
+    const apply=el('button','Aplicar sugestão');apply.type='button';apply.className='btn';
+    const discard=el('button','Manter meu texto original');discard.type='button';discard.className='btn secondary';
+    actions.append(apply,discard);preview.append(previewLabel,suggestion,actions);area.append(request,hint,status,preview);wrap.append(area);
+    const valido=()=>generation===formToken&&estado===formState&&input.isConnected&&!!user;
+    let originalRevisado='';
+    request.addEventListener('click',async()=>{
+      if(busy||!valido())return;
+      const original=input.value;
+      preview.hidden=true;suggestion.value='';
+      if(!original.trim()){status.textContent='Escreva seu texto neste campo antes de solicitar a revisão.';input.focus();return;}
+      if(!window.puter?.ai?.chat){status.textContent='O serviço de IA está indisponível. Tente novamente em instantes; seu texto foi mantido.';return;}
+      request.dataset.loading='true';request.disabled=true;status.textContent='Preparando sugestão…';
+      const prompt='Você auxilia professores a revisar a redação de um Plano Educacional Individualizado (PEI). '+
+        'Revise somente a clareza, a gramática, a coesão e a organização do texto do campo "'+label+'". '+
+        'Preserve o sentido e as informações originais. Não invente nem acrescente observações, diagnósticos, '+
+        'medicamentos, comportamentos, avaliações, fatos, resultados, metas ou informações sobre o aluno e sua família. '+
+        'Não prescreva condutas nem formule diagnóstico. Não use a orientação de preenchimento como se fosse uma observação. '+
+        'Responda somente com o texto revisado em português do Brasil, sem introduções, comentários ou marcações.\n\n'+
+        'Texto do professor:\n"""\n'+original+'\n"""';
+      try{
+        const response=await window.puter.ai.chat(prompt);
+        if(!valido())return;
+        if(input.value!==original){status.textContent='Você alterou o campo durante a revisão. Seu texto foi mantido; solicite uma nova sugestão.';return;}
+        const text=textoIA(response).trim();
+        if(!text)throw new Error('Resposta vazia');
+        originalRevisado=original;suggestion.value=text;preview.hidden=false;
+        status.textContent='Sugestão pronta. Ela ainda não substituiu seu texto nem foi salva.';
+      }catch(error){if(valido())status.textContent='Não foi possível obter uma sugestão da IA. Seu texto foi mantido; tente novamente.';}
+      finally{delete request.dataset.loading;request.disabled=busy;}
+    });
+    apply.addEventListener('click',()=>{
+      if(busy||!valido())return;
+      if(input.value!==originalRevisado){status.textContent='O campo foi alterado depois da revisão. Seu texto foi mantido; solicite uma nova sugestão.';return;}
+      input.value=suggestion.value;input.dispatchEvent(new Event('input',{bubbles:true}));preview.hidden=true;
+      status.textContent='Sugestão aplicada ao campo. Clique em Salvar para gravar o PEI.';
+    });
+    discard.addEventListener('click',()=>{
+      if(busy)return;
+      preview.hidden=true;suggestion.value='';status.textContent='Sugestão descartada. Seu texto original foi mantido.';
+    });
   }
   function formulario() {
     const root=$('form-sections');root.replaceChildren();
@@ -91,7 +150,9 @@
           definir(estado,path,input.value);dirty=true;
           $('save-note').textContent='Alterações ainda não salvas.';
         });
-        wrap.append(input);body.append(wrap);
+        wrap.append(input);
+        if(guide)adicionarIA(wrap,input,path,label);
+        body.append(wrap);
       }
       section.append(head,body);root.append(section);
     }

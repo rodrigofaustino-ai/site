@@ -109,3 +109,31 @@ logout, documento novo, exportações reais e telas de 320/390 pixels.
 - 52 verificações do formulário aprovadas; visualização de conteúdo comprimido
   conferida dentro da moldura; DOCX/ODT inspecionados para excluir instruções das
   respostas. Os testes continuam usando somente dados fictícios.
+
+### Revisão de texto com IA
+
+Os dez campos descritivos possuem Melhorar texto com IA, usando Puter, como os
+outros módulos. Apenas o texto do campo e sua identificação temática compõem a
+solicitação; não há envio automático dos demais campos ou do cadastro. O texto
+pode conter informações inseridas pelo professor: o aviso de envio fica junto
+ao botão e a revisão só é solicitada após o clique.
+
+A sugestão fica separada do original, com Aplicar sugestão e Manter meu texto
+original. Aplicar muda o campo e marca o PEI como não salvo. A gravação depende
+do botão Salvar. Campo vazio não gera solicitação e as instruções do modelo não
+são enviadas como se fossem observações do professor.
+
+O pedido à IA limita a revisão à redação e proíbe acrescentar fatos, diagnósticos,
+resultados ou metas não relatadas. Isso não garante correção das respostas: a
+revisão pelo professor continua necessária. Se o campo ou a sessão mudar durante
+a solicitação, a resposta não substitui o texto novo.
+
+Para conferir no Netlify de teste, use texto fictício e teste pedir sugestão,
+descartar, pedir novamente, aplicar e salvar. A disponibilidade e autenticação
+do serviço Puter dependem do serviço externo. Não foram feitos pedidos reais à
+IA nos testes automatizados.
+
+Validação atual: 69 verificações do PEI aprovadas no Chromium, com Firebase e IA
+simulados, incluindo falha do serviço, resposta atrasada, troca de sessão,
+confirmação antes de aplicar e ausência de gravação automática. DOCX e ODT
+continuam sendo gerados pelo teste.
