@@ -70,12 +70,30 @@ let total=0;function check(a,b){assert.deepEqual(a,b);total++;}
   check(await page.locator('#legacy-note').isVisible(),true);
   // Orientações originais estão disponíveis sem virar respostas fictícias.
   check(await field('contextoEscolar.socioafetivos').inputValue(),'');
+  check((await field('contextoEscolar.socioafetivos').getAttribute('placeholder')).includes('capacitismo'),true);
+  check(await field('contextoEscolar.socioafetivos').evaluate(n=>n.matches(':placeholder-shown')),true);
   check((await page.locator('#sec-escolar').textContent()).includes('capacitismo'),true);
   await page.locator('#btn-history').click();
+  await page.frameLocator('#pei-legacy-preview').getByText('Texto original preservado.',{exact:true}).waitFor({state:'visible'});
+  check(await page.locator('#pei-legacy-preview').isVisible(),true);
+  check(await page.frameLocator('#pei-legacy-preview').getByText('Texto original preservado.',{exact:true}).isVisible(),true);
   await page.locator('#pei-history-list button').first().click();
   check((await page.locator('#pei-legacy-preview').getAttribute('srcdoc')).includes('Texto original preservado.'),true);
   check((await page.locator('#pei-legacy-preview').getAttribute('srcdoc')).includes('<script>'),false);
   check(await page.evaluate(()=>!!window.executou),false);
+  // Conteúdo ausente não deve produzir uma visualização branca sem explicação.
+  await page.evaluate(()=>{mockStore['alunos/a/pei/versao-vazia']={peiHtml:'',peiComprimido:true,peiData:'2099-01-01T12:00:00Z'};});
+  await page.locator('#btn-history').click();
+  check((await page.locator('#pei-history-status').textContent()).includes('Não foi possível visualizar'),true);
+  check(await page.locator('#pei-legacy-preview').isVisible(),false);
+  await page.locator('#pei-history-list button').last().click();
+  await page.frameLocator('#pei-legacy-preview').getByText('Texto original preservado.',{exact:true}).waitFor({state:'visible'});
+  check(await page.locator('#pei-history-list button').last().getAttribute('aria-pressed'),'true');
+  await page.evaluate(()=>{delete mockStore['alunos/a/pei/versao-vazia'];});
+  await field('contextoEscolar.socioafetivos').fill('Participa de atividades em pequenos grupos.');
+  check(await field('contextoEscolar.socioafetivos').evaluate(n=>n.matches(':placeholder-shown')),false);
+  await field('contextoEscolar.socioafetivos').fill('');
+  check(await field('contextoEscolar.socioafetivos').evaluate(n=>n.matches(':placeholder-shown')),true);
   await field('contextoEscolar.socioafetivos').fill('Participa de atividades em pequenos grupos.');
   await field('contextoEscolar.linguagemOral').fill('Comunica preferências com apoio visual.');
   await field('estrategias.objetivosMetas').fill('Ampliar a participação nas atividades propostas.');

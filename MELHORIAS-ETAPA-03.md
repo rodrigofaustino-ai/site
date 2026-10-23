@@ -95,3 +95,17 @@ logout, documento novo, exportações reais e telas de 320/390 pixels.
 - 10 downloads DOCX/ODT existentes e 2 downloads do novo PEI aprovados.
 - Conteúdo e cabeçalho incorporado conferidos dentro dos novos DOCX/ODT.
 - Sintaxe dos scripts próprios validada.
+
+### Ajuste da consulta e das instruções de preenchimento
+
+- Consultar histórico abre a versão mais recente automaticamente e leva a tela
+  à visualização. Cada botão também indica explicitamente Visualizar.
+- Trocar de versão cria uma nova moldura isolada para evitar interferência do
+  carregamento anterior. Conteúdo ausente ou ilegível apresenta uma mensagem.
+- As dez instruções descritivas do modelo aparecem dentro dos campos vazios.
+  Desaparecem ao digitar e voltam se o texto for apagado. A orientação também
+  permanece disponível no bloco expansível durante a edição.
+- Instruções não são respostas e não são copiadas ao salvar ou exportar.
+- 52 verificações do formulário aprovadas; visualização de conteúdo comprimido
+  conferida dentro da moldura; DOCX/ODT inspecionados para excluir instruções das
+  respostas. Os testes continuam usando somente dados fictícios.
