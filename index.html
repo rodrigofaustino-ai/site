@@ -665,7 +665,7 @@ hr.sep{border:none;border-top:2px dashed rgba(0,0,0,.06);margin:.2rem 0;}
       <div class="card">
         <div class="color-strip" style="background:linear-gradient(90deg,var(--blue),var(--teal),var(--green))"></div>
         <div class="section-head"><div class="section-badge" style="background:var(--blue-l)">📋</div>Plano Educacional Individualizado — PEI</div>
-        <p style="font-size:13px;color:var(--muted);margin:0 0 12px;">Selecione um aluno para visualizar ou enviar o PEI. O arquivo DOCX é convertido automaticamente e salvo na nuvem.</p>
+        <p style="font-size:13px;color:var(--muted);margin:0 0 12px;">Abra o formulário de PEI para preencher, salvar e exportar. Os documentos importados anteriormente continuam disponíveis para consulta.</p>
         <button class="back-btn" id="btnCentralVoltarAluno" type="button" hidden style="margin-bottom:12px;">← Voltar ao aluno</button>
         <div id="peiListaAlunos" class="students-grid"></div>
       </div>
@@ -1355,6 +1355,10 @@ async function gravarPerfilLocalStorage(aluno, alunoId){
   }catch(e){
     console.warn('localStorage não disponível:', e);
   }
+}
+
+function abrirPeiDoAluno(nome, alunoId){
+  window.open('pei_formulario.html?alunoId=' + encodeURIComponent(alunoId) + '&nome=' + encodeURIComponent(nome || ''), '_blank');
 }
 
 const PAEE_FORM_URL = 'paee_formulario_02.html';
@@ -3722,26 +3726,12 @@ function renderCentralAluno(){
 
 async function abrirDocumentoCentral(tipo){
   if (!currentStudentId) {showToast('Salve o cadastro do aluno primeiro.'); return;}
-  const id = currentStudentId, perfil = {...currentProfile}, ownerUid = professorUid;
+  const id = currentStudentId, perfil = {...currentProfile};
   const lista = [{id, ...perfil}];
   if (tipo === 'paee') return abrirPaeeDoAluno(perfil.nome, id, lista);
   if (tipo === 'relatorio') return abrirRelatorioDoAluno(perfil.nome, id, lista);
   if (tipo === 'diagnostica') return abrirDiagnosticaDoAluno(perfil.nome, id, lista);
-  if (tipo === 'pei') {
-    voltarPeiLista();
-    showScreen('home');
-    await switchTab('pei');
-    if (professorUid !== ownerUid || currentStudentId !== id || !$('tabPei').classList.contains('active') || !$('screen-home').classList.contains('active')) return;
-    const item = Array.from($('peiListaAlunos').querySelectorAll('.pei-item')).find(el => el.dataset.alunoId === id);
-    if (item) {
-      const voltar = $('btnCentralVoltarAluno');
-      voltar.dataset.alunoId = id;
-      voltar.textContent = '← Voltar a ' + (perfil.nome || 'este aluno');
-      voltar.hidden = false;
-      item.classList.add('central-spotlight'); item.tabIndex = -1;
-      item.scrollIntoView({block:'center'}); item.focus({preventScroll:true});
-    } else showToast('Aluno não localizado na lista de PEI. Confira o turno e tente novamente.');
-  }
+  if (tipo === 'pei') return abrirPeiDoAluno(perfil.nome, id);
 }
 
 function renderRecentDates(){
@@ -3788,14 +3778,20 @@ async function renderPeiList(){
       nomeEl.textContent = a.nome || 'Sem nome';
       const badge = document.createElement('span');
       badge.className = 'pei-badge' + (temPei ? '' : ' sem');
-      badge.textContent = temPei ? '✓ PEI carregado' : 'Sem PEI';
+      badge.textContent = peiMeta && peiMeta.peiFormulario ? '✓ PEI salvo no formulário' : temPei ? '✓ PEI importado' : 'Sem PEI salvo';
       if(peiMeta && peiMeta.peiData) badge.title = 'Enviado em ' + new Date(peiMeta.peiData).toLocaleDateString('pt-BR');
       info.appendChild(nomeEl);
       info.appendChild(document.createElement('br'));
       info.appendChild(badge);
       item.appendChild(info);
 
-      // Botão upload
+      const formularioBtn = document.createElement('button');
+      formularioBtn.type = 'button'; formularioBtn.className = 'pei-ver-btn';
+      formularioBtn.textContent = 'Abrir formulário PEI';
+      formularioBtn.addEventListener('click', () => abrirPeiDoAluno(a.nome, a.id));
+      item.appendChild(formularioBtn);
+
+      // Importação antiga mantida somente para quem ainda não usa o formulário.
       const fileInput = document.createElement('input');
       fileInput.type = 'file';
       fileInput.accept = '.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document';
@@ -3807,7 +3803,7 @@ async function renderPeiList(){
       uploadBtn.className = 'pei-upload-btn';
       uploadBtn.textContent = temPei ? '↑ Atualizar' : '↑ Enviar DOCX';
       uploadBtn.addEventListener('click', () => fileInput.click());
-      item.appendChild(uploadBtn);
+      if (!peiMeta || !peiMeta.peiFormulario) item.appendChild(uploadBtn);
 
       // Botão visualizar (só se tiver PEI)
       if(temPei){
@@ -3863,13 +3859,22 @@ async function uploadPei(e, alunoId, nomeAluno, itemEl, badgeEl){
       return;
     }
     showLoad('Salvando PEI...');
-    await db.collection('alunos').doc(alunoId)
-            .collection('pei').doc('atual').set({
-      peiHtml: htmlComprimido,
-      peiComprimido: true,
-      peiData: new Date().toISOString(),
-      peiNomeArquivo: file.name,
-      professorUid,
+    const peiRef = db.collection('alunos').doc(alunoId).collection('pei').doc('atual');
+    const arquivoAnterior = db.collection('alunos').doc(alunoId).collection('pei')
+      .doc('versao-' + Date.now() + '-' + crypto.randomUUID());
+    await db.runTransaction(async transaction => {
+      const anterior = await transaction.get(peiRef);
+      if (anterior.exists && anterior.data().peiFormulario) {
+        throw new Error('Este aluno já usa o formulário de PEI. Abra o formulário para editar; a importação não substitui seus campos.');
+      }
+      if (anterior.exists) transaction.set(arquivoAnterior, anterior.data());
+      transaction.set(peiRef, {
+        peiHtml: htmlComprimido,
+        peiComprimido: true,
+        peiData: new Date().toISOString(),
+        peiNomeArquivo: file.name,
+        professorUid,
+      });
     });
     hideLoad();
     showToast('✓ PEI de ' + nomeAluno + ' salvo com sucesso!');

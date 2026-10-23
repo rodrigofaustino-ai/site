@@ -47,7 +47,7 @@
     const docs = node('div', 'central-docs');
     for (const [tipo, titulo, descricao, acao] of [
       ['paee', 'PAEE', 'Plano de Atendimento Educacional Especializado.', 'Abrir PAEE'],
-      ['pei', 'PEI', 'Consulte ou envie o plano em DOCX na biblioteca de PEI.', 'Ver / enviar PEI'],
+      ['pei', 'PEI', 'Preencha o plano individualizado, consulte versões e exporte.', 'Abrir PEI'],
       ['relatorio', 'Relatório', 'Registre as áreas trabalhadas e o parecer do atendimento.', 'Abrir relatório'],
       ['diagnostica', 'Diagnóstica', 'Consulte e preencha a avaliação pedagógica.', 'Abrir diagnóstica']
     ]) {

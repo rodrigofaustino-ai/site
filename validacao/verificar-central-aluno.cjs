@@ -86,16 +86,8 @@ function check(actual, expected){assert.deepEqual(actual,expected);count++;}
     await page.getByRole('button',{name:'Ver histórico completo',exact:true}).click();
     check(await page.evaluate(()=>document.activeElement.id),'entriesList');
     await page.evaluate(()=>{window.links=[];window.open=url=>links.push(url);});
-    for(const name of ['Abrir PAEE','Abrir relatório','Abrir diagnóstica'])await page.getByRole('button',{name,exact:true}).click();
-    check(await page.evaluate(()=>links.map(url=>new URL(url,location.href).searchParams.get('alunoId'))),['a','a','a']);
-    await page.getByRole('button',{name:'Ver / enviar PEI',exact:true}).click();
-    check(await page.evaluate(()=>[document.querySelector('#tabPei').classList.contains('active'),document.activeElement.dataset.alunoId]),[true,'a']);
-    await page.locator('#btnCentralVoltarAluno').click();
-    check(await page.evaluate(()=>[document.querySelector('#screen-profile').classList.contains('active'),document.activeElement.id]),[true,'centralAlunoTitulo']);
-    await page.evaluate(()=>abrirPei('a','Ana Teste','<p>Plano fictício</p>',null));
-    await page.getByRole('button',{name:'Ver / enviar PEI',exact:true}).click();
-    check(await page.locator('#peiListaAlunos').isVisible(),true);
-    await page.locator('#btnCentralVoltarAluno').click();
+    for(const name of ['Abrir PAEE','Abrir relatório','Abrir diagnóstica','Abrir PEI'])await page.getByRole('button',{name,exact:true}).click();
+    check(await page.evaluate(()=>links.map(url=>new URL(url,location.href).searchParams.get('alunoId'))),['a','a','a','a']);
     // Atualização do resumo após salvar o cadastro.
     await page.evaluate(()=>openStudent('a'));
     await page.locator('#escola').fill('Escola Atualizada');
@@ -158,6 +150,25 @@ function check(actual, expected){assert.deepEqual(actual,expected);count++;}
     }
     await page.setViewportSize({width:390,height:844});
     await page.screenshot({path:'/tmp/site-results/central-aluno-celular.png',fullPage:true});
+    // A importação antiga não substitui formulários e preserva o documento anterior.
+    check(await page.evaluate(async()=>{
+      window.importWrites=[];
+      const original=mammoth.convertToHtml;
+      mammoth.convertToHtml=async()=>({value:'<p>PEI importado fictício.</p>'});
+      window.importPrevious={peiFormulario:{schemaVersion:1},peiHtml:'<p>Formulário existente</p>'};
+      mockDb.runTransaction=async fn=>{
+        const pending=[];
+        await fn({get:async()=>({exists:true,data:()=>importPrevious}),set:(reference,data)=>pending.push(data)});
+        importWrites.push(...pending);
+      };
+      const event={target:{files:[new File(['ficticio'],'pei.docx')]}};
+      await uploadPei(event,'a','Ana Teste',null,document.createElement('span'));
+      const bloqueado=importWrites.length;
+      window.importPrevious={peiHtml:'<p>Documento anterior</p>',peiComprimido:false,peiData:'2026-10-20'};
+      await uploadPei(event,'a','Ana Teste',null,document.createElement('span'));
+      mammoth.convertToHtml=original;
+      return [bloqueado,importWrites.length,importWrites[0].peiHtml,LZString.decompressFromUTF16(importWrites[1].peiHtml)];
+    }),[0,2,'<p>Documento anterior</p>','<p>PEI importado fictício.</p>']);
     check(errors,[]);
     console.log(count+' verificações da central aprovadas no Chromium. Firebase simulado; nenhuma requisição externa permitida.');
   }finally{if(browser)await browser.close();await new Promise(resolve=>server.close(resolve));}

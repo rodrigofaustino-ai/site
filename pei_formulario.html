@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>PEI · Sala de Recursos</title>
+  <link rel="stylesheet" href="pei-formulario.css">
+  <link rel="stylesheet" href="pei-formulario-extra.css">
+</head>
+<body>
+  <div id="login-screen">
+    <div class="login-box">
+      <h1>PEI · Sala de Recursos</h1>
+      <p>Entre com a conta do Diário de Bordo.</p>
+      <form id="loginForm">
+        <div class="login-field"><label for="loginEmail">E-mail</label><input id="loginEmail" type="email" autocomplete="username" required></div>
+        <div class="login-field"><label for="loginPassword">Senha</label><input id="loginPassword" type="password" autocomplete="current-password" required></div>
+        <p id="loginError" role="alert"></p>
+        <button class="login-submit" id="loginBtn" type="submit">Entrar</button>
+      </form>
+    </div>
+  </div>
+  <div id="app-shell" hidden>
+    <header class="topbar">
+      <div class="brand-mark" aria-hidden="true"></div>
+      <div class="brand-text"><span class="eyebrow">Sala de Recursos Multifuncionais</span><span class="title">Plano Educacional Individualizado</span></div>
+      <div class="topbar-spacer"></div>
+      <span id="topbar-user"></span><button class="topbar-logout" id="btn-logout" type="button">Sair</button>
+    </header>
+    <main class="shell">
+      <p id="peiError" role="alert"></p>
+      <section id="pei-list">
+        <div class="list-head"><div><h1>Planos Educacionais Individualizados</h1><p>Selecione um aluno cadastrado no Diário para preencher ou consultar o PEI.</p></div><a class="btn secondary" href="index.html">Voltar ao Diário</a></div>
+        <div class="toolbar"><label for="search-input">Buscar aluno ou escola</label><input id="search-input" type="search"></div>
+        <div class="student-grid" id="student-grid"></div>
+      </section>
+      <section id="pei-editor" hidden>
+        <div class="form-header">
+          <div><h1 id="form-title">PEI</h1><p id="save-note" class="pei-status" role="status">Preencha os campos e clique em Salvar.</p></div>
+          <div class="form-actions">
+            <button class="btn secondary" id="btn-back-list" type="button">← Lista de alunos</button>
+            <button class="btn secondary" id="btn-export-docx" type="button">Exportar DOCX</button>
+            <button class="btn secondary" id="btn-export-odt" type="button">Exportar ODT</button>
+            <button class="btn" id="btn-save" type="button">Salvar</button>
+          </div>
+        </div>
+        <details class="pei-guidance"><summary>Orientações do modelo de PEI de Cambé</summary><div id="pei-introducao"></div></details>
+        <div id="legacy-note" class="pei-message" hidden>Este aluno possui um PEI importado. Consulte-o no histórico abaixo e preencha os campos deste formulário. O conteúdo antigo não será distribuído automaticamente entre os campos. Ao salvar, a versão anterior será preservada no histórico.</div>
+        <div class="form-shell">
+          <nav class="form-nav" aria-label="Seções do PEI">
+            <button type="button" data-section="sec-id">I · Identificação</button>
+            <button type="button" data-section="sec-escolar">II · Contexto escolar</button>
+            <button type="button" data-section="sec-estrategias">III · Estratégias de ensino</button>
+            <button type="button" data-section="sec-familiar">IV · Contexto familiar</button>
+            <button type="button" data-section="sec-sign">Assinaturas</button>
+          </nav>
+          <div id="form-sections"></div>
+        </div>
+        <section class="pei-history" aria-labelledby="history-title">
+          <h2 class="pei-heading" id="history-title">Documentos anteriores e versões salvas</h2>
+          <p>As versões são somente para consulta. Abrir um PEI não altera o que está salvo.</p>
+          <button class="btn secondary" id="btn-history" type="button">Consultar histórico</button>
+          <div id="pei-history-list" role="status"></div>
+          <iframe class="pei-preview" id="pei-legacy-preview" title="Consulta de uma versão anterior do PEI" sandbox="" hidden></iframe>
+        </section>
+      </section>
+    </main>
+  </div>
+  <script src="vendor/firebase-9.23.0/firebase-app-compat.js"></script>
+  <script src="vendor/firebase-9.23.0/firebase-auth-compat.js"></script>
+  <script src="vendor/firebase-9.23.0/firebase-firestore-compat.js"></script>
+  <script src="vendor/lz-string.min.js"></script>
+  <script src="vendor/index.iife.js"></script>
+  <script src="exportacao.js"></script>
+  <script src="pei-modelo.js"></script>
+  <script src="pei-firebase.js"></script>
+  <script src="pei-formulario.js"></script>
+</body>
+</html>
