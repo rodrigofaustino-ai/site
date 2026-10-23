@@ -137,3 +137,18 @@ Validação atual: 69 verificações do PEI aprovadas no Chromium, com Firebase 
 simulados, incluindo falha do serviço, resposta atrasada, troca de sessão,
 confirmação antes de aplicar e ausência de gravação automática. DOCX e ODT
 continuam sendo gerados pelo teste.
+
+### Ajuste de respostas repetidas da IA
+
+O pedido passou a solicitar reescrita da estrutura e desenvolvimento das ideias
+já expressas, preservando o significado e o grau de certeza. A resposta é
+comparada ao original sem diferenças de espaços, pontuação ou maiúsculas. Se
+repetir, é feita uma única nova tentativa pedindo reformulação explícita. Se
+continuar igual, não aparece uma sugestão para aplicar: o campo é preservado e
+a interface informa que a IA não reformulou. A ação pode realizar até duas
+chamadas ao serviço.
+
+76 verificações do PEI aprovadas, incluindo repetição seguida de reformulação,
+repetição persistente, preservação do texto e ausência de gravação automática.
+A IA foi simulada; a qualidade da resposta do serviço real não foi avaliada
+nesta execução e precisa ser conferida com texto fictício no site de teste.

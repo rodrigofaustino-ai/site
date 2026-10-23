@@ -195,6 +195,29 @@ let total=0;function check(a,b){assert.deepEqual(a,b);total++;}
   check(await ai.evaluate(()=>mockWrites.length),0);
   await ai.locator('#btn-save').click();await ai.waitForFunction(()=>document.querySelector('#save-note').textContent.startsWith('PEI salvo'));
   check(await ai.evaluate(()=>mockStore['alunos/a/pei/atual'].peiFormulario.contextoEscolar.socioafetivos),'Participa das atividades propostas com apoio visual.');
+  // Repetição da resposta, incluindo só maiúsculas/pontuação, exige reformulação.
+  await ai.evaluate(()=>{
+    window.tentativasIA=0;
+    puter.ai.chat=async prompt=>{
+      aiPrompts.push(prompt);tentativasIA++;
+      return {message:{content:tentativasIA===1?'PARTICIPA DAS ATIVIDADES PROPOSTAS COM APOIO VISUAL!!!':'Com apoio visual, participa das atividades propostas.'}};
+    };
+  });
+  await ask.click();await area.locator('.pei-ai-preview').waitFor({state:'visible'});
+  check(await ai.evaluate(()=>tentativasIA),2);
+  check(await area.locator('.pei-ai-preview textarea').inputValue(),'Com apoio visual, participa das atividades propostas.');
+  check(await socio.inputValue(),'Participa das atividades propostas com apoio visual.');
+  check(await ai.evaluate(()=>aiPrompts.at(-1).includes('Na tentativa anterior você repetiu')),true);
+  await area.getByRole('button',{name:'Manter meu texto original',exact:true}).click();
+  await ai.evaluate(()=>{
+    tentativasIA=0;puter.ai.chat=async()=>{tentativasIA++;return 'Participa das atividades propostas com apoio visual.';};
+  });
+  await ask.click();
+  await ai.waitForFunction(()=>document.querySelector('[data-path="contextoEscolar.socioafetivos"]').closest('.pei-field').querySelector('.pei-ai-status').textContent.includes('após duas tentativas'));
+  check(await ai.evaluate(()=>tentativasIA),2);
+  check(await area.locator('.pei-ai-preview').isVisible(),false);
+  check(await ai.evaluate(()=>mockWrites.length),2);
+  await ai.evaluate(()=>{puter.ai.chat=async()=>({message:{content:'Com apoio visual, participa das atividades propostas.'}});});
   // Uma edição feita depois da sugestão não pode ser substituída por engano.
   await ask.click();await area.locator('.pei-ai-preview').waitFor({state:'visible'});
   await socio.fill('Texto alterado depois da sugestão.');

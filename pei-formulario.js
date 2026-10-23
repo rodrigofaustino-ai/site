@@ -74,6 +74,10 @@
     if(typeof response?.text==='string')return response.text;
     return '';
   }
+  function mesmaRedacao(a,b) {
+    const normalizar=text=>text.normalize('NFKC').toLocaleLowerCase('pt-BR').replace(/[^\p{L}\p{N}]/gu,'');
+    return normalizar(a)===normalizar(b);
+  }
   function adicionarIA(wrap,input,path,label) {
     const formState=estado,formToken=generation;
     const area=el('div');area.className='pei-ai';
@@ -97,19 +101,33 @@
       if(!original.trim()){status.textContent='Escreva seu texto neste campo antes de solicitar a revisão.';input.focus();return;}
       if(!window.puter?.ai?.chat){status.textContent='O serviço de IA está indisponível. Tente novamente em instantes; seu texto foi mantido.';return;}
       request.dataset.loading='true';request.disabled=true;status.textContent='Preparando sugestão…';
-      const prompt='Você auxilia professores a revisar a redação de um Plano Educacional Individualizado (PEI). '+
-        'Revise somente a clareza, a gramática, a coesão e a organização do texto do campo "'+label+'". '+
-        'Preserve o sentido e as informações originais. Não invente nem acrescente observações, diagnósticos, '+
-        'medicamentos, comportamentos, avaliações, fatos, resultados, metas ou informações sobre o aluno e sua família. '+
-        'Não prescreva condutas nem formule diagnóstico. Não use a orientação de preenchimento como se fosse uma observação. '+
-        'Responda somente com o texto revisado em português do Brasil, sem introduções, comentários ou marcações.\n\n'+
+      const prompt='Você é um revisor de textos pedagógicos de Plano Educacional Individualizado (PEI). '+
+        'Sua tarefa é REESCREVER o texto do professor para o campo "'+label+'", e não apenas repeti-lo. '+
+        'Transforme anotações e frases simples em uma redação pedagógica clara, coesa, natural e bem organizada. '+
+        'Reformule a construção das frases, conecte as ideias, corrija a gramática e desenvolva melhor as ideias que já estão expressas. '+
+        'Use linguagem profissional e respeitosa, evitando jargões desnecessários. Preserve o significado, o grau de certeza e todas as informações relatadas. '+
+        'Você pode mudar a forma de escrever, mas não criar informações: não acrescente fatos, diagnósticos, medicamentos, '+
+        'comportamentos, resultados, metas, condutas ou níveis de apoio que não estejam no texto. '+
+        'Responda somente com a versão reescrita em português do Brasil, sem comentários, títulos ou marcações.\n\n'+
         'Texto do professor:\n"""\n'+original+'\n"""';
       try{
-        const response=await window.puter.ai.chat(prompt);
-        if(!valido())return;
-        if(input.value!==original){status.textContent='Você alterou o campo durante a revisão. Seu texto foi mantido; solicite uma nova sugestão.';return;}
-        const text=textoIA(response).trim();
-        if(!text)throw new Error('Resposta vazia');
+        let text='';
+        for(let tentativa=0;tentativa<2;tentativa++){
+          const pedido=tentativa===0?prompt:prompt+'\n\nNa tentativa anterior você repetiu o texto original. '+
+            'Agora reformule de fato a estrutura e a redação, desenvolvendo as ideias já fornecidas sem acrescentar fatos. '+
+            'Não se limite a mudar pontuação, espaços ou letras maiúsculas.';
+          const response=await window.puter.ai.chat(pedido);
+          if(!valido())return;
+          if(input.value!==original){status.textContent='Você alterou o campo durante a revisão. Seu texto foi mantido; solicite uma nova sugestão.';return;}
+          text=textoIA(response).trim();
+          if(!text)throw new Error('Resposta vazia');
+          if(!mesmaRedacao(original,text))break;
+          if(tentativa===0)status.textContent='A IA repetiu o texto. Solicitando uma reformulação…';
+        }
+        if(mesmaRedacao(original,text)){
+          status.textContent='A IA não apresentou uma reformulação após duas tentativas. Seu texto foi mantido; nenhuma sugestão foi aplicada.';
+          return;
+        }
         originalRevisado=original;suggestion.value=text;preview.hidden=false;
         status.textContent='Sugestão pronta. Ela ainda não substituiu seu texto nem foi salva.';
       }catch(error){if(valido())status.textContent='Não foi possível obter uma sugestão da IA. Seu texto foi mantido; tente novamente.';}
