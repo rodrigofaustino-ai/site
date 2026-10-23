@@ -1,0 +1,258 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isAdmin() {
+      return request.auth != null && request.auth.uid == 'vYUoFHRjbmVaj6Do58NjKQsFuql2';
+    }
+    function donoAluno(alunoId) {
+      return request.auth != null && get(/databases/$(database)/documents/alunos/$(alunoId)).data.professorUid == request.auth.uid;
+    }
+    match /alunos/{alunoId} {
+      allow create: if isAdmin() || (request.auth != null && request.resource.data.professorUid == request.auth.uid);
+      allow read, delete: if isAdmin() || (request.auth != null && resource.data.professorUid == request.auth.uid);
+      allow update: if isAdmin() || (request.auth != null && resource.data.professorUid == request.auth.uid
+        && request.resource.data.professorUid == resource.data.professorUid);
+      match /{subcollection}/{docId} {
+        allow read, write: if isAdmin() || donoAluno(alunoId);
+      }
+    }
+    match /frequenciaSemanas/{id} {
+      allow create: if isAdmin() || (request.auth != null && request.resource.data.professorUid == request.auth.uid);
+      allow read, delete: if isAdmin() || (request.auth != null && resource.data.professorUid == request.auth.uid);
+      allow update: if isAdmin() || (request.auth != null && resource.data.professorUid == request.auth.uid
+        && request.resource.data.professorUid == resource.data.professorUid);
+    }
+    match /plannerMensal/{id} {
+      // A consulta inicial de um mês vazio retorna "não existe", sem expor dados.
+      // Esta permissão não autoriza listar, criar ou ler documentos existentes.
+      allow get: if request.auth != null && resource == null;
+      allow create: if isAdmin() || (request.auth != null && request.resource.data.professorUid == request.auth.uid);
+      allow read, delete: if isAdmin() || (request.auth != null && resource.data.professorUid == request.auth.uid);
+      allow update: if isAdmin() || (request.auth != null && resource.data.professorUid == request.auth.uid
+        && request.resource.data.professorUid == resource.data.professorUid);
+    }
+    match /notas/{id} {
+      allow create: if isAdmin() || (request.auth != null && request.resource.data.professorUid == request.auth.uid);
+      allow read, delete: if isAdmin() || (request.auth != null && resource.data.professorUid == request.auth.uid);
+      allow update: if isAdmin() || (request.auth != null && resource.data.professorUid == request.auth.uid
+        && request.resource.data.professorUid == resource.data.professorUid);
+    }
+    // Copie somente este bloco match para dentro das regras existentes.
+    match /planosAula/{planoId} {
+      function valid(data) {
+        return data.keys().hasAll(['titulo', 'tema', 'descricao', 'autorUid', 'autorNome', 'uploadedAt', 'updatedAt', 'storagePath', 'fileName', 'fileSize'])
+          && data.keys().hasOnly(['titulo', 'tema', 'descricao', 'autorUid', 'autorNome', 'uploadedAt', 'updatedAt', 'storagePath', 'fileName', 'fileSize'])
+          && data.titulo is string && data.titulo.size() > 0 && data.titulo.size() <= 150
+          && data.tema is string && data.tema.size() > 0 && data.tema.size() <= 200
+          && data.descricao is string && data.descricao.size() > 0 && data.descricao.size() <= 1000
+          && data.autorUid == request.auth.uid
+          && data.autorNome is string && data.autorNome.size() > 0 && data.autorNome.size() <= 200
+          && data.uploadedAt is timestamp && data.updatedAt == request.time
+          && data.fileName is string && data.fileName.size() > 0 && data.fileName.size() <= 255
+          && data.fileName.matches('.*[.][dD][oO][cC][xX]')
+          && data.fileSize is int && data.fileSize > 0 && data.fileSize <= 10 * 1024 * 1024
+          && data.storagePath is string
+          && data.storagePath.matches('planosAula/' + request.auth.uid + '/' + planoId + '/[a-zA-Z0-9-]+[.]docx');
+      }
+      allow read: if request.auth != null;
+      allow create: if request.auth != null && valid(request.resource.data)
+        && request.resource.data.uploadedAt == request.time;
+      allow update: if request.auth != null && resource.data.autorUid == request.auth.uid
+        && valid(request.resource.data)
+        && request.resource.data.autorUid == resource.data.autorUid
+        && request.resource.data.autorNome == resource.data.autorNome
+        && request.resource.data.uploadedAt == resource.data.uploadedAt;
+      allow delete: if request.auth != null && resource.data.autorUid == request.auth.uid;
+    }
+// Acrescente somente o bloco match abaixo dentro de
+// match /databases/{database}/documents nas regras EXISTENTES.
+match /recursosDidaticos/{recursoId} {
+  function validRecurso(data) {
+    return data.keys().hasAll(['descricao', 'link', 'autorUid', 'autorNome', 'createdAt', 'updatedAt'])
+      && data.keys().hasOnly(['descricao', 'link', 'autorUid', 'autorNome', 'createdAt', 'updatedAt'])
+      && data.descricao is string && data.descricao.size() > 0 && data.descricao.size() <= 1000
+      && data.link is string && data.link.size() <= 2048
+      && data.link.matches('https?://[^/@\\s]+(/[^\\s]*)?')
+      && data.autorUid == request.auth.uid
+      && data.autorNome is string && data.autorNome.size() > 0 && data.autorNome.size() <= 200
+      && data.createdAt is timestamp && data.updatedAt == request.time;
+  }
+  allow read: if request.auth != null;
+  allow create: if request.auth != null && validRecurso(request.resource.data)
+    && request.resource.data.createdAt == request.time;
+  allow update: if request.auth != null && resource.data.autorUid == request.auth.uid
+    && validRecurso(request.resource.data)
+    && request.resource.data.autorUid == resource.data.autorUid
+    && request.resource.data.autorNome == resource.data.autorNome
+    && request.resource.data.createdAt == resource.data.createdAt;
+  allow delete: if request.auth != null && resource.data.autorUid == request.auth.uid;
+}
+
+// Acrescente este bloco dentro de match /databases/{database}/documents.
+// Preserve todas as regras existentes de alunos, planos e recursos.
+match /chatEquipe/{mensagemId} {
+  allow get: if request.auth != null;
+  allow list: if request.auth != null && request.query.limit <= 100;
+  allow create: if request.auth != null
+    && request.resource.data.keys().hasAll(['texto', 'autorUid', 'autorNome', 'autorEmail', 'createdAt'])
+    && request.resource.data.keys().hasOnly(['texto', 'autorUid', 'autorNome', 'autorEmail', 'createdAt'])
+    && request.resource.data.texto is string
+    && request.resource.data.texto.size() > 0
+    && request.resource.data.texto.size() <= 2000
+    && request.resource.data.autorUid == request.auth.uid
+    && request.resource.data.autorNome is string
+    && request.resource.data.autorNome.size() > 0
+    && request.resource.data.autorNome.size() <= 200
+    && request.resource.data.autorEmail == request.auth.token.email
+    && request.resource.data.createdAt == request.time;
+  allow update, delete: if false;
+// Insira este bloco DENTRO de match /chatEquipe/{mensagemId}.
+match /leituras/{leitorUid} {
+  allow read: if request.auth != null;
+  allow create: if request.auth != null && request.auth.uid == leitorUid
+    && exists(/databases/$(database)/documents/chatEquipe/$(mensagemId))
+    && request.resource.data.keys().hasAll(['uid','email','lidoEm'])
+    && request.resource.data.keys().hasOnly(['uid','email','lidoEm'])
+    && request.resource.data.uid == request.auth.uid
+    && request.resource.data.email == request.auth.token.email
+    && request.resource.data.lidoEm == request.time;
+  allow update, delete: if false;
+}
+
+}
+
+
+// Acrescente dentro de match /databases/{database}/documents.
+function familiaTokenValido(token) { return token.matches('[A-Za-z0-9_-]{43}'); }
+function familiaLinkAtivo(token) {
+  let convite = get(/databases/$(database)/documents/convitesFamilia/$(token)).data;
+  return familiaTokenValido(token) && convite.ativa == true && convite.expiraEm > request.time && convite.versao == 1;
+}
+function familiaDonoAluno(data) {
+  return request.auth != null && data.professorUid == request.auth.uid
+    && get(/databases/$(database)/documents/alunos/$(data.alunoId)).data.professorUid == request.auth.uid;
+}
+match /questionariosFamilia/{alunoId} {
+  function valid(data) {
+    return data.keys().hasAll(['professorUid','alunoId','token','ativa','criadoEm','expiraEm'])
+      && data.keys().hasOnly(['professorUid','alunoId','token','ativa','criadoEm','expiraEm'])
+      && familiaDonoAluno(data) && data.alunoId == alunoId && familiaTokenValido(data.token)
+      && data.ativa is bool && data.criadoEm is timestamp && data.expiraEm is timestamp;
+  }
+  allow read: if request.auth != null && (resource == null || resource.data.professorUid == request.auth.uid);
+  allow create: if valid(request.resource.data) && request.resource.data.criadoEm == request.time
+    && getAfter(/databases/$(database)/documents/convitesFamilia/$(request.resource.data.token)).data.alunoId == alunoId;
+  allow update: if request.auth != null && resource.data.professorUid == request.auth.uid && valid(request.resource.data)
+    && request.resource.data.professorUid == resource.data.professorUid
+    && (request.resource.data.criadoEm == resource.data.criadoEm || request.resource.data.criadoEm == request.time)
+    && getAfter(/databases/$(database)/documents/convitesFamilia/$(request.resource.data.token)).data.alunoId == alunoId;
+  allow delete: if false;
+}
+match /convitesFamilia/{token} {
+  allow get: if (request.auth != null && resource.data.professorUid == request.auth.uid)
+    || (familiaTokenValido(token) && resource.data.ativa == true && resource.data.expiraEm > request.time && resource.data.versao == 1);
+  allow list: if request.auth != null && resource.data.professorUid == request.auth.uid;
+  allow create: if familiaTokenValido(token) && familiaDonoAluno(request.resource.data)
+    && request.resource.data.keys().hasAll(['professorUid','alunoId','apelido','versao','ativa','criadoEm','expiraEm'])
+    && request.resource.data.keys().hasOnly(['professorUid','alunoId','apelido','versao','ativa','criadoEm','expiraEm'])
+    && request.resource.data.apelido is string && request.resource.data.apelido.size() > 0 && request.resource.data.apelido.size() <= 80
+    && request.resource.data.versao == 1 && request.resource.data.ativa == true
+    && request.resource.data.criadoEm == request.time && request.resource.data.expiraEm > request.time
+    && request.resource.data.expiraEm <= request.time + duration.value(90,'d');
+  allow update: if request.auth != null && resource.data.professorUid == request.auth.uid
+    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['ativa']) && request.resource.data.ativa is bool;
+  allow delete: if false;
+}
+match /enviosFamilia/{token} {
+  allow get: if familiaLinkAtivo(token) || (request.auth != null && get(/databases/$(database)/documents/convitesFamilia/$(token)).data.professorUid == request.auth.uid);
+  allow list: if false;
+  allow create: if familiaLinkAtivo(token)
+    && request.resource.data.keys().hasAll(['enviadoEm']) && request.resource.data.keys().hasOnly(['enviadoEm'])
+    && request.resource.data.enviadoEm == request.time
+    && getAfter(/databases/$(database)/documents/respostasFamilia/$(token)).data.enviadoEm == request.time;
+  allow update, delete: if false;
+}
+function familiaNotaValida(texto) { return texto is string && texto.size() <= 1000; }
+function familiaNotasValidas(notas) {
+  return notas is map && notas.keys().hasOnly(['comunica_escolha','comunica_chamado','comunica_fatos','leitura_nome','leitura_imagens','leitura_historia','escrita_registro','escrita_nome','escrita_palavras','percepcao_comando','percepcao_textura','percepcao_objeto','avd_alimentacao','avd_higiene','avd_vestir','social_interacao','social_emocoes','social_combinados','numeros_uso','numeros_quantidade','numeros_compara','formas_iguais','formas_reconhece','formas_cores','medidas_rotina','medidas_sequencia','medidas_espaco'])
+    && familiaNotaValida(notas.get('comunica_escolha', ''))
+    && familiaNotaValida(notas.get('comunica_chamado', ''))
+    && familiaNotaValida(notas.get('comunica_fatos', ''))
+    && familiaNotaValida(notas.get('leitura_nome', ''))
+    && familiaNotaValida(notas.get('leitura_imagens', ''))
+    && familiaNotaValida(notas.get('leitura_historia', ''))
+    && familiaNotaValida(notas.get('escrita_registro', ''))
+    && familiaNotaValida(notas.get('escrita_nome', ''))
+    && familiaNotaValida(notas.get('escrita_palavras', ''))
+    && familiaNotaValida(notas.get('percepcao_comando', ''))
+    && familiaNotaValida(notas.get('percepcao_textura', ''))
+    && familiaNotaValida(notas.get('percepcao_objeto', ''))
+    && familiaNotaValida(notas.get('avd_alimentacao', ''))
+    && familiaNotaValida(notas.get('avd_higiene', ''))
+    && familiaNotaValida(notas.get('avd_vestir', ''))
+    && familiaNotaValida(notas.get('social_interacao', ''))
+    && familiaNotaValida(notas.get('social_emocoes', ''))
+    && familiaNotaValida(notas.get('social_combinados', ''))
+    && familiaNotaValida(notas.get('numeros_uso', ''))
+    && familiaNotaValida(notas.get('numeros_quantidade', ''))
+    && familiaNotaValida(notas.get('numeros_compara', ''))
+    && familiaNotaValida(notas.get('formas_iguais', ''))
+    && familiaNotaValida(notas.get('formas_reconhece', ''))
+    && familiaNotaValida(notas.get('formas_cores', ''))
+    && familiaNotaValida(notas.get('medidas_rotina', ''))
+    && familiaNotaValida(notas.get('medidas_sequencia', ''))
+    && familiaNotaValida(notas.get('medidas_espaco', ''));
+}
+function familiaRespostasValidas(respostas) {
+  let opcoes = ['observa','as_vezes','apoio','ainda_nao','nao_sabe','nao_observou','nao_informar'];
+  return respostas is map
+    && respostas.keys().hasAll(['comunica_escolha','comunica_chamado','comunica_fatos','leitura_nome','leitura_imagens','leitura_historia','escrita_registro','escrita_nome','escrita_palavras','percepcao_comando','percepcao_textura','percepcao_objeto','avd_alimentacao','avd_higiene','avd_vestir','social_interacao','social_emocoes','social_combinados','numeros_uso','numeros_quantidade','numeros_compara','formas_iguais','formas_reconhece','formas_cores','medidas_rotina','medidas_sequencia','medidas_espaco'])
+    && respostas.keys().hasOnly(['comunica_escolha','comunica_chamado','comunica_fatos','leitura_nome','leitura_imagens','leitura_historia','escrita_registro','escrita_nome','escrita_palavras','percepcao_comando','percepcao_textura','percepcao_objeto','avd_alimentacao','avd_higiene','avd_vestir','social_interacao','social_emocoes','social_combinados','numeros_uso','numeros_quantidade','numeros_compara','formas_iguais','formas_reconhece','formas_cores','medidas_rotina','medidas_sequencia','medidas_espaco'])
+    && respostas.comunica_escolha in opcoes
+    && respostas.comunica_chamado in opcoes
+    && respostas.comunica_fatos in opcoes
+    && respostas.leitura_nome in opcoes
+    && respostas.leitura_imagens in opcoes
+    && respostas.leitura_historia in opcoes
+    && respostas.escrita_registro in opcoes
+    && respostas.escrita_nome in opcoes
+    && respostas.escrita_palavras in opcoes
+    && respostas.percepcao_comando in opcoes
+    && respostas.percepcao_textura in opcoes
+    && respostas.percepcao_objeto in opcoes
+    && respostas.avd_alimentacao in opcoes
+    && respostas.avd_higiene in opcoes
+    && respostas.avd_vestir in opcoes
+    && respostas.social_interacao in opcoes
+    && respostas.social_emocoes in opcoes
+    && respostas.social_combinados in opcoes
+    && respostas.numeros_uso in opcoes
+    && respostas.numeros_quantidade in opcoes
+    && respostas.numeros_compara in opcoes
+    && respostas.formas_iguais in opcoes
+    && respostas.formas_reconhece in opcoes
+    && respostas.formas_cores in opcoes
+    && respostas.medidas_rotina in opcoes
+    && respostas.medidas_sequencia in opcoes
+    && respostas.medidas_espaco in opcoes;
+}
+match /respostasFamilia/{token} {
+  allow read: if request.auth != null && resource.data.professorUid == request.auth.uid;
+  allow create: if familiaLinkAtivo(token)
+    && request.resource.data.keys().hasAll(['professorUid','alunoId','versao','responsavel','vinculo','respostas','observacoes','ciencia','enviadoEm'])
+    && request.resource.data.keys().hasOnly(['professorUid','alunoId','versao','responsavel','vinculo','respostas','observacoes','ciencia','enviadoEm','observacoesPerguntas'])
+    && request.resource.data.professorUid == get(/databases/$(database)/documents/convitesFamilia/$(token)).data.professorUid
+    && request.resource.data.alunoId == get(/databases/$(database)/documents/convitesFamilia/$(token)).data.alunoId
+    && request.resource.data.versao == 1 && request.resource.data.ciencia == true
+    && request.resource.data.responsavel is string && request.resource.data.responsavel.size() > 0 && request.resource.data.responsavel.size() <= 120
+    && request.resource.data.vinculo is string && request.resource.data.vinculo.size() > 0 && request.resource.data.vinculo.size() <= 80
+    && request.resource.data.observacoes is string && request.resource.data.observacoes.size() <= 2000
+    && request.resource.data.enviadoEm == request.time
+    && getAfter(/databases/$(database)/documents/enviosFamilia/$(token)).data.enviadoEm == request.time
+    && familiaNotasValidas(request.resource.data.get('observacoesPerguntas', {}))
+    && familiaRespostasValidas(request.resource.data.respostas);
+  allow update, delete: if false;
+}
+
+  }
+}

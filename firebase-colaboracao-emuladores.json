@@ -1,0 +1,15 @@
+{
+  "firestore": {
+    "rules": "firebase/colaboracao-etapa-06.rules"
+  },
+  "emulators": {
+    "firestore": {
+      "host": "127.0.0.1",
+      "port": 8087
+    },
+    "ui": {
+      "enabled": false
+    },
+    "singleProjectMode": true
+  }
+}
