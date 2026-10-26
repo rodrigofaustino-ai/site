@@ -1956,6 +1956,7 @@ function renderTabelaFrequencia(){
 
     const filtrado=FrequenciaInterface.filtrar(rows,semanas);rows=filtrado.rows;semanas=filtrado.semanas;
     FrequenciaInterface.resumo(rows,semanas);
+    if(!semanas.length){wrap.innerHTML='<div class="freq-empty-alunos">Nenhuma semana selecionada. Abra Semanas visíveis e marque as colunas que deseja exibir.</div>';return;}
     if(!rows.length){wrap.innerHTML='<div class="freq-empty-alunos">Nenhum aluno ou horário corresponde aos filtros.</div>';return;}
     let html=`<table class="freq-table"><thead><tr><th class="th-dia">Dia</th><th class="th-horario">Horário</th><th class="th-aluno">Aluno</th>`;
     semanas.forEach(s=>{

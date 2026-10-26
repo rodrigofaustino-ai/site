@@ -18,3 +18,12 @@
 
 .freq-popover{max-height:calc(100vh - 20px);max-width:calc(100vw - 20px);overflow-y:auto;box-sizing:border-box}
 .freq-popover p{overflow-wrap:anywhere}
+.freq-colunas{border:1px solid #afc6c2;border-radius:8px;padding:10px;background:#fff;min-width:220px;max-width:100%;box-sizing:border-box}
+.freq-colunas summary{cursor:pointer;font-size:14px;font-weight:600;min-height:22px}
+.freq-colunas p{font-size:13px;line-height:1.5;max-width:420px;text-align:left}
+.freq-colunas-acoes{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
+.freq-colunas-lista{max-height:240px;overflow-y:auto}
+.freq-filtros .freq-coluna-check{display:flex;flex-direction:row;gap:8px;align-items:flex-start;font-weight:400;padding:8px 4px;cursor:pointer}
+.freq-coluna-check input{flex:0 0 auto;width:18px;height:18px;margin:2px 0 0}
+.freq-coluna-check span{overflow-wrap:anywhere}
+@media(max-width:600px){.freq-colunas{width:100%;min-width:0}}

@@ -37,7 +37,9 @@ async function main(){
     const reads=await page.evaluate(()=>window.reads);
     await page.locator('#freqBusca').fill('ana');check(await page.locator('.freq-mark').count(),6);
     await page.locator('#freqDia').selectOption('Quinta');check(await page.locator('.freq-mark').count(),2);
-    await page.locator('#freqSemana').selectOption('s1');check(await page.locator('.freq-mark').count(),1);
+    await page.locator('.freq-colunas summary').click();
+    await page.getByRole('button',{name:'Ocultar todas',exact:true}).click();
+    await page.locator('.freq-coluna-check input[value=s1]').check();check(await page.locator('.freq-mark').count(),1);
     check(await page.evaluate(()=>window.reads),reads);
     const cell=()=>page.locator('.freq-mark').first();
     check((await cell().getAttribute('aria-label')).includes('registro semanal antigo'),true);
@@ -50,11 +52,12 @@ async function main(){
     await page.waitForFunction(()=>document.querySelector('#freqSalvamento').textContent.startsWith('Salvo:'));
     check(await page.evaluate(()=>store['frequenciaSemanas/s1'].status),{a:'presente',b__Terça:'falta',a__Quinta:null});
     check((await cell().textContent()).includes('Não lançado'),true);
-    check(await page.locator('#freqBusca').inputValue(),'ana');check(await page.locator('#freqSemana').inputValue(),'s1');
+    check(await page.locator('#freqBusca').inputValue(),'ana');check(await page.locator('.freq-coluna-check input:checked').evaluateAll(inputs=>inputs.map(i=>i.value)),['s1']);
     await page.locator('#freqDia').selectOption('Segunda');
     check(await page.locator('.freq-mark').count(),2);
     check(await page.locator('.freq-mark small').count(),2);
-    await page.locator('#freqSemana').selectOption('s2');
+    await page.getByRole('button',{name:'Ocultar todas',exact:true}).click();
+    await page.locator('.freq-coluna-check input[value=s2]').check();
     // Alteração de um dos horários reflete a única marcação diária nos dois.
     await cell().click();await page.getByRole('button',{name:'Falta',exact:true}).click();
     await page.waitForFunction(()=>document.querySelector('#freqSalvamento').textContent.includes('· Falta.'));
@@ -112,6 +115,35 @@ async function main(){
       }
     }
     check(await page.evaluate(()=>writes.length),antesExport);
+    // Colunas não consecutivas, atalhos e preferência independente dos registros.
+    await page.evaluate(()=>{
+      for(const [id,data,ordem]of [['s3','2026-11-02',3],['s4','2026-11-09',4],['s5','2026-11-16',5]])
+        store['frequenciaSemanas/'+id]={professorUid:'prof',turno:'Matutino',label:'Semana '+ordem,dataInicio:data,ordem,status:{}};
+    });
+    await page.evaluate(()=>renderFrequencia());
+    if(!await page.locator('.freq-colunas').evaluate(d=>d.open))await page.locator('.freq-colunas summary').click();
+    const readsColunas=await page.evaluate(()=>reads),writesColunas=await page.evaluate(()=>writes.length);
+    await page.getByRole('button',{name:'Ocultar todas',exact:true}).click();
+    check(await page.locator('.freq-mark').count(),0);
+    check((await page.locator('#freqWrap').textContent()).includes('Nenhuma semana selecionada'),true);
+    await page.locator('.freq-coluna-check input[value=s1]').check();await page.locator('.freq-coluna-check input[value=s4]').check();
+    check(await page.locator('.freq-week-label').evaluateAll(inputs=>inputs.map(i=>i.value)),['Semana 1','Semana 4']);
+    check(await page.locator('.freq-mark').count(),8);
+    check(await page.evaluate(()=>store['frequenciaSemanas/s2'].status.a__Segunda),'presente');
+    await page.getByRole('button',{name:'4 mais recentes',exact:true}).click();
+    check(await page.locator('.freq-coluna-check input:checked').evaluateAll(inputs=>inputs.map(i=>i.value)),['s2','s3','s4','s5']);
+    check(await page.evaluate(()=>reads),readsColunas);check(await page.evaluate(()=>writes.length),writesColunas);
+    await page.evaluate(async()=>{store['frequenciaSemanas/s6']={professorUid:'prof',turno:'Matutino',label:'Semana 6',dataInicio:'2026-11-23',ordem:6,status:{}};await renderFrequencia();});
+    check(await page.locator('.freq-coluna-check input:checked').evaluateAll(inputs=>inputs.map(i=>i.value)),['s3','s4','s5','s6']);
+    await page.getByRole('button',{name:'Ocultar todas',exact:true}).click();
+    await page.locator('.freq-coluna-check input[value=s1]').check();await page.locator('.freq-coluna-check input[value=s4]').check();
+    await page.evaluate(async()=>{FrequenciaInterface.limpar();await renderFrequencia();});
+    check(await page.locator('.freq-coluna-check input:checked').evaluateAll(inputs=>inputs.map(i=>i.value)),['s1','s4']);
+    await page.evaluate(async()=>{professorUid='outra-conta';mockAuth.currentUser={uid:'outra-conta'};await renderFrequencia();});
+    check(await page.locator('.freq-coluna-check').count(),0);
+    await page.evaluate(async()=>{professorUid='prof';mockAuth.currentUser={uid:'prof'};await renderFrequencia();});
+    check(await page.locator('.freq-coluna-check input:checked').evaluateAll(inputs=>inputs.map(i=>i.value)),['s1','s4']);
+    check(await page.evaluate(()=>writes.length),writesColunas);
     fs.mkdirSync('/tmp/site-results',{recursive:true});await page.locator('#tabFrequencia').screenshot({path:'/tmp/site-results/frequencia-conferencia.png'});
     for(const width of [390,320]){await page.setViewportSize({width,height:844});check(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);}
     // Uma consulta antiga não pode reaparecer depois da troca de conta.

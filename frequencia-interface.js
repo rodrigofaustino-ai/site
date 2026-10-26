@@ -3,7 +3,8 @@
   'use strict';
   const dias=['Segunda','Terça','Quinta','Sexta','Sem dia'];
   const labels={presente:'Presente',falta:'Falta',justificado:'Justificado',sem_atend:'Sem atendimento pedagógico'};
-  let key=null,filtro={busca:'',dia:'',semana:'',ocultarVazios:true};
+  const inicial=()=>({busca:'',dia:'',modo:'todas',semanas:new Set(),ocultarVazios:true});
+  let key=null,filtro=inicial();
   const n=(tag,text)=>{const el=document.createElement(tag);if(text!=null)el.textContent=text;return el;};
   const normal=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
   function dataValida(value){
@@ -39,26 +40,54 @@
   }
   function iniciar({contexto,semanas,alterou}){
     const root=document.getElementById('freqFiltros');if(!root)return;
-    if(key!==contexto){key=contexto;filtro={busca:'',dia:'',semana:'',ocultarVazios:true};}
-    if(filtro.semana&&!semanas.some(s=>s.id===filtro.semana))filtro.semana='';
+    const aberto=key===contexto&&root.querySelector('.freq-colunas')?.open;
+    const storageKey='srm_freq_colunas_'+contexto;
+    const guardar=()=>{try{localStorage.setItem(storageKey,JSON.stringify({modo:filtro.modo,semanas:[...filtro.semanas]}));}catch{}};
+    if(key!==contexto){key=contexto;filtro=inicial();
+      try{const saved=JSON.parse(localStorage.getItem(storageKey));if(saved&&['todas','recentes','selecionadas'].includes(saved.modo)&&Array.isArray(saved.semanas)){
+        filtro.modo=saved.modo;filtro.semanas=new Set(saved.semanas.filter(id=>typeof id==='string').slice(0,500));
+      }}catch{}
+    }
+    filtro.semanas=new Set([...filtro.semanas].filter(id=>semanas.some(s=>s.id===id)));
     root.replaceChildren();
     const field=(text,input)=>{const label=n('label',text);label.append(input);root.append(label);return input;};
     const busca=field('Buscar aluno',n('input'));busca.type='search';busca.id='freqBusca';busca.value=filtro.busca;
     busca.addEventListener('input',()=>{filtro.busca=busca.value;alterou();});
     const dia=field('Dia',n('select'));dia.id='freqDia';for(const value of ['',...dias]){const op=n('option',value||'Todos os dias');op.value=value;dia.append(op);}dia.value=filtro.dia;
     dia.addEventListener('change',()=>{filtro.dia=dia.value;alterou();});
-    const semana=field('Semana',n('select'));semana.id='freqSemana';
-    const all=n('option','Todas as semanas');all.value='';semana.append(all);
-    for(const s of semanas){const op=n('option',(s.label||'Semana sem rótulo')+(s.dataInicio?' · '+s.dataInicio.split('-').reverse().join('/'):' · sem data'));op.value=s.id;semana.append(op);}semana.value=filtro.semana;
-    semana.addEventListener('change',()=>{filtro.semana=semana.value;alterou();});
+    const colunas=n('details'),summary=n('summary');colunas.className='freq-colunas';colunas.open=!!aberto;colunas.append(summary);root.append(colunas);
+    const ajuda=n('p','Marque as semanas que deseja ver. Ocultar uma coluna não apaga as marcações. O atalho de semanas recentes usa a data de início.');colunas.append(ajuda);
+    const actions=n('div');actions.className='freq-colunas-acoes';colunas.append(actions);
+    const checks=n('div');checks.className='freq-colunas-lista';colunas.append(checks);
+    const atualizar=()=>{const ids=new Set(semanasVisiveis(semanas).map(s=>s.id));summary.textContent='Semanas visíveis: '+ids.size+' de '+semanas.length;
+      checks.querySelectorAll('input').forEach(input=>input.checked=ids.has(input.value));guardar();alterou();};
+    for(const [label,modo]of [['Mostrar todas','todas'],['4 mais recentes','recentes'],['Ocultar todas','selecionadas']]){
+      const button=n('button',label);button.type='button';button.className='central-btn';
+      if(modo==='recentes')button.disabled=!semanas.some(s=>dataValida(s.dataInicio));
+      button.addEventListener('click',()=>{filtro.modo=modo;filtro.semanas=new Set();atualizar();});actions.append(button);
+    }
+    for(const s of semanas){const label=n('label');label.className='freq-coluna-check';const input=n('input');input.type='checkbox';input.value=s.id;
+      label.append(input,n('span',(s.label||'Semana sem rótulo')+(dataValida(s.dataInicio)?' · '+s.dataInicio.split('-').reverse().join('/'):' · sem data válida')));checks.append(label);
+      input.addEventListener('change',()=>{const selecionadas=new Set(semanasVisiveis(semanas).map(s=>s.id));input.checked?selecionadas.add(s.id):selecionadas.delete(s.id);filtro.modo='selecionadas';filtro.semanas=selecionadas;atualizar();});
+    }
+    const visiveis=new Set(semanasVisiveis(semanas).map(s=>s.id));summary.textContent='Semanas visíveis: '+visiveis.size+' de '+semanas.length;
+    checks.querySelectorAll('input').forEach(input=>input.checked=visiveis.has(input.value));
     const label=n('label'),empty=n('input');label.className='freq-filtro-vazios';empty.type='checkbox';empty.id='freqOcultarVazios';empty.checked=filtro.ocultarVazios;label.append(empty,n('span','Ocultar horários sem alunos'));root.append(label);
     empty.addEventListener('change',()=>{filtro.ocultarVazios=empty.checked;alterou();});
     const clear=n('button','Limpar filtros');clear.type='button';clear.className='central-btn';root.append(clear);
-    clear.addEventListener('click',()=>{filtro={busca:'',dia:'',semana:'',ocultarVazios:true};busca.value='';dia.value='';semana.value='';empty.checked=true;alterou();});
+    clear.addEventListener('click',()=>{filtro=inicial();busca.value='';dia.value='';empty.checked=true;atualizar();});
+  }
+  function semanasVisiveis(semanas){
+    if(filtro.modo==='todas')return semanas;
+    if(filtro.modo==='recentes'){
+      const ids=new Set(semanas.filter(s=>dataValida(s.dataInicio)).slice().sort((a,b)=>a.dataInicio.localeCompare(b.dataInicio)).slice(-4).map(s=>s.id));
+      return semanas.filter(s=>ids.has(s.id));
+    }
+    return semanas.filter(s=>filtro.semanas.has(s.id));
   }
   function filtrar(rows,semanas){return {
     rows:rows.filter(r=>(!filtro.dia||r.dia===filtro.dia)&&(!filtro.ocultarVazios||r.aluno)&&(!filtro.busca.trim()||r.aluno&&normal(r.aluno.nome).includes(normal(filtro.busca.trim())))),
-    semanas:semanas.filter(s=>!filtro.semana||s.id===filtro.semana)
+    semanas:semanasVisiveis(semanas)
   };}
   function resumo(rows,semanas){
     const root=document.getElementById('freqConferencia');if(!root)return;root.replaceChildren();
@@ -78,5 +107,5 @@
     if(counts.desconhecido)root.append(n('p',counts.desconhecido+' marcação(ões) não reconhecida(s). Confira as células indicadas.'));
     root.append(n('p','Sem lançamento não é falta. A exportação existente permanece separada desta conferência.'));
   }
-  window.FrequenciaInterface={iniciar,filtrar,resumo,estado,labels,apurar,dataValida,limpar(){key=null;filtro={busca:'',dia:'',semana:'',ocultarVazios:true};for(const id of ['freqFiltros','freqConferencia'])document.getElementById(id)?.replaceChildren();}};
+  window.FrequenciaInterface={iniciar,filtrar,resumo,estado,labels,apurar,dataValida,limpar(){key=null;filtro=inicial();for(const id of ['freqFiltros','freqConferencia'])document.getElementById(id)?.replaceChildren();}};
 })();
