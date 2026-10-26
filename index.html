@@ -2090,16 +2090,19 @@ async function confirmarAddSemana(){
 
 /* ── Relatório de frequência em DOCX/ODT (intervalo de datas) ── */
 function abrirModalRelatorioFreq(){
-  const hoje=todayStr();
+  const agora=new Date();const hoje=[agora.getFullYear(),String(agora.getMonth()+1).padStart(2,'0'),String(agora.getDate()).padStart(2,'0')].join('-');
   const trintaDiasAtras=new Date();trintaDiasAtras.setDate(trintaDiasAtras.getDate()-30);
-  const de=trintaDiasAtras.toISOString().slice(0,10);
+  const de=[trintaDiasAtras.getFullYear(),String(trintaDiasAtras.getMonth()+1).padStart(2,'0'),String(trintaDiasAtras.getDate()).padStart(2,'0')].join('-');
+  const disponiveis=freqDados&&freqSessaoValida(freqDados.uid,freqDados.turno)?freqDados.alunos:[];
   showModal(`
     <div class="section-head" style="font-size:17px"><div class="section-badge" style="background:var(--orange-l)">📄</div>Relatório de frequência</div>
     <span class="ai-hint">Selecione o intervalo de datas (com base na data de início de cada semana cadastrada).</span>
+    <div class="field"><label for="freqRelAluno">Aluno</label><select id="freqRelAluno"><option value="">Todos os alunos</option>${disponiveis.map(a=>`<option value="${esc(a.id)}">${esc(a.nome||'Sem nome')}</option>`).join('')}</select></div>
     <div class="fg">
       <div class="field"><label>De</label><input type="date" id="freqRelDe" value="${de}"></div>
       <div class="field"><label>Até</label><input type="date" id="freqRelAte" value="${hoje}"></div>
     </div>
+    <p class="ai-hint">O resumo diário separa registros semanais antigos. Percentual: P ÷ (P + F + J), como no cálculo anterior; SAP e campos sem lançamento ficam fora do denominador.</p>
     <div style="display:flex;gap:.6rem;justify-content:flex-end;flex-wrap:wrap;margin-top:.3rem">
       <button class="back-btn" onclick="hideModal()">Cancelar</button>
       <button class="save-btn coral" style="background:linear-gradient(135deg,var(--orange),#e07a00);box-shadow:0 4px 14px rgba(255,154,60,.35)" onclick="gerarRelatorioFrequencia('docx')">📄 Gerar DOCX</button>
@@ -2109,26 +2112,31 @@ function abrirModalRelatorioFreq(){
 }
 
 async function gerarRelatorioFrequencia(formato='docx'){
-  const de=val('freqRelDe'),ate=val('freqRelAte');
-  if(!de||!ate){showToast('Informe as duas datas');return;}
+  const de=val('freqRelDe'),ate=val('freqRelAte'),alunoFiltro=val('freqRelAluno');
+  const uidRelatorio=typeof professorUid==='undefined'?null:professorUid,turnoRelatorio=typeof turnoAtual==='undefined'?null:turnoAtual;
+  const sessaoRelatorio=()=>uidRelatorio===(typeof professorUid==='undefined'?null:professorUid)&&turnoRelatorio===(typeof turnoAtual==='undefined'?null:turnoAtual);
+  if(!FrequenciaInterface.dataValida(de)||!FrequenciaInterface.dataValida(ate)){showToast('Informe duas datas válidas');return;}
   if(de>ate){showToast('A data "De" deve ser anterior à data "Até"');return;}
   if(typeof docx==='undefined'){showToast('Biblioteca DOCX carregando, tente novamente.');return;}
   hideModal();
   showLoad('Gerando relatório...');
   try{
     const [alunosSnap,semanasSnap]=await Promise.all([alunosRef().get(),semanasRef().get()]);
-    let alunos=[];alunosSnap.forEach(d=>alunos.push({id:d.id,...d.data()}));
+    if(!sessaoRelatorio()){hideLoad();return;}
+    let alunos=[];alunosSnap.forEach(d=>alunos.push({...d.data(),id:d.id}));
     alunos=filtrarAlunosPorTurno(alunos);
+    if(alunoFiltro)alunos=alunos.filter(a=>a.id===alunoFiltro);
     alunos.sort((a,b)=>(a.nome||'').localeCompare(b.nome||'','pt-BR'));
-    let todasSemanas=[];semanasSnap.forEach(d=>todasSemanas.push({id:d.id,...d.data()}));
+    let todasSemanas=[];semanasSnap.forEach(d=>todasSemanas.push({...d.data(),id:d.id}));
     todasSemanas=filtrarSemanasPorTurno(todasSemanas);
     const semanas=todasSemanas
-      .filter(s=>s.dataInicio&&s.dataInicio>=de&&s.dataInicio<=ate)
+      .filter(s=>FrequenciaInterface.dataValida(s.dataInicio)&&s.dataInicio>=de&&s.dataInicio<=ate)
       .sort((a,b)=>a.dataInicio<b.dataInicio?-1:a.dataInicio>b.dataInicio?1:0);
     hideLoad();
-    if(!alunos.length){showToast('Cadastre alunos para gerar o relatório');return;}
+    if(!alunos.length){showToast('Nenhum aluno disponível para os filtros escolhidos');return;}
     if(!semanas.length){showToast('Nenhuma semana com data de início nesse intervalo.');return;}
 
+    const apuracoes=new Map(alunos.map(a=>[a.id,FrequenciaInterface.apurar(a,semanas)]));
     const {
       Document,Packer,Paragraph,TextRun,Table,TableRow,TableCell,
       WidthType,AlignmentType,BorderStyle,ShadingType,TableLayoutType,HeightRule
@@ -2255,31 +2263,19 @@ async function gerarRelatorioFrequencia(formato='docx'){
           children:[new Paragraph({children:[new TextRun({text:a.nome||'Sem nome',bold:true,size:22})],spacing:{before:10,after:10}})],
         }),
         ...semanas.map((s,i)=>{
-          // Tenta buscar o status por todos os dias de atendimento do aluno nesta semana
-          // usando a chave nova (alunoId__dia) com fallback para a chave antiga (alunoId)
-          let raw = undefined;
-          if(s.status){
-            const ats = (a.atendimentos&&a.atendimentos.length)
-              ? a.atendimentos
-              : (a.diaAtendimento?[{dia:a.diaAtendimento}]:[]);
-            for(const at of ats){
-              const chave = a.id+'__'+(at.dia||'');
-              if(s.status[chave]!==undefined){ raw=s.status[chave]; break; }
-            }
-            if(raw===undefined) raw=s.status[a.id];
-          }
-          const abrev=statusAbrev[raw]||'—';
-          const st=statusStyle(abrev);
+          const linhas=apuracoes.get(a.id).porSemana[i].linhas;
+          const st=linhas.length===1?statusStyle(statusAbrev[linhas[0].value]||'—'):{fill:'FFFFFF'};
           const w=colSemWidths[i];
           return new TableCell({
             width:{size:w,type:WidthType.DXA},
             shading:{type:ShadingType.CLEAR,fill:st.fill},
             margins:{top:40,bottom:40,left:20,right:20},
             borders:{top:borderThin,bottom:borderThin,left:borderThin,right:borderThin},
-            children:[new Paragraph({
-              children:[new TextRun({text:st.text,bold:st.bold,size:22,color:st.color})],
-              alignment:AlignmentType.CENTER,spacing:{before:10,after:10},
-            })],
+            children:linhas.map(linha=>{
+              const abrev=linha.value==null?'—':Object.hasOwn(statusAbrev,linha.value)?statusAbrev[linha.value]:'?';
+              const estilo=statusStyle(abrev);
+              return new Paragraph({children:[new TextRun({text:linha.dia+': '+abrev,bold:true,size:18,color:estilo.color||'333333'})],alignment:AlignmentType.CENTER,spacing:{before:10,after:10}});
+            }),
           });
         }),
       ],
@@ -2296,7 +2292,7 @@ async function gerarRelatorioFrequencia(formato='docx'){
     children.push(new Paragraph({
       children:[
         new TextRun({text:'Legenda: ',bold:true,size:20,color:'586257'}),
-        new TextRun({text:'P = Presente   F = Falta   J = Justificado   S = Sem Atendimento Pedagógico   — = sem registro',size:20,color:'586257',italics:true}),
+        new TextRun({text:'P = Presente   F = Falta   J = Justificado   S = Sem Atendimento Pedagógico   — = sem lançamento   ? = marcação não reconhecida',size:20,color:'586257',italics:true}),
       ],
       spacing:{before:60,after:40},
     }));
@@ -2304,9 +2300,9 @@ async function gerarRelatorioFrequencia(formato='docx'){
     // SEÇÃO 2 — Resumo por aluno
     // Título integrado à tabela para alinhamento perfeito com a Grade
 
-    // Larguras do resumo: nome + 5 colunas de números
+    // Larguras do resumo: nome + 6 colunas de números
     const COL_NOME_R=cm(7);
-    const nCols=5;
+    const nCols=6;
     const espacoNum=TABLE_W-COL_NOME_R;
     const COL_NUM_BASE=Math.floor(espacoNum/nCols);
     const COL_NUM_RESTO=espacoNum-(COL_NUM_BASE*nCols);
@@ -2314,9 +2310,9 @@ async function gerarRelatorioFrequencia(formato='docx'){
     colNumWidths[nCols-1]+=COL_NUM_RESTO;
     const COL_NUM=COL_NUM_BASE;
     const COL_NUM_LAST=colNumWidths[nCols-1];
-    const resumoCols=['Presenças','Faltas','Justificadas','Sem Atend.','% Frequência'];
-    const resumoFills=['D4EDDA','F8D7DA','FFF3CD','E2E3E5','E7F0EA'];
-    const resumoColors=['155724','721C24','856404','383D41','123D28'];
+    const resumoCols=['Presenças','Faltas','Justificadas','Sem Atend.','Sem lançamento','% diária'];
+    const resumoFills=['D4EDDA','F8D7DA','FFF3CD','E2E3E5','F2F4F7','E7F0EA'];
+    const resumoColors=['155724','721C24','856404','383D41','586257','123D28'];
 
     const resumoTitleRow=new TableRow({
       children:[new TableCell({
@@ -2325,7 +2321,7 @@ async function gerarRelatorioFrequencia(formato='docx'){
         shading:{type:ShadingType.CLEAR,fill:'1B5E3C'},
         margins:{top:80,bottom:80,left:100,right:80},
         borders:{top:borderMed,bottom:borderMed,left:borderMed,right:borderMed},
-        children:[new Paragraph({children:[new TextRun({text:'RESUMO POR ALUNO NO PERÍODO',bold:true,size:24,color:'FFFFFF'})],spacing:{before:20,after:20}})],
+        children:[new Paragraph({children:[new TextRun({text:'RESUMO DIÁRIO POR ALUNO NO PERÍODO',bold:true,size:24,color:'FFFFFF'})],spacing:{before:20,after:20}})],
       })],
     });
     const resumoHeaderRow=new TableRow({
@@ -2354,32 +2350,14 @@ async function gerarRelatorioFrequencia(formato='docx'){
       ],
     });
 
-    const resumoFillsPar  =['D4EDDA','F8D7DA','FFF3CD','E2E3E5','E7F0EA'];
-    const resumoFillsImpar=['E8F5ED','FCEAEA','FFFAEE','EEEEEF','F2F7F3'];
+    const resumoFillsPar  =['D4EDDA','F8D7DA','FFF3CD','E2E3E5','F2F4F7','E7F0EA'];
+    const resumoFillsImpar=['E8F5ED','FCEAEA','FFFAEE','EEEEEF','F7F8FA','F2F7F3'];
 
-    const resumoDataRows=alunos
-      .map(a=>{
-        let p=0,f=0,j=0,s=0;
-        const ats=(a.atendimentos&&a.atendimentos.length)
-          ? a.atendimentos
-          : (a.diaAtendimento?[{dia:a.diaAtendimento}]:[]);
-        semanas.forEach(sem=>{
-          let st=undefined;
-          if(sem.status){
-            for(const at of ats){
-              const chave=a.id+'__'+(at.dia||'');
-              if(sem.status[chave]!==undefined){st=sem.status[chave];break;}
-            }
-            if(st===undefined) st=sem.status[a.id];
-          }
-          if(st==='presente')p++;else if(st==='falta')f++;else if(st==='justificado')j++;else if(st==='sem_atend')s++;
-        });
-        return{a,p,f,j,s};
-      })
-      .map(({a,p,f,j,s},ai)=>{
+    const resumoDataRows=alunos.map((a,ai)=>{
+        const {presente:p,falta:f,justificado:j,sem_atend:s,vazio}=apuracoes.get(a.id).diarios;
         const registradas=p+f+j;
         const pct=registradas?Math.round((p/registradas)*100)+'%':'—';
-        const vals=[String(p),String(f),String(j),String(s),pct];
+        const vals=[String(p),String(f),String(j),String(s),String(vazio),pct];
         const fills=ai%2===0?resumoFillsPar:resumoFillsImpar;
         return new TableRow({
           children:[
@@ -2398,7 +2376,7 @@ async function gerarRelatorioFrequencia(formato='docx'){
               margins:{top:40,bottom:40,left:20,right:20},
               borders:{top:borderThin,bottom:borderThin,left:borderThin,right:borderThin},
               children:[new Paragraph({
-                children:[new TextRun({text:v,bold:i===4,size:22,color:resumoColors[i]})],
+                children:[new TextRun({text:v,bold:i===5,size:22,color:resumoColors[i]})],
                 alignment:AlignmentType.CENTER,spacing:{before:10,after:10},
               })],
             });
@@ -2413,6 +2391,17 @@ async function gerarRelatorioFrequencia(formato='docx'){
       width:{size:TABLE_W,type:WidthType.DXA},
       layout:TableLayoutType.FIXED,
     }));
+
+    children.push(bp('Totais diários por aluno/dia/semana, sem duplicar horários no mesmo dia. Percentual diário = P / (P + F + J) × 100. Justificadas permanecem no denominador, como antes; SAP, campos sem lançamento e marcações não reconhecidas ficam fora. Registros semanais antigos e registros sem dia identificado não entram neste percentual.'));
+    children.push(bp('Período selecionado pela data de início das semanas cadastradas. Não são inferidas datas individuais de atendimento. Semanas sem data válida ficam fora da seleção.'));
+    for(const a of alunos){
+      const dados=apuracoes.get(a.id);
+      for(const [key,title]of [['antigos','Registros semanais antigos (sem dia informado)'],['semDia','Registros sem dia identificado']]){
+        const c=dados[key];if(!Object.values(c).some(Boolean))continue;
+        children.push(bp((a.nome||'Aluno')+' — '+title+': P '+c.presente+', F '+c.falta+', J '+c.justificado+', SAP '+c.sem_atend+', sem lançamento '+c.vazio+', não reconhecidos '+c.desconhecido+'. Não somados aos totais diários.'));
+      }
+      if(dados.diarios.desconhecido)children.push(bp((a.nome||'Aluno')+' — '+dados.diarios.desconhecido+' marcação(ões) diária(s) não reconhecida(s); confira os dados antes de usar os totais.'));
+    }
 
     // Gerar e baixar
     const docxDoc=new Document({
@@ -2435,6 +2424,7 @@ async function gerarRelatorioFrequencia(formato='docx'){
     });
 
     Packer.toBlob(docxDoc).then(async blob=>{
+      if(!sessaoRelatorio())return;
       await SRMExport.fromDocx(blob, formato, `Relatorio_Frequencia_${de}_a_${ate}`);
       showToast('✓ Relatório de frequência '+formato.toUpperCase()+' gerado com sucesso!');
     }).catch(err=>{

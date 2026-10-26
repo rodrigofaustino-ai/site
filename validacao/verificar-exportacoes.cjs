@@ -10,6 +10,7 @@ function context(file){
  w.HTMLAnchorElement.prototype.click=function(){saved.at(-1).name=this.download};
  w.showToast=message=>{if(message.startsWith('Erro'))throw new Error(message)};w.hideLoad=()=>{};w.showLoad=()=>{};w.hideModal=()=>{};
  w.eval(fs.readFileSync(path.join(base,'exportacao.js'),'utf8'));
+ if(file==='index.html')w.eval(fs.readFileSync(path.join(base,'frequencia-interface.js'),'utf8'));
  const scripts=Array.from(w.document.querySelectorAll('script:not([src])')).map(s=>s.textContent).join('\n');
  const ast=acorn.parse(scripts,{ecmaVersion:'latest'});
  const code=ast.body.filter(n=>n.type==='FunctionDeclaration'||(n.type==='VariableDeclaration'&&n.declarations.every(d=>/^[A-Z_]+$/.test(d.id.name)&&['ArrayExpression','ObjectExpression','Literal'].includes(d.init?.type)))).map(n=>scripts.slice(n.start,n.end)).join('\n');
@@ -76,7 +77,7 @@ async function validate(entry,format){
  const snapshot=items=>({forEach:fn=>items.forEach(d=>fn({id:d.id,data:()=>d}))});
  w.alunosRef=()=>({get:async()=>snapshot(alunos)});w.semanasRef=()=>({get:async()=>snapshot(semanas)});
  w.filtrarAlunosPorTurno=items=>items;w.filtrarSemanasPorTurno=items=>items;w.showToast=message=>{if(message.startsWith('Erro'))throw Error(message)};
- w.val=id=>id==='freqRelDe'?'2026-10-01':'2026-10-08';
+ w.val=id=>id==='freqRelDe'?'2026-10-01':id==='freqRelAte'?'2026-10-08':'';
  for(const fmt of ['docx','odt']){const count=saved.length+1;await w.gerarRelatorioFrequencia(fmt);await validate(await waitFile(saved,count),fmt);console.log('Frequência',fmt,'OK');}
  await assert.rejects(w.SRMExport.fromHtml('<p></p>','docx','vazio'),/vazio/);
  dom.window.close();console.log('TOTAL:',total,'arquivos DOCX/ODT validados');

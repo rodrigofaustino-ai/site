@@ -35,19 +35,16 @@ Limpar uma célula grava `null` na chave diária, preservando outras marcações
 o valor semanal antigo. Isso evita tanto restaurar o valor antigo por fallback
 quanto apagar a marcação que outros dias ainda consultam. Não há migração em lote.
 
-## Segunda etapa ainda pendente: resumo e relatórios
+## Segunda etapa: resumo e relatórios (concluída no mesmo pacote)
 
-A exportação DOCX/ODT existente foi mantida. Ao revisar o código, foi encontrado
-um problema: para um aluno com mais de um dia marcado na mesma semana, o resumo
-exportado pode considerar somente a primeira marcação encontrada. Essa lógica
-será revista na segunda etapa; os novos contadores da tela não validam os totais
-do relatório atual. O filtro de exportação continua baseado na data de início
-da semana cadastrada, não em datas individuais inferidas de cada atendimento.
+A revisão foi concluída em um segundo commit do mesmo pacote. Consulte
+`ETAPA-10-FREQUENCIA-RELATORIOS.md`: a grade e o resumo agora consideram os dias
+separadamente, preservam registros semanais antigos em bloco próprio e permitem
+selecionar um aluno. O percentual mantém a fórmula anterior, explicitada no arquivo.
 
-Antes de tratar percentuais, a apresentação deve distinguir marcações diárias,
-registros semanais antigos e dias sem lançamento, preservando os dados. Esta
-primeira entrega não muda o cálculo antigo nem estabelece uma nova política para
-faltas justificadas, feriados ou atendimento por horário.
+A descrição e os testes desta seção de lançamento correspondem à primeira fase;
+o guia dos relatórios registra o resultado completo e a validação dos valores
+nos arquivos DOCX/ODT da segunda fase.
 
 ## Publicação futura
 

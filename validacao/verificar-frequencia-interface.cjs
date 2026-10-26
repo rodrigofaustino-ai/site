@@ -1,5 +1,6 @@
 'use strict';
 const {chromium}=require('playwright-core'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),http=require('node:http');
+const JSZip=require('../vendor/jszip.min.js');
 const root=path.resolve(__dirname,'..');let count=0;const check=(a,b)=>{assert.deepEqual(a,b);count++;};
 const mock=`
 window.store={
@@ -79,6 +80,38 @@ async function main(){
     await page.getByRole('button',{name:'Limpar filtros',exact:true}).click();check(await page.locator('.freq-mark').count(),8);
     await page.locator('#freqOcultarVazios').uncheck();check((await page.locator('.linha-vazia').count())>0,true);
     await page.locator('#freqOcultarVazios').check();
+    // Relatório: cada dia contado uma vez, legado separado e arquivo individual.
+    check(await page.evaluate(()=>{
+      const a=store['alunos/a'],w1={...store['frequenciaSemanas/s1'],id:'s1'},w2={...store['frequenciaSemanas/s2'],id:'s2'};
+      const out=FrequenciaInterface.apurar({...a,id:'a'},[w1,w2]);
+      return [out.diarios,out.antigos];
+    }),[{presente:1,falta:0,justificado:1,sem_atend:0,vazio:1,desconhecido:0},{presente:1,falta:0,justificado:0,sem_atend:0,vazio:0,desconhecido:0}]);
+    check(await page.evaluate(()=>{
+      const out=FrequenciaInterface.apurar({id:'a',atendimentos:[{dia:'Segunda'}]},[{id:'x',status:{a__Quinta:'falta',a__Segunda:'presente','a__Sem dia':'presente'}}]);
+      return [out.diarios.presente,out.diarios.falta,out.diarios.vazio,out.semDia.presente];
+    }),[1,1,0,1]);
+    check(await page.evaluate(()=>FrequenciaInterface.dataValida('2024-02-29')),true);
+    check(await page.evaluate(()=>FrequenciaInterface.dataValida('2024-02-30')),false);
+    await page.evaluate(()=>{store['frequenciaSemanas/invalida']={professorUid:'prof',turno:'Matutino',dataInicio:'2026-10-32',label:'SEMANA INVÁLIDA',status:{a__Segunda:'falta'}};});
+    const antesExport=await page.evaluate(()=>writes.length);
+    for(const formato of ['docx','odt']){
+      await page.evaluate(()=>abrirModalRelatorioFreq());
+      await page.locator('#freqRelAluno').selectOption('a');
+      await page.locator('#freqRelDe').fill('2026-10-19');await page.locator('#freqRelAte').fill('2026-11-01');
+      const promise=page.waitForEvent('download');
+      await page.locator('#genModalBox button').filter({hasText:'Gerar '+formato.toUpperCase()}).click();
+      const download=await promise;fs.mkdirSync('/tmp/site-results',{recursive:true});
+      const file='/tmp/site-results/frequencia-revisada.'+formato;await download.saveAs(file);
+      const zip=await JSZip.loadAsync(fs.readFileSync(file)),xml=await zip.file(formato==='docx'?'word/document.xml':'content.xml').async('string');
+      check(xml.includes('Segunda: P'),true);check(xml.includes('Quinta: J'),true);
+      check(xml.includes('Semanal antigo: P'),true);check(xml.includes('Bruno fictício'),false);
+      check(xml.includes('SEMANA INVÁLIDA'),false);check(xml.includes('50%'),true);
+      if(formato==='docx'){
+        const cells=await page.evaluate(xml=>{const d=new DOMParser().parseFromString(xml,'application/xml');const tables=d.getElementsByTagNameNS('*','tbl');const rows=tables[1].getElementsByTagNameNS('*','tr');return [...rows[2].getElementsByTagNameNS('*','tc')].map(c=>[...c.getElementsByTagNameNS('*','t')].map(t=>t.textContent).join(''));},xml);
+        check(cells,['Ána fictícia','1','0','1','0','1','50%']);
+      }
+    }
+    check(await page.evaluate(()=>writes.length),antesExport);
     fs.mkdirSync('/tmp/site-results',{recursive:true});await page.locator('#tabFrequencia').screenshot({path:'/tmp/site-results/frequencia-conferencia.png'});
     for(const width of [390,320]){await page.setViewportSize({width,height:844});check(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);}
     // Uma consulta antiga não pode reaparecer depois da troca de conta.
