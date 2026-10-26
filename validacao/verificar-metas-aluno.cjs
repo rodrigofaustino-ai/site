@@ -138,10 +138,59 @@ let total=0;function check(a,b){assert.deepEqual(a,b);total++;}
   await page.evaluate(()=>{mockMetaError=false;});await page.getByRole('button',{name:'Atualizar metas',exact:true}).click();
   await page.waitForFunction(()=>document.querySelector('#metasStatus').textContent.includes('1 meta'));
   await page.locator('#metasFiltro').selectOption('todas');
+  // Filtro por datas inclusivo, sem duplicar atendimentos com várias metas.
+  const antesPainel=await page.evaluate(()=>mockWrites.length);
+  await page.evaluate(()=>{
+    window.fixturePeriodo={statusMetas:'pronto',statusRegistros:'pronto',metas:[
+      {id:'m1',objetivo:'Meta atual um',status:'ativa',revisao:'2000-01-01',criterio:'Critério registrado'},
+      {id:'m2',objetivo:'Meta atual dois',status:'em_revisao',revisao:'2999-01-01'},
+      {id:'m3',objetivo:'Meta concluída',status:'concluida',revisao:'2000-01-01'}
+    ],registros:[
+      {date:'2024-02-01',text:'Limite inicial sem vínculo'},
+      {date:'2024-02-29',text:'Limite final bissexto',metaIds:['m1','m1','m2'],metaVinculos:[{id:'m1',objetivo:'Objetivo antigo'}]},
+      {date:'2024-03-01',text:'Fora do período',metaIds:['m1']},
+      {date:'2024-02-30',text:'Data inválida',metaIds:['desconhecida']},
+      {text:'Sem data e sem vínculo'},
+      {date:'2024-02-12',text:'Vínculo desconhecido',metaIds:['desconhecida']},
+      {date:'2024-02-15',text:'Relato da meta concluída',metaIds:['m3']}
+    ]};window.fixtureOriginal=JSON.stringify(fixturePeriodo);AcompanhamentoPeriodo.render(fixturePeriodo);
+  });
+  await page.locator('#acompanhamentoPeriodo > details > summary').click();
+  await page.locator('#acompanhamentoDe').fill('2024-02-01');await page.locator('#acompanhamentoAte').fill('2024-02-29');
+  await page.getByRole('button',{name:'Aplicar período',exact:true}).click();
+  const metricas=()=>page.locator('.acompanhamento-indicador strong').allTextContents();
+  check(await metricas(),['4','3','1','2']);
+  check(await page.locator('.acompanhamento-tabela tbody tr').count(),3);
+  check((await page.locator('#acompanhamentoResultados').textContent()).includes('1 meta(s) atual(is) com data de revisão anterior a hoje'),true);
+  check((await page.locator('#acompanhamentoResultados').textContent()).includes('2 registro(s) sem data válida'),true);
+  check((await page.locator('#acompanhamentoResultados').textContent()).includes('metas não encontradas'),true);
+  await page.locator('.acompanhamento-tabela tbody tr').first().locator('summary').click();
+  check((await page.locator('.acompanhamento-tabela tbody tr').first().textContent()).includes('Objetivo registrado no atendimento: Objetivo antigo'),true);
+  // Dados que chegam em seguida não aplicam datas que o professor ainda edita.
+  await page.locator('#acompanhamentoDe').fill('2024-03-01');
+  await page.evaluate(()=>AcompanhamentoPeriodo.render(fixturePeriodo));check(await metricas(),['4','3','1','2']);
+  await page.getByRole('button',{name:'Aplicar período',exact:true}).click();
+  check((await page.locator('#acompanhamentoStatus').textContent()).includes('data inicial'),true);
+  check(await page.locator('.acompanhamento-indicador').count(),0);
+  await page.getByRole('button',{name:'Todo o histórico',exact:true}).click();check(await metricas(),['7','5','2','2']);
+  // Falha de consulta não pode ser apresentada como ausência de registros.
+  await page.evaluate(()=>AcompanhamentoPeriodo.render({...fixturePeriodo,statusRegistros:'erro'}));
+  check(await page.locator('.acompanhamento-indicador').count(),0);
+  check((await page.locator('#acompanhamentoStatus').textContent()).includes('Não foi possível confirmar'),true);
+  await page.evaluate(()=>AcompanhamentoPeriodo.render({...fixturePeriodo,statusMetas:'carregando'}));
+  check((await page.locator('#acompanhamentoStatus').textContent()).includes('Carregando'),true);
+  await page.evaluate(()=>AcompanhamentoPeriodo.render(fixturePeriodo));
+  check(await page.evaluate(()=>JSON.stringify(fixturePeriodo)===fixtureOriginal),true);
+  check(await page.evaluate(()=>mockWrites.length),antesPainel);
   fs.mkdirSync('/tmp/site-results',{recursive:true});
   await page.locator('#metasAluno').scrollIntoViewIfNeeded();await page.screenshot({path:'/tmp/site-results/metas-aluno-desktop.png'});
+  await page.locator('#acompanhamentoPeriodo').screenshot({path:'/tmp/site-results/acompanhamento-periodo-desktop.png'});
   for(const width of [390,320]){await page.setViewportSize({width,height:844});check(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);}
   await page.setViewportSize({width:390,height:844});await page.screenshot({path:'/tmp/site-results/metas-aluno-celular.png'});
+  await page.locator('#acompanhamentoPeriodo').screenshot({path:'/tmp/site-results/acompanhamento-periodo-celular.png'});
+  await page.evaluate(()=>openStudent('b'));
+  await page.waitForFunction(()=>document.querySelector('#metasStatus').textContent.includes('0 meta'));
+  check((await page.locator('#acompanhamentoPeriodo').textContent()).includes('Meta atual um'),false);
   check(errors,[]);
   console.log(total+' verificações de metas e vínculo dos atendimentos aprovadas; somente Firebase simulado.');
  }finally{if(browser)await browser.close();await new Promise(resolve=>server.close(resolve));}

@@ -11,7 +11,7 @@
     ['revisao','Data de revisão','date',true,''],['status','Situação da meta','select',true,'']
   ];
   let config=null,generation=0,metas=[],registros=[],registrosStatus='carregando',selected=new Set();
-  let editing=null,revision=0,busy=false,loading=false,dirty=false,falhaCarregamento=false;
+  let editing=null,revision=0,busy=false,loading=false,dirty=false,falhaCarregamento=false,metasConfirmadas=false;
   const $=id=>document.getElementById(id);
   const node=(tag,text)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;return n;};
   const button=(text,fn)=>{const b=node('button',text);b.type='button';b.className='central-btn';b.addEventListener('click',fn);return b;};
@@ -33,6 +33,7 @@
     const status=node('p');status.id='metasStatus';status.className='metas-status';status.setAttribute('role','status');root.append(status);
     const links=$('metasVinculoAtendimento');links.replaceChildren();links.className='metas-vinculo';
     if(!config?.alunoId){mensagem('Salve o cadastro do aluno para começar suas metas.');links.append(node('p','Salve o cadastro para vincular metas a um atendimento.'));return;}
+    const painel=node('section');painel.id='acompanhamentoPeriodo';root.append(painel);
     const toolbar=node('div');toolbar.className='metas-toolbar';
     toolbar.append(button('Atualizar metas',()=>carregar()));
     const label=node('label','Exibir ');const filter=node('select');filter.id='metasFiltro';
@@ -70,6 +71,8 @@
     root.append(fieldset);
   }
   function renderLista(){
+    const statusMetas=loading?'carregando':falhaCarregamento?'erro':metasConfirmadas?'pronto':'carregando';
+    window.AcompanhamentoPeriodo?.render({metas,registros,statusMetas,statusRegistros:registrosStatus});
     const root=$('metasLista');if(!root)return;root.replaceChildren();
     const filter=$('metasFiltro').value;
     const list=metas.filter(meta=>filter==='todas'||(filter==='atuais'?vinculavel(meta):meta.status===filter));
@@ -94,11 +97,11 @@
   }
   async function carregar(){
     if(!config?.alunoId||loading||busy)return;
-    const ctx=config,token=generation;loading=true;mensagem('Carregando metas…');renderVinculos();
+    const ctx=config,token=generation;loading=true;mensagem('Carregando metas…');renderVinculos();renderLista();
     try{
       const snap=await ctx.db.collection('alunos').doc(ctx.alunoId).collection('metas').get();
       if(!valido(token,ctx))return;
-      falhaCarregamento=false;
+      falhaCarregamento=false;metasConfirmadas=true;
       metas=snap.docs.map(doc=>({...doc.data(),id:doc.id})).sort((a,b)=>String(a.revisao||'').localeCompare(String(b.revisao||'')));
       selected=new Set([...selected].filter(id=>metas.some(meta=>meta.id===id&&vinculavel(meta))));
       mensagem(metas.length+' meta(s) carregada(s). Use Atualizar metas para consultar alterações feitas em outra aba.');
@@ -141,7 +144,8 @@
     finally{if(valido(token,ctx))bloquear(false);}
   }
   function ativar(ctx){
-    generation++;config=ctx;metas=[];registros=[];registrosStatus='carregando';selected=new Set();editing=null;revision=0;busy=false;loading=false;dirty=false;falhaCarregamento=false;
+    window.AcompanhamentoPeriodo?.limpar();
+    generation++;config=ctx;metas=[];registros=[];registrosStatus='carregando';selected=new Set();editing=null;revision=0;busy=false;loading=false;dirty=false;falhaCarregamento=false;metasConfirmadas=false;
     montar();if(ctx?.alunoId)carregar();
   }
   function atualizarRegistros(items,status){registros=items||[];registrosStatus=status;renderLista();}
