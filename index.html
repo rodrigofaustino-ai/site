@@ -505,8 +505,14 @@ hr.sep{border:none;border-top:2px dashed rgba(0,0,0,.06);margin:.2rem 0;}
 <link rel="stylesheet" href="metas-aluno.css">
 <script src="metas-aluno.js"></script>
 <script src="firebase-ambiente-teste.js"></script>
+<link rel="stylesheet" href="colaboracao.css">
+<script src="pei-visualizacao.js"></script>
+<script src="colaboracao-modelo.js"></script>
+<script src="colaboracao-servico.js"></script>
+<script src="colaboracao-aluno.js"></script>
 </head>
 <body>
+<nav class="colaboracao-entrada" aria-label="Compartilhamento"><a class="central-btn" href="colaboracao.html">Conteúdos compartilhados comigo</a></nav>
 <div class="shape s1"></div><div class="shape s2"></div>
 <div class="shape s3"></div><div class="shape s4"></div>
 
@@ -799,6 +805,7 @@ hr.sep{border:none;border-top:2px dashed rgba(0,0,0,.06);margin:.2rem 0;}
 
     <section class="central-aluno" id="centralAluno"></section>
     <section id="metasAluno" class="card metas-aluno"></section>
+    <section id="compartilharAluno" class="card colaboracao-box" hidden></section>
 
     <div class="card">
       <div class="color-strip" style="background:linear-gradient(90deg,var(--coral),var(--orange),var(--yellow))"></div>
@@ -1155,7 +1162,7 @@ auth.onAuthStateChanged(async user => {
     perfilLoadVersion++;
     hideLoad();
     $('centralAluno').replaceChildren();
-    window.MetasAluno.ativar(null);
+    window.MetasAluno.ativar(null);window.ColaboracaoAluno.ativar(null);
     currentStudentId=null;currentProfile={};currentEntries=[];currentPhotoB64=null;contacts=[];
     $('loginEmail').value='';
     $('loginPassword').value='';
@@ -2600,7 +2607,7 @@ async function deleteStudent(id,nome){
 ════════════════════════════════════════ */
 async function goHome(){
   if (!window.MetasAluno.podeSair()) return;
-  window.MetasAluno.ativar(null);
+  window.MetasAluno.ativar(null);window.ColaboracaoAluno.ativar(null);
   perfilLoadVersion++;
   hideLoad();
   if(unsubEntries){unsubEntries();unsubEntries=null;}
@@ -2612,7 +2619,7 @@ async function goHome(){
 
 function goNewStudent(){
   if (!window.MetasAluno.podeSair()) return;
-  window.MetasAluno.ativar(null);
+  window.MetasAluno.ativar(null);window.ColaboracaoAluno.ativar(null);
   perfilLoadVersion++;
   hideLoad();
   centralRegistrosStatus = 'pronto';
@@ -2628,7 +2635,7 @@ function goNewStudent(){
 
 async function openStudent(id){
   if (!window.MetasAluno.podeSair()) return;
-  window.MetasAluno.ativar(null);
+  window.MetasAluno.ativar(null);window.ColaboracaoAluno.ativar(null);
   const versao = ++perfilLoadVersion, ownerUid = professorUid;
   centralRegistrosStatus = 'carregando';
   if(unsubEntries){unsubEntries();unsubEntries=null;}
@@ -3729,6 +3736,10 @@ function configurarMetasAluno(id){
 }
 
 function renderCentralAluno(){
+  const shareId=currentStudentId,shareUid=professorUid;
+  window.ColaboracaoAluno.ativar(shareId&&currentProfile.professorUid===shareUid?{
+    alunoId:shareId,uid:shareUid,db,vigente:()=>currentStudentId===shareId&&professorUid===shareUid
+  }:null);
   window.MetasAluno.atualizarRegistros(currentEntries,centralRegistrosStatus);
   window.CentralAluno.render({
     alunoId: currentStudentId,

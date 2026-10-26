@@ -13,7 +13,7 @@ async function main() {
   const env = await initializeTestEnvironment({
     projectId: 'demo-colaboracao',
     firestore: { host: '127.0.0.1', port: 8087,
-      rules: fs.readFileSync(path.join(__dirname, isolado ? '../firebase/ambiente-teste.rules' : '../firebase/colaboracao-etapa-06.rules'), 'utf8') }
+      rules: fs.readFileSync(path.join(__dirname, process.env.SRM_REGRAS_COMPARTILHAMENTO === '1' ? '../firebase/compartilhamento-teste.rules' : isolado ? '../firebase/ambiente-teste.rules' : '../firebase/colaboracao-etapa-06.rules'), 'utf8') }
   });
   let checks = 0;
   const yes = async promise => { await assertSucceeds(promise); checks++; };
