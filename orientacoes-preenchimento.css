@@ -1,0 +1,5 @@
+.orientacao-preenchimento{margin:6px 0 10px;font-size:12px;line-height:1.6;font-weight:400;color:#526277;text-align:left;white-space:normal}
+.orientacao-preenchimento summary{cursor:pointer;font-weight:600;color:#245b83;list-style-position:inside}
+.orientacao-preenchimento summary:focus-visible{outline:2px solid #245b83;outline-offset:3px;border-radius:3px}
+.orientacao-preenchimento p{margin:8px 0 0;white-space:pre-wrap;overflow-wrap:anywhere;font-weight:400;text-align:left}
+@media print{.orientacao-preenchimento{display:none}}

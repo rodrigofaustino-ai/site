@@ -79,8 +79,8 @@ let total=0;function check(a,b){assert.deepEqual(a,b);total++;}
   check(await page.locator('#legacy-note').isVisible(),true);
   // Orientações originais estão disponíveis sem virar respostas fictícias.
   check(await field('contextoEscolar.socioafetivos').inputValue(),'');
-  check((await field('contextoEscolar.socioafetivos').getAttribute('placeholder')).includes('capacitismo'),true);
-  check(await field('contextoEscolar.socioafetivos').evaluate(n=>n.matches(':placeholder-shown')),true);
+  check(await field('contextoEscolar.socioafetivos').getAttribute('placeholder'),null);
+  check(await page.locator('#sec-escolar .pei-guidance').first().evaluate(n=>n.open),false);
   check((await page.locator('#sec-escolar').textContent()).includes('capacitismo'),true);
   await page.locator('#btn-history').click();
   await page.frameLocator('#pei-legacy-preview').getByText('Texto original preservado.',{exact:true}).waitFor({state:'visible'});
@@ -114,7 +114,7 @@ let total=0;function check(a,b){assert.deepEqual(a,b);total++;}
   await field('contextoEscolar.socioafetivos').fill('Participa de atividades em pequenos grupos.');
   check(await field('contextoEscolar.socioafetivos').evaluate(n=>n.matches(':placeholder-shown')),false);
   await field('contextoEscolar.socioafetivos').fill('');
-  check(await field('contextoEscolar.socioafetivos').evaluate(n=>n.matches(':placeholder-shown')),true);
+  check(await field('contextoEscolar.socioafetivos').getAttribute('placeholder'),null);
   await field('contextoEscolar.socioafetivos').fill('Participa de atividades em pequenos grupos.');
   await field('contextoEscolar.linguagemOral').fill('Comunica preferências com apoio visual.');
   await field('estrategias.objetivosMetas').fill('Ampliar a participação nas atividades propostas.');

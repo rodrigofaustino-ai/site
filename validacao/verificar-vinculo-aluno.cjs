@@ -71,6 +71,15 @@ const check = (value, expected) => {assert.deepEqual(value, expected); checks++;
       // Mesmo nome, pessoas diferentes: a identidade prevalece sobre nome e ordem.
       await open([doc('outro', 'Ana', 'aluno-b'), doc('certo', 'Nome anterior', 'aluno-a')]);
       check(await page.evaluate(() => [state.id, state.alunoId]), ['certo', 'aluno-a']);
+      await page.evaluate(() => showScreen('app'));
+      await page.locator('.orientacao-preenchimento summary').first().waitFor();
+      const antesOrientacao = await page.evaluate(() => JSON.stringify(state));
+      await page.locator('.orientacao-preenchimento summary').first().click();
+      check(await page.locator('.orientacao-preenchimento').first().evaluate(n => n.open), true);
+      check(await page.evaluate(() => JSON.stringify(state)), antesOrientacao);
+      check(await page.evaluate(() => gravacoes.length), 0);
+      check(await page.locator('textarea[placeholder]').count(), 0);
+      check(await page.locator('#search-input').getAttribute('placeholder') !== null, true);
       await page.evaluate(() => saveStudent());
       check(await page.evaluate(() => [gravacoes[0].id, gravacoes[0].data.alunoId]), ['certo', 'aluno-a']);
       // Não reutilizar documento já vinculado a um homônimo.

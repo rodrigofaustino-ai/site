@@ -218,7 +218,6 @@
         if(type!=='textarea')input.type=type;
         input.id=id;input.dataset.path=path;input.value=valor(estado,path);
         if(guide) {
-          input.placeholder=PEIModelo.orientacoes[guide];
           input.rows=10;
         }
         if(path==='identificacao.nome')input.required=true;
