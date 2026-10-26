@@ -31,9 +31,9 @@ function ref(parts){return {
 };}
 window.mockDb={collection:name=>ref([name]),async runTransaction(fn){
  const pending=[];
- await fn({get:reference=>reference.get(),set:(reference,data)=>pending.push({path:reference.path,data:clone(data)})});
+ await fn({get:reference=>reference.get(),set:(reference,data)=>pending.push({path:reference.path,data:clone(data)}),update:(reference,data)=>pending.push({path:reference.path,data:clone(data),merge:true})});
  if(mockDeny)throw Object.assign(new Error('Negado'),{code:'permission-denied'});
- for(const write of pending){mockStore[write.path]=write.data;mockWrites.push(write);}
+ for(const write of pending){mockStore[write.path]=write.merge?{...mockStore[write.path],...write.data}:write.data;mockWrites.push(write);}for(const write of pending)if(write.path.includes('/registros/'))emit(write.path.split('/')[1]);
 }};
 window.mockAuth={currentUser:null,onAuthStateChanged(fn){fn(null);return ()=>{};},async signOut(){}};
 window.firebase={initializeApp(){},auth:()=>mockAuth,firestore:()=>mockDb,storage:()=>({}),app:()=>({options:{}})};

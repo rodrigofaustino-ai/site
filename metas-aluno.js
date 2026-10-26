@@ -61,7 +61,7 @@
   function renderVinculos(){
     const root=$('metasVinculoAtendimento');if(!root||!config?.alunoId)return;
     root.replaceChildren();
-    const fieldset=node('fieldset');fieldset.disabled=loading;fieldset.append(node('legend','Metas trabalhadas neste atendimento (opcional)'));
+    const fieldset=node('fieldset');fieldset.disabled=loading||!!window.RegistroAssistido?.salvando();fieldset.append(node('legend','Metas trabalhadas neste atendimento (opcional)'));
     const ativas=metas.filter(vinculavel);
     if(!ativas.length)fieldset.append(node('p',loading?'Carregando metas…':falhaCarregamento?'Não foi possível consultar as metas. Você pode registrar o atendimento sem vínculo e tentar atualizar as metas novamente.':'Nenhuma meta ativa disponível. Você pode registrar o atendimento normalmente.'));
     for(const meta of ativas){
@@ -150,7 +150,7 @@
   }
   function atualizarRegistros(items,status){registros=items||[];registrosStatus=status;renderLista();}
   window.addEventListener('beforeunload',event=>{if(dirty){event.preventDefault();event.returnValue='';}});
-  window.MetasAluno={ativar,atualizarRegistros,
+  window.MetasAluno={ativar,atualizarRegistros,atualizarVinculos:renderVinculos,
     podeSair:()=>!dirty||window.confirm('Há uma meta com alterações não salvas. Deseja sair sem salvar a meta?'),
     selecionadas:()=>[...selected].filter(id=>metas.some(meta=>meta.id===id&&vinculavel(meta))),
     vinculosSelecionados:()=>metas.filter(meta=>selected.has(meta.id)&&vinculavel(meta)).map(meta=>({id:meta.id,objetivo:meta.objetivo,revision:meta.revision||0})),

@@ -508,6 +508,8 @@ hr.sep{border:none;border-top:2px dashed rgba(0,0,0,.06);margin:.2rem 0;}
 <script src="metas-aluno.js"></script>
 <link rel="stylesheet" href="frequencia-interface.css">
 <script src="frequencia-interface.js"></script>
+<link rel="stylesheet" href="registro-assistido.css">
+<script src="registro-assistido.js"></script>
 <script src="firebase-ambiente-teste.js"></script>
 <link rel="stylesheet" href="colaboracao.css">
 <script src="pei-visualizacao.js"></script>
@@ -931,13 +933,15 @@ hr.sep{border:none;border-top:2px dashed rgba(0,0,0,.06);margin:.2rem 0;}
         <div class="date-tags" id="recentDates"></div>
       </div>
       <div id="metasVinculoAtendimento"></div>
+      <div id="registroAssistido"></div>
       <div class="field">
         <label>🗒️ Relato do atendimento</label>
-        <textarea class="entry-text" id="entryText" placeholder="Descreva os acontecimentos do atendimento: atividades realizadas, comportamentos, avanços, dificuldades, interações, respostas aos estímulos..."></textarea>
+        <details class="registro-orientacao"><summary>Orientação de preenchimento do relato</summary><p>Descreva as atividades realizadas, os apoios utilizados, as respostas observadas e os encaminhamentos, conforme o que aconteceu no atendimento. A análise dos avanços e dificuldades cabe ao profissional, com base nos registros.</p></details>
+        <textarea class="entry-text" id="entryText"></textarea>
         <div class="char-count" id="charCount">0 caracteres</div>
         <div class="ai-row">
           <button class="ai-btn" id="btnMelhorarIA">✨ Melhorar com IA</button>
-          <span class="ai-hint">Usa o Google Gemini (gratuito) para revisar e ampliar o texto</span>
+          <span class="ai-hint">Revisa o relato informado. Confira a sugestão antes de usar.</span>
         </div>
         <div class="ai-suggestion" id="aiSuggestionBox">
           <div class="ai-suggestion-title">✨ Sugestão da IA</div>
@@ -963,6 +967,7 @@ hr.sep{border:none;border-top:2px dashed rgba(0,0,0,.06);margin:.2rem 0;}
       </div>
       <div class="field"><label>👤 Registrado por</label><input type="text" id="registradoPor" placeholder="Nome do professor / profissional"></div>
       <button class="save-btn coral" id="btnSalvarRegistro">✅ Salvar registro do atendimento</button>
+      <p id="registroStatus" role="status" aria-live="polite"></p>
       <hr class="sep">
       <div class="pdf-fields">
         <div class="pdf-fields-title">🖨️ Dados para o PDF</div>
@@ -1047,6 +1052,7 @@ function filtrarAlunosPorTurno(lista){
 let currentStudentId = null;
 let contacts         = [];
 let freqPopoverEl=null,freqPopoverTarget=null,freqRenderVersion=0,freqDados=null,freqSalvando=false,freqWriteVersion=0;
+let entryAIVersion=0,entryIAPending=false,entryIASource=null;
 let currentEntries   = [];
 let currentProfile   = {};
 let currentPhotoB64  = null;
@@ -1094,7 +1100,8 @@ function extractAIText(resp){
   return String(resp);
 }
 async function melhorarComIA(){
-  const texto=$('entryText').value.trim();
+  if(RegistroAssistido.salvando()||entryIAPending)return;
+  const texto=$('entryText').value.trim(),student=currentStudentId,uid=professorUid,version=++entryAIVersion;
   if(!texto){showToast('Escreva algo no relato antes de pedir ajuda da IA');return;}
   if(typeof puter==='undefined' || !puter.ai || !puter.ai.chat){
     showToast('Serviço de IA indisponível no momento (verifique sua conexão).');
@@ -1103,7 +1110,7 @@ async function melhorarComIA(){
 
   const btn=$('btnMelhorarIA');
   const original=btn.innerHTML;
-  btn.disabled=true; btn.innerHTML='⏳ Aprimorando...';
+  entryIAPending=true;entryIASource=null;btn.disabled=true; btn.innerHTML='⏳ Aprimorando...';
   $('aiSuggestionBox').classList.remove('show');
 
   const prompt=`Você é um assistente pedagógico que ajuda professores de Sala de Recursos Multifuncionais (SRM) a redigir relatos de atendimento.
@@ -1117,28 +1124,30 @@ ${texto}
 
   try{
     const resp = await puter.ai.chat(prompt);
+    if(version!==entryAIVersion||currentStudentId!==student||professorUid!==uid||RegistroAssistido.salvando()||$('entryText').value.trim()!==texto)return;
     const sugestao = extractAIText(resp).trim();
     if(!sugestao){showToast('A IA não retornou nenhum texto. Tente novamente.');btn.disabled=false;btn.innerHTML=original;return;}
-    $('aiSuggestionText').textContent=sugestao;
+    entryIASource={student,uid,texto,version};$('aiSuggestionText').textContent=sugestao;
     $('aiSuggestionBox').classList.add('show');
     $('aiSuggestionBox').scrollIntoView({behavior:'smooth',block:'nearest'});
   }catch(e){
     console.error('Erro IA:', e);
     showToast('Não foi possível revisar com IA agora. Tente novamente.');
   }finally{
-    btn.disabled=false; btn.innerHTML=original;
+    if(version===entryAIVersion){entryIAPending=false;btn.disabled=RegistroAssistido.salvando();btn.innerHTML=original;}
   }
 }
 function aceitarSugestaoIA(){
+  if(RegistroAssistido.salvando()||!entryIASource||entryIASource.version!==entryAIVersion||entryIASource.student!==currentStudentId||entryIASource.uid!==professorUid||entryIASource.texto!==$('entryText').value.trim()){invalidarIARegistro();showToast('O relato mudou. Solicite uma nova sugestão para o texto atual.');return;}
   const sugestao=$('aiSuggestionText').textContent;
   $('entryText').value=sugestao;
   $('charCount').textContent=sugestao.length+' caracteres';
-  $('aiSuggestionBox').classList.remove('show');
+  invalidarIARegistro();$('entryText').dispatchEvent(new Event('input',{bubbles:true}));
   showToast('✓ Texto atualizado com a sugestão da IA');
 }
-function descartarSugestaoIA(){
-  $('aiSuggestionBox').classList.remove('show');
-}
+function descartarSugestaoIA(){invalidarIARegistro();}
+function invalidarIARegistro(){entryAIVersion++;entryIAPending=false;entryIASource=null;if($('aiSuggestionBox'))$('aiSuggestionBox').classList.remove('show');if($('btnMelhorarIA')){$('btnMelhorarIA').textContent='✨ Melhorar com IA';$('btnMelhorarIA').disabled=!!window.RegistroAssistido?.salvando();}}
+function iaRegistroEmCurso(){return entryIAPending;}
 function showLoad(msg){$('loadingMsg').textContent=msg||'Aguarde...';$('loadingOverlay').classList.add('show');}
 function hideLoad(){$('loadingOverlay').classList.remove('show');}
 function setBadge(st,lbl){
@@ -1157,6 +1166,7 @@ function showScreen(name){
 ════════════════════════════════════════ */
 auth.onAuthStateChanged(async user => {
   if(user){
+    if(professorUid&&professorUid!==user.uid)window.RegistroAssistido.limparSessao();
     professorUid = user.uid;
     $('userInfoBar').textContent = user.email;
     setBadge('online','Nuvem conectada');
@@ -1166,12 +1176,12 @@ auth.onAuthStateChanged(async user => {
   } else {
     professorUid = null;
     turnoAtual = null;
-    limparFrequencia();
+    limparFrequencia();window.RegistroAssistido.limparSessao();
     if(unsubEntries){unsubEntries();unsubEntries=null;}
     perfilLoadVersion++;
     hideLoad();
     $('centralAluno').replaceChildren();
-    window.MetasAluno.ativar(null);window.ColaboracaoAluno.ativar(null);
+    window.MetasAluno.ativar(null);window.ColaboracaoAluno.ativar(null);window.RegistroAssistido.ativar(null);
     currentStudentId=null;currentProfile={};currentEntries=[];currentPhotoB64=null;contacts=[];
     $('loginEmail').value='';
     $('loginPassword').value='';
@@ -1257,7 +1267,7 @@ async function backfillProfessorEmail(user){
 
 /* LOGOUT — chama auth.signOut() diretamente, sem pontes */
 async function doLogout(){
-  if (!window.MetasAluno.podeSair()) return;
+  if (!window.MetasAluno.podeSair() || !window.RegistroAssistido.podeSair()) return;
   try{
     if(window.DiarioPresenca) await window.DiarioPresenca.sair();
     await auth.signOut();
@@ -1280,7 +1290,7 @@ document.addEventListener('DOMContentLoaded', () => {
   $('btnAddNota').addEventListener('click', addNota);
   $('btnSalvarPerfil').addEventListener('click', saveProfile);
   $('btnSalvarRegistro').addEventListener('click', saveEntry);
-  $('btnHoje').addEventListener('click', ()=>{$('entryDate').value=todayStr();});
+  $('btnHoje').addEventListener('click', ()=>{$('entryDate').value=RegistroAssistido.hoje();});
   $('btnExportPDF').addEventListener('click', exportPDF);
   $('photoCircle').addEventListener('click', ()=>$('photoInput').click());
   $('photoInput').addEventListener('change', handlePhoto);
@@ -1302,6 +1312,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   document.querySelectorAll('.humor-opt').forEach(el=>{
     el.addEventListener('click', ()=>{
+      if(RegistroAssistido.salvando())return;
       document.querySelectorAll('.humor-opt').forEach(o=>o.classList.remove('sel'));
       el.classList.add('sel');
       $('humorVal').value=el.dataset.humor;
@@ -2618,8 +2629,8 @@ async function deleteStudent(id,nome){
    NAVIGATION
 ════════════════════════════════════════ */
 async function goHome(){
-  if (!window.MetasAluno.podeSair()) return;
-  window.MetasAluno.ativar(null);window.ColaboracaoAluno.ativar(null);
+  if (!window.MetasAluno.podeSair() || !window.RegistroAssistido.podeSair()) return;
+  window.MetasAluno.ativar(null);window.ColaboracaoAluno.ativar(null);window.RegistroAssistido.ativar(null);
   perfilLoadVersion++;
   hideLoad();
   if(unsubEntries){unsubEntries();unsubEntries=null;}
@@ -2630,8 +2641,8 @@ async function goHome(){
 }
 
 function goNewStudent(){
-  if (!window.MetasAluno.podeSair()) return;
-  window.MetasAluno.ativar(null);window.ColaboracaoAluno.ativar(null);
+  if (!window.MetasAluno.podeSair() || !window.RegistroAssistido.podeSair()) return;
+  window.MetasAluno.ativar(null);window.ColaboracaoAluno.ativar(null);window.RegistroAssistido.ativar(null);
   perfilLoadVersion++;
   hideLoad();
   centralRegistrosStatus = 'pronto';
@@ -2639,15 +2650,15 @@ function goNewStudent(){
   currentStudentId=null;currentProfile={};currentEntries=[];currentPhotoB64=null;contacts=[];turnoAlunoSelecionado='';
   clearForm();
   $('breadcrumbName').textContent='Novo aluno';$('profileTitle').textContent='Novo Aluno';
-  showScreen('profile');$('entryDate').value=todayStr();
+  showScreen('profile');$('entryDate').value=RegistroAssistido.hoje();
   renderContacts();renderEntriesList();renderRecentDates();
   if(!contacts.length)addContact();
   renderCentralAluno();
 }
 
 async function openStudent(id){
-  if (!window.MetasAluno.podeSair()) return;
-  window.MetasAluno.ativar(null);window.ColaboracaoAluno.ativar(null);
+  if (!window.MetasAluno.podeSair() || !window.RegistroAssistido.podeSair()) return;
+  window.MetasAluno.ativar(null);window.ColaboracaoAluno.ativar(null);window.RegistroAssistido.ativar(null);
   const versao = ++perfilLoadVersion, ownerUid = professorUid;
   centralRegistrosStatus = 'carregando';
   if(unsubEntries){unsubEntries();unsubEntries=null;}
@@ -2669,7 +2680,7 @@ async function openStudent(id){
   renderCentralAluno();
   const nome=currentProfile.nome||'Aluno';
   $('breadcrumbName').textContent=nome;$('profileTitle').textContent=nome;
-  showScreen('profile');$('entryDate').value=todayStr();hideLoad();
+  showScreen('profile');$('entryDate').value=RegistroAssistido.hoje();hideLoad();
   // Grid e upload inicializados após showScreen — DOM da tela de perfil já visível
   // Carrega imagens da subcoleção (novo) e migra as antigas do doc principal se houver
   laudoImagens=[];
@@ -3680,29 +3691,26 @@ async function saveProfile(){
    DIARY ENTRIES
 ════════════════════════════════════════ */
 async function saveEntry(){
+  const registro=window.RegistroAssistido;
+  if(registro.salvando())return;
   if(!currentStudentId){showToast('Salve as informações do aluno primeiro');return;}
-  const studentId=currentStudentId, ownerUid=professorUid;
-  const date=val('entryDate');
-  const text=val('entryText').trim();
-  const metaVinculos=window.MetasAluno.vinculosSelecionados();
-  const metaIds=metaVinculos.map(meta=>meta.id);
-  if(!date){showToast('Selecione a data do atendimento');return;}
-  if(!text){showToast('Escreva o relato antes de salvar');return;}
-  $('btnSalvarRegistro').disabled=true;setBadge('syncing','Salvando...');
+  if(registro.roteiroPendente()){registro.mensagem('O roteiro ainda não foi acrescentado ao relato. Confira a prévia e acrescente, ou limpe o roteiro para salvar somente o relato digitado.',true);return;}
+  const studentId=currentStudentId,ownerUid=professorUid,date=val('entryDate'),text=val('entryText').trim();
+  if(!registro.dataValida(date)){registro.mensagem('Selecione uma data válida para o atendimento.',true);return;}
+  if(!text){registro.mensagem('Escreva o relato antes de salvar.',true);return;}
+  const metaVinculos=window.MetasAluno.vinculosSelecionados(),metaIds=metaVinculos.map(meta=>meta.id);
+  const ticket=registro.preparar({date,text,humor:val('humorVal'),por:val('registradoPor'),...(metaIds.length?{metaIds,metaVinculos}:{})});
+  registro.bloquear(true);registro.limparIA();registro.mensagem('Salvando atendimento…');setBadge('syncing','Salvando...');
   try{
-    await db.collection('alunos').doc(studentId).collection('registros').add({
-      date,text,humor:val('humorVal'),por:val('registradoPor'),createdAt:new Date().toISOString(),...(metaIds.length?{metaIds,metaVinculos}:{})
-    });
-    await db.collection('alunos').doc(studentId).set({ultimoRegistro:date},{merge:true});
-    if(currentStudentId===studentId && professorUid===ownerUid){
-      $('entryText').value='';$('charCount').textContent='0 caracteres';
-      document.querySelectorAll('.humor-opt').forEach(o=>o.classList.remove('sel'));$('humorVal').value='';
-      $('entryDate').value=todayStr();
-      window.MetasAluno.limparSelecao();
-    }
-    setBadge('online','Nuvem conectada');showToast('✓ Registro salvo na nuvem!');
-  }catch(e){setBadge('offline','Erro');showToast('Erro ao salvar');console.error(e);}
-  $('btnSalvarRegistro').disabled=false;
+    await registro.salvarBanco({db,alunoId:studentId,uid:ownerUid,ticket,vigente:()=>registro.valido(ticket)&&currentStudentId===studentId&&professorUid===ownerUid});
+    if(!registro.valido(ticket))return;
+    $('entryText').value='';$('charCount').textContent='0 caracteres';
+    document.querySelectorAll('.humor-opt').forEach(o=>o.classList.remove('sel'));$('humorVal').value='';
+    $('entryDate').value=registro.hoje();window.MetasAluno.limparSelecao();
+    registro.confirmado();setBadge('online','Nuvem conectada');showToast('✓ Registro salvo na nuvem!');
+  }catch(e){if(registro.valido(ticket)){
+    setBadge('offline','Erro');registro.mensagem('Não foi possível confirmar o salvamento. Seu texto foi mantido. Confira o histórico antes de alterar os campos; tentar novamente sem alterar o preenchimento não duplica esta tentativa.',true);console.error(e);
+  }}finally{if(registro.valido(ticket))registro.bloquear(false);}
 }
 
 async function deleteEntry(id){
@@ -3748,6 +3756,8 @@ function configurarMetasAluno(id){
 }
 
 function renderCentralAluno(){
+  const entryStudent=currentStudentId,entryUid=professorUid;
+  window.RegistroAssistido.ativar(entryUid?{alunoId:entryStudent,uid:entryUid,vigente:()=>currentStudentId===entryStudent&&professorUid===entryUid}:null);
   const shareId=currentStudentId,shareUid=professorUid;
   window.ColaboracaoAluno.ativar(shareId&&currentProfile.professorUid===shareUid?{
     alunoId:shareId,uid:shareUid,db,vigente:()=>currentStudentId===shareId&&professorUid===shareUid
