@@ -506,6 +506,8 @@ hr.sep{border:none;border-top:2px dashed rgba(0,0,0,.06);margin:.2rem 0;}
 <link rel="stylesheet" href="acompanhamento-periodo.css">
 <script src="acompanhamento-periodo.js"></script>
 <script src="metas-aluno.js"></script>
+<link rel="stylesheet" href="frequencia-interface.css">
+<script src="frequencia-interface.js"></script>
 <script src="firebase-ambiente-teste.js"></script>
 <link rel="stylesheet" href="colaboracao.css">
 <script src="pei-visualizacao.js"></script>
@@ -641,6 +643,9 @@ hr.sep{border:none;border-top:2px dashed rgba(0,0,0,.06);margin:.2rem 0;}
             <button class="new-btn freq-add-btn" id="btnAddSemana">＋ Adicionar semana</button>
           </div>
         </div>
+        <div class="freq-filtros" id="freqFiltros"></div>
+        <section class="freq-conferencia" id="freqConferencia" aria-label="Conferência das marcações"></section>
+        <p id="freqSalvamento" role="status" aria-live="polite"></p>
         <div class="freq-wrap" id="freqWrap">
           <div class="empty-list"><div class="spinner" style="margin:0 auto 8px"></div>Carregando...</div>
         </div>
@@ -1041,6 +1046,7 @@ function filtrarAlunosPorTurno(lista){
 ════════════════════════════════════════ */
 let currentStudentId = null;
 let contacts         = [];
+let freqPopoverEl=null,freqPopoverTarget=null,freqRenderVersion=0,freqDados=null,freqSalvando=false,freqWriteVersion=0;
 let currentEntries   = [];
 let currentProfile   = {};
 let currentPhotoB64  = null;
@@ -1160,6 +1166,7 @@ auth.onAuthStateChanged(async user => {
   } else {
     professorUid = null;
     turnoAtual = null;
+    limparFrequencia();
     if(unsubEntries){unsubEntries();unsubEntries=null;}
     perfilLoadVersion++;
     hideLoad();
@@ -1889,34 +1896,38 @@ const FREQ_STATUS={
   justificado:{label:'Justificado', abbr:'J', emoji:'📄'},
   sem_atend:{label:'Sem Atend. Pedagógico', abbr:'SAP', emoji:'⛔'}
 };
-let freqPopoverEl=null;
-
+function limparFrequencia(){
+  freqRenderVersion++;freqWriteVersion++;freqSalvando=false;freqDados=null;closeFreqPopover();FrequenciaInterface.limpar();
+  if($('freqWrap'))$('freqWrap').replaceChildren();
+  if($('freqSalvamento'))$('freqSalvamento').textContent='';
+}
+function freqSessaoValida(uid,turno){return professorUid===uid&&turnoAtual===turno&&auth.currentUser?.uid===uid;}
 async function renderFrequencia(){
-  const wrap=$('freqWrap');
-  wrap.innerHTML=`<div class="empty-list"><div class="spinner" style="margin:0 auto 8px"></div>Carregando...</div>`;
+  const wrap=$('freqWrap'),uid=professorUid,turno=turnoAtual;
+  if(freqDados&&(freqDados.uid!==uid||freqDados.turno!==turno))limparFrequencia();
+  const version=++freqRenderVersion;
+  closeFreqPopover();const scroll=wrap.scrollLeft;
+  wrap.innerHTML='<div class="empty-list">Carregando frequência…</div>';
+  if(!uid||!freqSessaoValida(uid,turno)){limparFrequencia();return;}
   try{
-    const [alunosSnap, semanasSnap]=await Promise.all([
-      alunosRef().get(),
-      semanasRef().get()
-    ]);
-    let alunos=[];
-    alunosSnap.forEach(d=>alunos.push({id:d.id,...d.data()}));
-    alunos=filtrarAlunosPorTurno(alunos);
-
-    let semanas=[];
-    semanasSnap.forEach(d=>semanas.push({id:d.id,...d.data()}));
-    semanas=filtrarSemanasPorTurno(semanas);
-    semanas.sort((a,b)=>(a.ordem||0)-(b.ordem||0)); // já não vem ordenado do servidor
-
-    if(!alunos.length){
-      wrap.innerHTML=`<div class="freq-empty-alunos">Cadastre alunos na aba "Alunos" para acompanhar a frequência.</div>`;
-      return;
-    }
-    if(!semanas.length){
-      wrap.innerHTML=`<div class="freq-empty-alunos">Nenhuma semana cadastrada ainda. Clique em "＋ Adicionar semana" para começar.</div>`;
-      return;
-    }
-
+    const [alunosSnap,semanasSnap]=await Promise.all([alunosRef().get(),semanasRef().get()]);
+    if(version!==freqRenderVersion||!freqSessaoValida(uid,turno))return;
+    let alunos=[],semanas=[];
+    alunosSnap.forEach(d=>alunos.push({...d.data(),id:d.id}));semanasSnap.forEach(d=>semanas.push({...d.data(),id:d.id}));
+    alunos=filtrarAlunosPorTurno(alunos);semanas=filtrarSemanasPorTurno(semanas).sort((a,b)=>(a.ordem||0)-(b.ordem||0));
+    freqDados={alunos,semanas,uid,turno};
+    FrequenciaInterface.iniciar({contexto:JSON.stringify([uid,turno]),semanas,alterou:renderTabelaFrequencia});
+    renderTabelaFrequencia();wrap.scrollLeft=scroll;
+  }catch(e){if(version===freqRenderVersion&&freqSessaoValida(uid,turno)){
+    freqDados=null;FrequenciaInterface.limpar();wrap.innerHTML='<div class="freq-empty-alunos">Não foi possível carregar a frequência. Reabra a aba para tentar novamente.</div>';console.error(e);
+  }}
+}
+function renderTabelaFrequencia(){
+  if(!freqDados||!freqSessaoValida(freqDados.uid,freqDados.turno))return;
+  const wrap=$('freqWrap');let {alunos,semanas}=freqDados;
+  closeFreqPopover();
+  if(!alunos.length){wrap.innerHTML='<div class="freq-empty-alunos">Cadastre alunos para acompanhar a frequência.</div>';FrequenciaInterface.resumo([],semanas);return;}
+  if(!semanas.length){wrap.innerHTML='<div class="freq-empty-alunos">Nenhuma semana cadastrada. Use Adicionar semana para começar.</div>';FrequenciaInterface.resumo([],[]);return;}
     // organiza por dia de atendimento (Segunda, Terça, Quinta, Sexta) e por horário,
     // incluindo horários da grade que ainda não têm nenhum aluno
     const ORDEM_DIA=['Segunda','Terça','Quinta','Sexta'];
@@ -1933,7 +1944,7 @@ async function renderFrequencia(){
     Object.values(porDiaHorario).forEach(diaObj=>Object.values(diaObj).forEach(lst=>lst.sort((a,b)=>(a.nome||'').localeCompare(b.nome||'','pt-BR'))));
     semDia.sort((a,b)=>(a.nome||'').localeCompare(b.nome||'','pt-BR'));
 
-    const rows=[];
+    let rows=[];
     ORDEM_DIA.forEach(d=>{
       HORARIOS.forEach(h=>{
         const lista=porDiaHorario[d][h];
@@ -1943,6 +1954,9 @@ async function renderFrequencia(){
     });
     semDia.forEach(a=>rows.push({dia:'Sem dia',horario:null,aluno:a}));
 
+    const filtrado=FrequenciaInterface.filtrar(rows,semanas);rows=filtrado.rows;semanas=filtrado.semanas;
+    FrequenciaInterface.resumo(rows,semanas);
+    if(!rows.length){wrap.innerHTML='<div class="freq-empty-alunos">Nenhum aluno ou horário corresponde aos filtros.</div>';return;}
     let html=`<table class="freq-table"><thead><tr><th class="th-dia">Dia</th><th class="th-horario">Horário</th><th class="th-aluno">Aluno</th>`;
     semanas.forEach(s=>{
       html+=`<th>
@@ -1979,9 +1993,9 @@ async function renderFrequencia(){
         const a=r.aluno;
         html+=`<td class="td-aluno">${esc(a.nome||'Sem nome')}</td>`;
         semanas.forEach(s=>{
-          const chaveDia=a.id+'__'+r.dia;
-          const status=s.status&&(s.status[chaveDia]!==undefined?s.status[chaveDia]:s.status[a.id]);
-          html+=`<td class="freq-cell" onclick="openFreqPopover(event,'${s.id}','${a.id}','${r.dia}')">${freqBadgeHtml(status)}</td>`;
+          const st=FrequenciaInterface.estado(s,a.id,r.dia),status=st.value;
+          const conhecido=Object.hasOwn(FREQ_STATUS,status),label=conhecido?FREQ_STATUS[status].label:status==null?'Sem lançamento':'Marcação não reconhecida';
+          html+=`<td class="freq-cell"><button class="freq-mark" type="button" data-freq-week="${esc(s.id)}" data-freq-aluno="${esc(a.id)}" data-freq-dia="${esc(r.dia)}" data-freq-horario="${esc(r.horario||'')}" aria-label="${esc((a.nome||'Aluno')+' · '+r.dia+' · '+(r.horario||'Sem horário')+' · '+(s.label||'Semana')+' · '+label+(st.fonte==='legado'?' · registro semanal antigo':''))}">${status==null?'<span class="freq-badge vazio">Não lançado</span>':conhecido?freqBadgeHtml(status):'<span class="freq-badge vazio">Conferir</span>'}${st.fonte==='legado'?'<small>semanal antigo</small>':''}</button></td>`;
         });
       }else{
         html+=`<td class="td-aluno vazio">— Nenhum aluno neste horário —</td>`;
@@ -1990,12 +2004,12 @@ async function renderFrequencia(){
       html+=`</tr>`;
     });
     html+=`</tbody></table>`;
-    wrap.innerHTML=html;
+    const scroll=wrap.scrollLeft;wrap.innerHTML=html;wrap.scrollLeft=scroll;
+    wrap.querySelectorAll('[data-freq-week]').forEach(button=>{
+      button.disabled=freqSalvando;
+      button.addEventListener('click',event=>openFreqPopover(event,button.dataset.freqWeek,button.dataset.freqAluno,button.dataset.freqDia));
+    });
 
-  }catch(e){
-    wrap.innerHTML=`<div class="freq-empty-alunos">⚠️ Erro ao carregar a frequência.</div>`;
-    console.error(e);
-  }
 }
 
 function freqBadgeHtml(status){
@@ -2512,52 +2526,57 @@ async function deleteSemanaFrequencia(semanaId){
 
 function closeFreqPopover(){
   if(freqPopoverEl){freqPopoverEl.remove();freqPopoverEl=null;}
-  document.removeEventListener('click', onDocClickCloseFreqPopover, true);
+  document.removeEventListener('click',onDocClickCloseFreqPopover,true);
+  document.removeEventListener('keydown',onFreqPopoverKey,true);
+  if(freqPopoverTarget?.isConnected)freqPopoverTarget.focus({preventScroll:true});freqPopoverTarget=null;
 }
-function onDocClickCloseFreqPopover(e){
-  if(freqPopoverEl && !freqPopoverEl.contains(e.target)) closeFreqPopover();
+function onDocClickCloseFreqPopover(e){if(freqPopoverEl&&!freqPopoverEl.contains(e.target))closeFreqPopover();}
+function onFreqPopoverKey(e){
+  if(e.key==='Escape'){e.preventDefault();closeFreqPopover();}
+  else if(['ArrowDown','ArrowUp'].includes(e.key)&&freqPopoverEl?.contains(document.activeElement)){
+    e.preventDefault();const buttons=[...freqPopoverEl.querySelectorAll('button')],index=buttons.indexOf(document.activeElement);
+    buttons[(index+(e.key==='ArrowDown'?1:-1)+buttons.length)%buttons.length].focus();
+  }
+}
+function openFreqPopover(evt,semanaId,alunoId,dia){
+  evt.stopPropagation();if(freqSalvando||!freqDados||!freqSessaoValida(freqDados.uid,freqDados.turno))return;
+  closeFreqPopover();const target=evt.currentTarget,rect=target.getBoundingClientRect();
+  const semana=freqDados.semanas.find(s=>s.id===semanaId),aluno=freqDados.alunos.find(a=>a.id===alunoId);if(!semana||!aluno)return;
+  const uid=professorUid,turno=turnoAtual,st=FrequenciaInterface.estado(semana,alunoId,dia),pop=document.createElement('div');
+  pop.className='freq-popover';pop.setAttribute('role','dialog');pop.setAttribute('aria-label','Marcar frequência');
+  const title=document.createElement('p');title.id='freqPopoverDescricao';pop.setAttribute('aria-describedby',title.id);title.textContent=(aluno.nome||'Aluno')+' · '+dia+' · '+(semana.label||'Semana');pop.append(title);
+  if(st.fonte==='legado'){const note=document.createElement('p');note.textContent='O valor exibido vem de um registro semanal antigo. Esta alteração será salva somente para este dia.';pop.append(note);}
+  for(const [key,label]of [...Object.entries(FrequenciaInterface.labels),['_clear','Limpar marcação deste dia']]){
+    const button=document.createElement('button');button.type='button';button.dataset.key=key;button.textContent=label;button.setAttribute('aria-pressed',String(key==='_clear'?st.value==null:st.value===key));
+    button.addEventListener('click',async()=>{
+      if(freqSalvando||!freqSessaoValida(uid,turno))return;const writeVersion=++freqWriteVersion;freqSalvando=true;closeFreqPopover();
+      $('freqWrap').querySelectorAll('.freq-mark').forEach(b=>b.disabled=true);$('freqSalvamento').textContent='Salvando marcação…';
+      try{
+        // null representa dia explicitamente limpo e evita restaurar o fallback semanal.
+        const ref=db.collection('frequenciaSemanas').doc(semanaId);
+        await db.runTransaction(async tx=>{
+          const previous=await tx.get(ref);
+          if(writeVersion!==freqWriteVersion||!freqSessaoValida(uid,turno))throw new Error('A conta ou o turno mudou. Reabra a frequência.');
+          if(!previous.exists||previous.data().professorUid!==uid)throw new Error('A semana não está disponível para esta conta.');
+          const atual=FrequenciaInterface.estado(previous.data(),alunoId,dia);
+          if(atual.value!==st.value||atual.fonte!==st.fonte)throw new Error('A marcação mudou em outra aba. Reabra a frequência antes de tentar novamente.');
+          tx.update(ref,{['status.'+alunoId+'__'+dia]:key==='_clear'?null:key});
+        });
+        if(writeVersion!==freqWriteVersion||!freqSessaoValida(uid,turno))return;
+        freqSalvando=false;await renderFrequencia();
+        if(writeVersion!==freqWriteVersion||!freqSessaoValida(uid,turno))return;
+        $('freqSalvamento').textContent='Salvo: '+(aluno.nome||'Aluno')+' · '+dia+' · '+(semana.label||'Semana')+' · '+(key==='_clear'?'Sem lançamento':FrequenciaInterface.labels[key])+'.';
+        const restored=[...$('freqWrap').querySelectorAll('.freq-mark')].find(b=>b.dataset.freqWeek===semanaId&&b.dataset.freqAluno===alunoId&&b.dataset.freqDia===dia&&b.dataset.freqHorario===target.dataset.freqHorario);restored?.focus({preventScroll:true});
+      }catch(e){if(writeVersion===freqWriteVersion&&freqSessaoValida(uid,turno)){$('freqSalvamento').textContent=e.message?.includes('outra aba')?e.message:'Não foi possível salvar. A marcação anterior foi mantida. Tente novamente.';console.error(e);}}
+      finally{if(writeVersion===freqWriteVersion){freqSalvando=false;if(freqSessaoValida(uid,turno))$('freqWrap').querySelectorAll('.freq-mark').forEach(b=>b.disabled=false);}}
+    });pop.append(button);
+  }
+  document.body.append(pop);pop.style.top=Math.max(10,Math.min(rect.bottom+6,innerHeight-pop.offsetHeight-10))+'px';pop.style.left=Math.max(10,Math.min(rect.left,innerWidth-pop.offsetWidth-10))+'px';
+  freqPopoverEl=pop;freqPopoverTarget=target;pop.querySelector('button[aria-pressed="true"]')?.focus();if(!pop.contains(document.activeElement))pop.querySelector('button').focus();
+  document.addEventListener('keydown',onFreqPopoverKey,true);
+  setTimeout(()=>{if(freqPopoverEl===pop&&pop.isConnected)document.addEventListener('click',onDocClickCloseFreqPopover,true);},0);
 }
 
-function openFreqPopover(evt,semanaId,alunoId,dia){
-  evt.stopPropagation();
-  closeFreqPopover();
-  const rect=evt.currentTarget.getBoundingClientRect();
-  const pop=document.createElement('div');
-  pop.className='freq-popover';
-  const opts=[
-    {key:'presente',label:'Presente',emoji:'✅'},
-    {key:'falta',label:'Falta',emoji:'❌'},
-    {key:'justificado',label:'Justificado',emoji:'📄'},
-    {key:'sem_atend',label:'Sem Atend. Pedagógico',emoji:'⛔'}
-  ];
-  pop.innerHTML = opts.map(o=>`<button data-key="${o.key}"><span class="dot ${o.key}"></span>${o.emoji} ${o.label}</button>`).join('')
-    + `<hr><button data-key="_clear"><span class="dot vazio"></span>🗑️ Limpar</button>`;
-  document.body.appendChild(pop);
-  const top=Math.min(rect.bottom+6, window.innerHeight-pop.offsetHeight-10);
-  const left=Math.min(rect.left, window.innerWidth-pop.offsetWidth-10);
-  pop.style.top=Math.max(10,top)+'px';
-  pop.style.left=Math.max(10,left)+'px';
-  freqPopoverEl=pop;
-  const campo='status.'+alunoId+'__'+dia;
-  pop.querySelectorAll('button').forEach(btn=>{
-    btn.addEventListener('click', async ()=>{
-      const key=btn.dataset.key;
-      closeFreqPopover();
-      try{
-        if(key==='_clear'){
-          await db.collection('frequenciaSemanas').doc(semanaId).update({
-            [campo]:firebase.firestore.FieldValue.delete(),
-            [`status.${alunoId}`]:firebase.firestore.FieldValue.delete() // limpa também a chave antiga, se houver
-          });
-        }else{
-          await db.collection('frequenciaSemanas').doc(semanaId).update({[campo]:key});
-        }
-        renderFrequencia();
-      }catch(e){showToast('Erro ao salvar frequência');console.error(e);}
-    });
-  });
-  setTimeout(()=>document.addEventListener('click', onDocClickCloseFreqPopover, true),0);
-}
 async function renderStudentList(){
   const c=$('studentsList');
   try{
