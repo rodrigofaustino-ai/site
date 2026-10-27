@@ -144,8 +144,15 @@ async function main(){
     await page.evaluate(async()=>{professorUid='prof';mockAuth.currentUser={uid:'prof'};await renderFrequencia();});
     check(await page.locator('.freq-coluna-check input:checked').evaluateAll(inputs=>inputs.map(i=>i.value)),['s1','s4']);
     check(await page.evaluate(()=>writes.length),writesColunas);
+    await page.locator('#toast').evaluate(el=>{el.classList.remove('show');el.style.transition='none';});
     fs.mkdirSync('/tmp/site-results',{recursive:true});await page.locator('#tabFrequencia').screenshot({path:'/tmp/site-results/frequencia-conferencia.png'});
-    for(const width of [390,320]){await page.setViewportSize({width,height:844});check(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);}
+    for(const width of [390,320]){
+      await page.setViewportSize({width,height:844});check(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
+      await page.locator('#freqWrap').evaluate(el=>el.scrollLeft=el.scrollWidth);
+      check(await page.locator('.td-aluno:not(.vazio)').first().evaluate(el=>{const r=el.getBoundingClientRect(),wrap=document.getElementById('freqWrap').getBoundingClientRect();return r.left>=wrap.left&&r.right<wrap.right;}),true);
+      check(await page.locator('.td-dia').first().evaluate(el=>getComputedStyle(el).position),'static');
+      await page.locator('#tabFrequencia').screenshot({path:'/tmp/site-results/frequencia-visual-'+width+'.png'});
+    }
     // Uma consulta antiga não pode reaparecer depois da troca de conta.
     await page.evaluate(()=>{window.pendingLoad=new Promise(resolve=>window.resumeLoad=resolve);window.pendingRender=renderFrequencia();professorUid=null;mockAuth.currentUser=null;limparFrequencia();resumeLoad({docs:[],forEach(){}});});
     await page.evaluate(()=>pendingRender);check(await page.locator('#freqWrap').textContent(),'');check(await page.locator('#freqConferencia').textContent(),'');

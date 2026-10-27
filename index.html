@@ -519,6 +519,7 @@ hr.sep{border:none;border-top:2px dashed rgba(0,0,0,.06);margin:.2rem 0;}
 <script src="colaboracao-servico.js"></script>
 <script src="colaboracao-aluno.js"></script>
 <link rel="stylesheet" href="ficha-visual.css">
+<link rel="stylesheet" href="frequencia-visual.css">
 </head>
 <body>
 <nav class="colaboracao-entrada" aria-label="Compartilhamento"><a class="central-btn" href="colaboracao.html">Conteúdos compartilhados comigo</a></nav>
@@ -3751,7 +3752,7 @@ function renderEntriesList(){
         <span class="entry-date-pill">📅 ${window.HistoricoAtendimentos.dataValida(e.date)?fmtShort(e.date):'Data não informada ou inválida'}</span>
         ${e.humor?`<span class="humor-pill ${hc}">${he} ${esc(e.humor)}</span>`:''}
         ${e.por?`<span class="entry-by">👤 ${esc(e.por)}</span>`:''}
-        <button class="del-entry-btn" data-eid="${e._id}">🗑️</button>
+        <button class="del-entry-btn" aria-label="Excluir atendimento" title="Excluir atendimento" data-eid="${esc(e._id)}">🗑️</button>
       </div>
       ${Array.isArray(e.metaIds)?e.metaIds.filter(id=>typeof id==='string').map(id=>`<span class="meta-entry-tag">${esc((Array.isArray(e.metaVinculos)?e.metaVinculos.find(meta=>meta.id===id)?.objetivo:null)||window.MetasAluno.rotulo(id))}</span>`).join(''):''}
       <div class="entry-body${long?' collapsed':''}" id="eb${i}">${esc(e.text)}</div>

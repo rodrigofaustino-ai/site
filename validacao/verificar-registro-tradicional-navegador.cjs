@@ -81,6 +81,7 @@ function mock(){
  ];centralRegistrosStatus='pronto';renderEntriesList();});
  const cards=()=>page.locator('#entriesList .entry-card').count();
  check(await cards(),3);
+ await page.locator('#entriesList').screenshot({path:'/tmp/site-results/historico-visual.png'});
  const callsAntes=await page.evaluate(()=>__test.calls);
  await page.locator('#historicoBusca').fill('JOSE autonomia');check(await cards(),1);
  check((await page.locator('#entriesList').textContent()).includes('Organização'),true);

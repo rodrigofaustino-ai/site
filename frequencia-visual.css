@@ -1,0 +1,68 @@
+/* Segunda etapa visual, limitada à frequência e à lista de atendimentos. */
+body:has(#screen-home.active #tabFrequencia.active)::before{background:#f5f7f8}
+body:has(#screen-home.active #tabFrequencia.active)>.shape{display:none}
+#tabFrequencia{
+  --teal:#176b5b;--teal-l:#e9f3ef;--ink:#24333d;--muted:#52616b;
+  --surface:#fff;--surface2:#f5f7f8;--border:#dde5e7;
+  text-align:left;line-height:1.5;
+}
+#tabFrequencia>.card{padding:24px;border:1px solid var(--border);border-radius:12px;box-shadow:0 2px 8px #24333d0a;gap:20px}
+#tabFrequencia .color-strip{display:none}
+#tabFrequencia .section-head{font-size:22px}
+#tabFrequencia .section-badge{background:#e9f3ef!important;border-radius:8px}
+#tabFrequencia .ai-hint{font-size:14px;line-height:1.6}
+#tabFrequencia .freq-toolbar{margin-bottom:0;gap:16px}
+#tabFrequencia .freq-filtros{background:#f5f7f8;border:1px solid var(--border);border-radius:10px;padding:16px;margin:0}
+#tabFrequencia :is(input[type=search],select,.freq-colunas){border-color:#a7b6bc;color:var(--ink);font-size:16px}
+#tabFrequencia .freq-filtro-vazios input{width:18px;height:18px;accent-color:#176b5b}
+#tabFrequencia :is(.new-btn,.pdf-btn,.central-btn){min-height:44px;border-radius:8px;box-shadow:none;font-size:14px}
+#tabFrequencia .new-btn{background:#176b5b;color:#fff;border:1px solid #176b5b}
+#tabFrequencia :is(.pdf-btn,.central-btn){background:#fff;color:#245346;border:1px solid #a7b6bc}
+#tabFrequencia :is(.new-btn,.pdf-btn,.central-btn):hover{transform:none;box-shadow:none;filter:brightness(.96)}
+#tabFrequencia :is(button,input,select,summary):focus-visible,.freq-popover button:focus-visible{outline:3px solid #176b5b;outline-offset:2px}
+#tabFrequencia .freq-conferencia{margin:0;background:#f5f7f8;border-color:var(--border)}
+#tabFrequencia .freq-indicadores>div{border-color:var(--border);padding:12px}
+#tabFrequencia .freq-indicadores strong{color:#176b5b}
+#tabFrequencia .freq-wrap{border:1px solid #c3d0d4;border-radius:10px;isolation:isolate}
+#tabFrequencia .freq-table{font-size:14px}
+#tabFrequencia .freq-table thead th{background:#e9f0ee}
+#tabFrequencia .freq-table td.td-dia{background:#e9f0ee;color:#245346;letter-spacing:.5px}
+#tabFrequencia .freq-table td.td-horario{background:#f5f7f8;font-size:12px}
+#tabFrequencia .freq-table tbody tr:nth-child(even) td:not(.td-dia):not(.td-horario){background:#f5f7f8}
+#tabFrequencia .freq-table tbody tr:nth-child(odd) td:not(.td-dia):not(.td-horario){background:#fff}
+#tabFrequencia .freq-table td.td-aluno{box-shadow:3px 0 5px #24333d0d}
+#tabFrequencia .freq-week-label{font-size:14px;min-height:32px}
+#tabFrequencia .freq-week-date{font-size:12px;color:#176b5b;min-height:28px}
+#tabFrequencia .freq-week-del{font-size:12px;min-height:28px;color:#8c3030}
+#tabFrequencia .freq-badge{border-radius:6px;font-size:14px}
+#tabFrequencia .freq-badge.presente{background:#e5f2e9;color:#245b39}
+#tabFrequencia .freq-badge.falta{background:#faeaea;color:#973737}
+#tabFrequencia .freq-badge.justificado{background:#fff2db;color:#805219}
+#tabFrequencia .freq-badge.sem_atend{background:#e9edf0;color:#46525f}
+#tabFrequencia .freq-mark small{font-size:11px}
+.freq-popover{border:1px solid #c3d0d4;box-shadow:0 8px 28px #24333d24;color:#24333d}
+.freq-popover button{min-height:44px;color:#24333d;font-size:15px}
+#screen-profile .historico-filtros{background:#f5f7f8;padding:16px}
+#screen-profile .historico-campos label{font-size:14px;font-weight:600}
+#screen-profile .historico-campos :is(input,select){padding:9px 12px}
+#screen-profile .entry-card{border:1px solid #dde5e7;border-radius:10px;padding:20px;box-shadow:none;gap:12px}
+#screen-profile .entry-header{border-bottom:1px solid #e5ebed;padding-bottom:12px;gap:10px}
+#screen-profile .entry-date-pill{background:#e9f3ef;color:#245346;font-size:14px;border-radius:6px}
+#screen-profile .entry-by{font-size:13px;color:#52616b}
+#screen-profile .entry-body{font-size:16px;line-height:1.75}
+#screen-profile .entry-expand{min-height:44px;color:#176b5b;font-size:14px}
+#screen-profile .del-entry-btn{min-width:44px;min-height:44px;opacity:1;color:#973737;border:1px solid #dde5e7;border-radius:8px}
+#screen-profile .meta-entry-tag{font-size:13px;line-height:1.5;background:#e9f3ef;color:#245346;border-radius:6px}
+@media(max-width:600px){
+  #tabFrequencia>.card{padding:16px;gap:16px}
+  #tabFrequencia .section-head{font-size:20px}
+  #tabFrequencia .freq-filtros{padding:12px}
+  #tabFrequencia .freq-indicadores{grid-template-columns:repeat(2,minmax(0,1fr))}
+  #tabFrequencia .freq-indicadores>div{overflow-wrap:anywhere}
+  /* No celular, apenas o nome permanece fixo para deixar as semanas visíveis. */
+  #tabFrequencia .freq-table :is(.th-dia,.td-dia,.th-horario,.td-horario){position:static}
+  #tabFrequencia .freq-table :is(.th-aluno,.td-aluno){left:0;min-width:140px;max-width:160px}
+  #screen-profile .entry-card{padding:16px}
+  #screen-profile .entry-by{margin-left:0;flex-basis:100%}
+}
+@media(prefers-reduced-motion:reduce){#tabFrequencia *{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
