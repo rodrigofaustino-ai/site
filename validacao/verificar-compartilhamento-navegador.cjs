@@ -120,6 +120,13 @@ async function main(){
     check(await recipient.evaluate(()=>writes[0].data.publicacaoId),shared.publicacaoId);
     fs.mkdirSync('/tmp/site-results',{recursive:true});
     await recipient.screenshot({path:'/tmp/site-results/compartilhamento-recebido.png',fullPage:true});
+    for(const width of [390,320]){
+      await recipient.setViewportSize({width,height:844});
+      check(await recipient.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
+      check(await recipient.getByRole('button',{name:'Registrar observação',exact:true}).evaluate(el=>el.getBoundingClientRect().height>=44),true);
+      await recipient.screenshot({path:'/tmp/site-results/compartilhamento-'+width+'.png',fullPage:true});
+    }
+
     await recipient.evaluate(()=>{mockStore['colaboracoes/recebido/conteudo/atual'].publicacaoId=crypto.randomUUID();emit();});
     await recipient.getByText(/cópia anterior/).waitFor();
     check(await recipient.getByText(/cópia anterior/).count(),1);

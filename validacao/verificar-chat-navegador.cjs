@@ -41,7 +41,14 @@ function mockFirebase(){
   await a.evaluate(()=>firebase.auth().signOut());assert.equal(await a.locator('#chatEquipe').isVisible(),false);assert.equal(await a.locator('#chatMensagens article').count(),0);assert.equal(await a.evaluate(()=>__test.listenerCount()),0);
   await a.evaluate(()=>{__test.login('a');selecionarTurno('Matutino');});await a.locator('#chatAbrir').click();await a.waitForFunction(()=>document.querySelectorAll('#chatMensagens article').length===100);await a.locator('#chatHistorico').click();await a.waitForFunction(()=>document.querySelectorAll('#chatMensagens article').length===109);assert.equal(await a.locator('#chatHistorico').isVisible(),false);
   await a.waitForTimeout(850);assert.equal(receipts.has('historico-0/a'),false);await a.locator('[data-message-id="historico-0"]').scrollIntoViewIfNeeded();await a.waitForFunction(async()=>Boolean(await window.chatRPC('getReceipt',{messageId:'historico-0',uid:'a'})));
-  await a.setViewportSize({width:390,height:844});assert.equal(await a.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);const box=await a.locator('#chatPainel').boundingBox();assert(box.x>=0&&box.x+box.width<=390);
+  fs.mkdirSync('/tmp/site-results',{recursive:true});
+  await a.locator('#chatPainel').screenshot({path:'/tmp/site-results/chat-visual.png'});
+  for(const width of [390,320]){
+   await a.setViewportSize({width,height:844});assert.equal(await a.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
+   const box=await a.locator('#chatPainel').boundingBox();assert(box.x>=0&&box.x+box.width<=width);
+   assert(await a.locator('#chatEnviar').evaluate(el=>el.getBoundingClientRect().height>=44));
+   await a.locator('#chatPainel').screenshot({path:'/tmp/site-results/chat-visual-'+width+'.png'});
+  }
   await a.locator('#chatTexto').fill('Rascunho privado');await a.evaluate(()=>__test.login('c'));assert.equal(await a.locator('#chatTexto').inputValue(),'');assert.equal(await a.locator('#chatPainel').isVisible(),false);assert.deepEqual(errors,[]);
   console.log('Leituras: não registra chat fechado/aba oculta/mensagem fora da área de leitura, confirma após exposição, lista leitor com apelido sem @.');
   console.log('Chat: duas sessões, atualização em tempo real, envio explícito, não lidas, texto seguro, data, falha/reenvio sem duplicação, histórico, logout/troca de conta e celular passaram (Firebase simulado).');
