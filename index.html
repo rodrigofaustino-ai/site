@@ -522,6 +522,7 @@ hr.sep{border:none;border-top:2px dashed rgba(0,0,0,.06);margin:.2rem 0;}
 <link rel="stylesheet" href="diario-visual.css">
 <link rel="stylesheet" href="frequencia-visual.css">
 <link rel="stylesheet" href="equipe-visual.css">
+<link rel="stylesheet" href="revisao-interface.css">
 </head>
 <body>
 <nav class="colaboracao-entrada" aria-label="Compartilhamento"><a class="central-btn" href="colaboracao.html">Conteúdos compartilhados comigo</a></nav>
@@ -546,9 +547,9 @@ hr.sep{border:none;border-top:2px dashed rgba(0,0,0,.06);margin:.2rem 0;}
       <div class="login-sub">Sala de Recursos Multifuncionais</div></div>
     </div>
     <div class="login-rainbow"></div>
-    <div class="login-field"><label>📧 E-mail</label>
+    <div class="login-field"><label for="loginEmail">📧 E-mail</label>
       <input type="email" id="loginEmail" placeholder="seu@email.com" autocomplete="email"></div>
-    <div class="login-field"><label>🔒 Senha</label>
+    <div class="login-field"><label for="loginPassword">🔒 Senha</label>
       <input type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password"></div>
     <div class="login-error" id="loginError"></div>
     <button class="login-btn" id="loginBtn">Entrar no Diário</button>
@@ -592,12 +593,12 @@ hr.sep{border:none;border-top:2px dashed rgba(0,0,0,.06);margin:.2rem 0;}
           <span id="cloudTxt">Conectando...</span>
         </span>
         <div id="userInfoBar" class="user-info"></div>
-        <span id="turnoBadge" style="font-size:12px;font-weight:700;padding:3px 10px;border-radius:20px;background:rgba(255,255,255,.2);color:#fff;display:none;cursor:pointer;" title="Trocar turno" onclick="mostrarTrocaTurno()"></span>
+        <button type="button" id="turnoBadge" aria-label="Trocar turno" style="font-size:12px;font-weight:700;padding:3px 10px;border-radius:20px;background:rgba(255,255,255,.2);color:#fff;display:none;cursor:pointer;" title="Trocar turno" onclick="mostrarTrocaTurno()"></button>
         <button id="btnLogout" style="background:rgba(255,255,255,.2);border:none;color:#fff;font-size:13px;font-weight:600;padding:5px 12px;border-radius:8px;cursor:pointer;">Sair</button>
       </div>
     </div>
-    <div class="tabs-bar">
-      <button class="tab-btn active" id="tabBtnAlunos" onclick="switchTab('alunos')">🧒 Alunos</button>
+    <nav class="tabs-bar" aria-label="Áreas do Diário">
+      <button class="tab-btn active" aria-current="true" id="tabBtnAlunos" onclick="switchTab('alunos')">🧒 Alunos</button>
       <button class="tab-btn" id="tabBtnGrade" onclick="switchTab('grade')">📅 Grade de Atendimento</button>
       <button class="tab-btn" id="tabBtnFrequencia" onclick="switchTab('frequencia')">✅ Frequência</button>
       <button class="tab-btn" id="tabBtnPlanner" onclick="switchTab('planner')">🗓️ Planner</button>
@@ -608,7 +609,7 @@ hr.sep{border:none;border-top:2px dashed rgba(0,0,0,.06);margin:.2rem 0;}
       <button class="tab-btn" id="tabBtnDiagnostica" onclick="switchTab('diagnostica')">📊 Diagnóstica</button>
       <button class="tab-btn" id="tabBtnPlanos" onclick="switchTab('planos')">📚 Planos de Aula</button>
       <button class="tab-btn" id="tabBtnRecursos" onclick="switchTab('recursos')">🔗 Recursos Didáticos</button>
-    </div>
+    </nav>
 
     <!-- ABA ALUNOS -->
     <div class="tab-panel active" id="tabAlunos">
@@ -781,9 +782,9 @@ hr.sep{border:none;border-top:2px dashed rgba(0,0,0,.06);margin:.2rem 0;}
         <div class="color-strip" style="background:linear-gradient(90deg,var(--teal),var(--purple),var(--coral),var(--yellow),var(--green))"></div>
         <div class="section-head"><div class="section-badge" style="background:var(--teal-l)">🗓️</div>Planner Mensal</div>
         <div class="planner-toolbar">
-          <button class="planner-nav-btn" id="btnPlannerPrev" title="Mês anterior">◀</button>
+          <button class="planner-nav-btn" id="btnPlannerPrev" aria-label="Mês anterior" title="Mês anterior">◀</button>
           <span class="planner-month-label" id="plannerMonthLabel">—</span>
-          <button class="planner-nav-btn" id="btnPlannerNext" title="Próximo mês">▶</button>
+          <button class="planner-nav-btn" id="btnPlannerNext" aria-label="Próximo mês" title="Próximo mês">▶</button>
           <span id="plannerSaveStatus" style="margin-left:auto;font-size:12px;font-weight:700;"></span>
         </div>
         <div class="planner-legend" id="plannerLegend"></div>
@@ -835,14 +836,14 @@ hr.sep{border:none;border-top:2px dashed rgba(0,0,0,.06);margin:.2rem 0;}
           <input type="file" id="photoInput" accept="image/*">
         </div>
         <div class="flds">
-          <div class="field"><label>Nome completo do aluno</label><input type="text" id="nomeAluno" placeholder="Nome completo"></div>
+          <div class="field"><label for="nomeAluno">Nome completo do aluno</label><input type="text" id="nomeAluno" placeholder="Nome completo"></div>
           <div class="fg">
             <div class="field">
-              <label>Data de nascimento</label>
+              <label for="dataNasc">Data de nascimento</label>
               <input type="date" id="dataNasc">
               <span id="idadeDisplay" style="font-size:12px;font-weight:700;color:var(--teal);margin-top:4px;display:none;">🎂 <span id="idadeTexto"></span></span>
             </div>
-            <div class="field"><label>Turma / Série</label><input type="text" id="turma" placeholder="Ex: 3º ano A"></div>
+            <div class="field"><label for="turma">Turma / Série</label><input type="text" id="turma" placeholder="Ex: 3º ano A"></div>
           </div>
           <div class="field full">
             <label>🌓 Turno do atendimento na SRM</label>
@@ -858,9 +859,9 @@ hr.sep{border:none;border-top:2px dashed rgba(0,0,0,.06);margin:.2rem 0;}
       <hr class="sep">
       <div class="section-head" style="font-size:14px"><div class="section-badge" style="background:var(--blue-l);width:28px;height:28px;font-size:14px">🏫</div>Escola</div>
       <div class="fg">
-        <div class="field full"><label>Nome da escola</label><input type="text" id="escola" placeholder="Nome da instituição"></div>
-        <div class="field"><label>Município / Estado</label><input type="text" id="municipio" placeholder="Ex: Londrina / PR"></div>
-        <div class="field"><label>Período</label>
+        <div class="field full"><label for="escola">Nome da escola</label><input type="text" id="escola" placeholder="Nome da instituição"></div>
+        <div class="field"><label for="municipio">Município / Estado</label><input type="text" id="municipio" placeholder="Ex: Londrina / PR"></div>
+        <div class="field"><label for="periodo">Período</label>
           <select id="periodo"><option value="">Selecionar</option><option>Manhã</option><option>Tarde</option><option>Integral</option><option>Contraturno</option></select></div>
       </div>
       <div class="field full" style="margin-top:.8rem">
@@ -872,7 +873,7 @@ hr.sep{border:none;border-top:2px dashed rgba(0,0,0,.06);margin:.2rem 0;}
       <hr class="sep">
       <div class="section-head" style="font-size:14px"><div class="section-badge" style="background:var(--purple-l);width:28px;height:28px;font-size:14px">📄</div>Laudo / Diagnóstico</div>
       <div class="fg">
-        <div class="field full"><label>Laudo(s) que o aluno possui</label><input type="text" id="laudo" placeholder="Ex: TEA, TDAH, Dislexia..."></div>
+        <div class="field full"><label for="laudo">Laudo(s) que o aluno possui</label><input type="text" id="laudo" placeholder="Ex: TEA, TDAH, Dislexia..."></div>
         <div class="field">
           <label>CID-10</label>
           <div class="cid-wrap">
@@ -901,9 +902,9 @@ hr.sep{border:none;border-top:2px dashed rgba(0,0,0,.06);margin:.2rem 0;}
           </div>
           <div id="cidBuscaResultado" style="margin-top:8px;"></div>
         </div>
-        <div class="field"><label>Data do laudo</label><input type="date" id="dataLaudo"></div>
+        <div class="field"><label for="dataLaudo">Data do laudo</label><input type="date" id="dataLaudo"></div>
         <div class="field full">
-          <label>Observações clínicas relevantes</label>
+          <label for="obsClinicas">Observações clínicas relevantes</label>
           <div style="position:relative;">
             <textarea id="obsClinicas" placeholder="Diagnóstico, medicações, necessidades específicas..." style="padding-right:42px;"></textarea>
             <button id="btnIaObsClinicas" title="Revisar e ampliar com IA" style="position:absolute;top:6px;right:6px;width:30px;height:30px;padding:0;border:1px solid var(--border);border-radius:7px;background:var(--surface);display:flex;align-items:center;justify-content:center;font-size:14px;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.1);">✨</button>
@@ -933,7 +934,7 @@ hr.sep{border:none;border-top:2px dashed rgba(0,0,0,.06);margin:.2rem 0;}
       <div class="section-head"><div class="section-badge" style="background:var(--teal-l)">✏️</div>Registro do Atendimento</div>
       <div>
         <div class="date-area">
-          <div class="field"><label>📅 Data do atendimento</label><input type="date" id="entryDate"></div>
+          <div class="field"><label for="entryDate">📅 Data do atendimento</label><input type="date" id="entryDate"></div>
           <button class="add-btn" id="btnHoje">📌 Hoje</button>
         </div>
         <div class="date-tags" id="recentDates"></div>
@@ -941,7 +942,7 @@ hr.sep{border:none;border-top:2px dashed rgba(0,0,0,.06);margin:.2rem 0;}
       <div id="metasVinculoAtendimento"></div>
       <div id="registroAssistido"></div>
       <div class="field">
-        <label>🗒️ Relato do atendimento</label>
+        <label for="entryText">🗒️ Relato do atendimento</label>
         <details class="registro-orientacao"><summary>Orientação de preenchimento do relato</summary><p>Descreva as atividades realizadas, os apoios utilizados, as respostas observadas e os encaminhamentos, conforme o que aconteceu no atendimento. A análise dos avanços e dificuldades cabe ao profissional, com base nos registros.</p></details>
         <textarea class="entry-text" id="entryText"></textarea>
         <div class="char-count" id="charCount">0 caracteres</div>
@@ -971,16 +972,16 @@ hr.sep{border:none;border-top:2px dashed rgba(0,0,0,.06);margin:.2rem 0;}
         </div>
         <input type="hidden" id="humorVal">
       </div>
-      <div class="field"><label>👤 Registrado por</label><input type="text" id="registradoPor" placeholder="Nome do professor / profissional"></div>
+      <div class="field"><label for="registradoPor">👤 Registrado por</label><input type="text" id="registradoPor" placeholder="Nome do professor / profissional"></div>
       <button class="save-btn coral" id="btnSalvarRegistro">✅ Salvar registro do atendimento</button>
       <p id="registroStatus" role="status" aria-live="polite"></p>
       <hr class="sep">
       <div class="pdf-fields">
         <div class="pdf-fields-title">🖨️ Dados para o PDF</div>
         <div class="fg">
-          <div class="field full"><label>Local (cidade / escola)</label><input type="text" id="pdfLocal" placeholder="Ex: Londrina, Escola Municipal..."></div>
-          <div class="field"><label>Nome do professor para assinatura</label><input type="text" id="pdfProfessor" placeholder="Nome completo"></div>
-          <div class="field"><label>Cargo / Função</label><input type="text" id="pdfCargo" placeholder="Ex: Professor da SRM"></div>
+          <div class="field full"><label for="pdfLocal">Local (cidade / escola)</label><input type="text" id="pdfLocal" placeholder="Ex: Londrina, Escola Municipal..."></div>
+          <div class="field"><label for="pdfProfessor">Nome do professor para assinatura</label><input type="text" id="pdfProfessor" placeholder="Nome completo"></div>
+          <div class="field"><label for="pdfCargo">Cargo / Função</label><input type="text" id="pdfCargo" placeholder="Ex: Professor da SRM"></div>
         </div>
       </div>
       <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem">
@@ -1341,7 +1342,9 @@ document.addEventListener('DOMContentLoaded', () => {
 ════════════════════════════════════════ */
 function switchTab(name){
   ['alunos','grade','frequencia','paee','pei','relatorio','diagnostica','planner','notas','planos','recursos'].forEach(t=>{
-    $('tabBtn'+t.charAt(0).toUpperCase()+t.slice(1)).classList.toggle('active',t===name);
+    const botao=$('tabBtn'+t.charAt(0).toUpperCase()+t.slice(1));
+    botao.classList.toggle('active',t===name);
+    if(t===name)botao.setAttribute('aria-current','true');else botao.removeAttribute('aria-current');
     $('tab'+t.charAt(0).toUpperCase()+t.slice(1)).classList.toggle('active',t===name);
   });
   if(name==='planos') window.PlanosAula.activate();
@@ -1893,7 +1896,7 @@ async function renderGrade(){
               ? `<div class="slot-empty">— Nenhum aluno —</div>`
               : `<div class="slot-alunos">${lista.map(a=>{
                   const cor=AV_GRAD_COLORS[Math.abs([...(a.nome||'')].reduce((acc,c)=>acc+c.charCodeAt(0),0))%AV_GRAD_COLORS.length];
-                  return`<div class="aluno-chip" data-open="${a.id}" title="Abrir registro"><span class="av-dot" style="background:${cor}"></span><span class="aluno-nome">${esc(a.nome||'Sem nome')}</span></div>`;
+                  return`<button type="button" class="aluno-chip" data-open="${esc(a.id)}" aria-label="Abrir ficha de ${esc(a.nome||'aluno')}" title="Abrir registro"><span class="av-dot" style="background:${cor}"></span><span class="aluno-nome">${esc(a.nome||'Sem nome')}</span></button>`;
                 }).join('')}</div>`;
             return `<div class="day-slot">
               <div class="slot-time">⏰ ${h}${lista&&lista.length?`<span class="count">${lista.length}</span>`:''}</div>
@@ -2062,12 +2065,12 @@ function addSemanaFrequencia(){
   showModal(`
     <div class="section-head" style="font-size:17px"><div class="section-badge" style="background:var(--teal-l)">📅</div>Nova semana</div>
     <div class="field">
-      <label>Data de início da semana (segunda-feira)</label>
+      <label for="novaSemanaData">Data de início da semana (segunda-feira)</label>
       <input type="date" id="novaSemanaData" value="${hoje}">
     </div>
     <span class="ai-hint">Pode ser uma data retroativa — a semana será encaixada automaticamente na ordem cronológica correta.</span>
     <div class="field">
-      <label>Rótulo (opcional)</label>
+      <label for="novaSemanaLabel">Rótulo (opcional)</label>
       <input type="text" id="novaSemanaLabel" placeholder="Gerado automaticamente pela data">
     </div>
     <div style="display:flex;gap:.6rem;justify-content:flex-end;flex-wrap:wrap;margin-top:.3rem">
@@ -2127,8 +2130,8 @@ function abrirModalRelatorioFreq(){
     <span class="ai-hint">Selecione o intervalo de datas (com base na data de início de cada semana cadastrada).</span>
     <div class="field"><label for="freqRelAluno">Aluno</label><select id="freqRelAluno"><option value="">Todos os alunos</option>${disponiveis.map(a=>`<option value="${esc(a.id)}">${esc(a.nome||'Sem nome')}</option>`).join('')}</select></div>
     <div class="fg">
-      <div class="field"><label>De</label><input type="date" id="freqRelDe" value="${de}"></div>
-      <div class="field"><label>Até</label><input type="date" id="freqRelAte" value="${hoje}"></div>
+      <div class="field"><label for="freqRelDe">De</label><input type="date" id="freqRelDe" value="${de}"></div>
+      <div class="field"><label for="freqRelAte">Até</label><input type="date" id="freqRelAte" value="${hoje}"></div>
     </div>
     <p class="ai-hint">O resumo diário separa registros semanais antigos. Percentual: P ÷ (P + F + J), como no cálculo anterior; SAP e campos sem lançamento ficam fora do denominador.</p>
     <div style="display:flex;gap:.6rem;justify-content:flex-end;flex-wrap:wrap;margin-top:.3rem">
@@ -2480,7 +2483,7 @@ async function abrirModalDataSemana(semanaId){
     <div class="section-head" style="font-size:17px"><div class="section-badge" style="background:var(--teal-l)">📅</div>${temData?'Editar':'Definir'} data da semana</div>
     <span class="ai-hint">${temData?'Alterar a data reordena esta semana automaticamente na linha do tempo.':'Semanas antigas sem data ficam sempre no final. Defina a data de início para encaixar esta semana na ordem cronológica certa.'}</span>
     <div class="field">
-      <label>Data de início da semana (segunda-feira)</label>
+      <label for="editSemanaData">Data de início da semana (segunda-feira)</label>
       <input type="date" id="editSemanaData" value="${dados.dataInicio||''}">
     </div>
     <div style="display:flex;gap:.6rem;justify-content:flex-end;flex-wrap:wrap;margin-top:.3rem">
@@ -2613,8 +2616,8 @@ async function renderStudentList(){
         <div class="student-info"><strong>${esc(s.nome||'Sem nome')}</strong>
         <span>${esc(s.turma||'')}${s.turma?' · ':''}Último atendimento: ${s.ultimoRegistro?fmtShort(s.ultimoRegistro):'Sem registros'}</span>${lt}</div>
         <div class="student-actions">
-          <button class="icon-btn open" data-open="${s.id}" title="Abrir">🗂️</button>
-          <button class="icon-btn del" data-del="${s.id}" data-nome="${esc(s.nome||'')}" title="Excluir">🗑️</button>
+          <button class="icon-btn open" data-open="${esc(s.id)}" aria-label="Abrir ficha de ${esc(s.nome||'aluno')}" title="Abrir">🗂️</button>
+          <button class="icon-btn del" data-del="${s.id}" data-nome="${esc(s.nome||'')}" aria-label="Excluir cadastro de ${esc(s.nome||'aluno')}" title="Excluir">🗑️</button>
         </div></div>`;
     }).join('');
     // eventos via delegação

@@ -24,7 +24,22 @@ function mock(){
 (async()=>{let server,browser;try{
  server=http.createServer((req,res)=>{const filename=path.resolve(root,'.'+new URL(req.url,'http://localhost').pathname);if(!filename.startsWith(root+path.sep)||!fs.existsSync(filename)){res.writeHead(404);return res.end();}res.setHeader('Content-Type',filename.endsWith('.js')?'application/javascript':filename.endsWith('.css')?'text/css':'text/html');res.end(fs.readFileSync(filename));});await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));const origin='http://127.0.0.1:'+server.address().port;
  browser=await chromium.launch({executablePath:'/usr/bin/chromium',args:['--no-sandbox']});const page=await browser.newPage({viewport:{width:1440,height:1000}}),errors=[];page.on('pageerror',error=>errors.push(error.message));await page.addInitScript(mock);await page.route('**/*',route=>{const url=route.request().url();if(!url.startsWith(origin+'/'))return route.abort();if(/firebase-.*-compat\.js/.test(url))return route.fulfill({body:'',contentType:'application/javascript'});return route.continue();});await page.goto(origin+'/index.html',{waitUntil:'networkidle'});
- await page.evaluate(async()=>{professorUid='a';turnoAtual='Matutino';__test.auth.currentUser={uid:'a',email:'a@example.test'};await openStudent('aluno-a');});
+ await page.evaluate(async()=>{professorUid='a';__test.auth.currentUser={uid:'a',email:'a@example.test'};__test.store['alunos/aluno-a'].atendimentos=[{dia:'Segunda',horario:'1º Horário'}];selecionarTurno('Matutino');await renderStudentList();});
+ // Comandos reais pelo teclado, com botões nativos e rótulos dos campos.
+ await page.getByRole('button',{name:'Trocar turno',exact:true}).focus();await page.keyboard.press('Enter');
+ check(await page.locator('#screen-turno').isVisible(),true);
+ await page.locator('#btnTurnoMatutino').focus();await page.keyboard.press('Enter');
+ await page.getByRole('button',{name:'Abrir ficha de Aluno fictício A',exact:true}).focus();await page.keyboard.press('Enter');
+ await page.waitForFunction(()=>currentStudentId==='aluno-a'&&document.getElementById('screen-profile').classList.contains('active'));
+ check(await page.getByLabel('Nome completo do aluno',{exact:true}).inputValue(),'Aluno fictício A');
+ check(await page.getByLabel('Relato do atendimento',{exact:false}).count(),1);
+ await page.locator('label[for=entryText]').click();check(await page.locator('#entryText').evaluate(el=>el===document.activeElement),true);
+ await page.evaluate(()=>goHome());await page.locator('#tabBtnGrade').focus();await page.keyboard.press('Enter');
+ check(await page.locator('#tabBtnGrade').getAttribute('aria-current'),'true');check(await page.locator('#tabBtnAlunos').getAttribute('aria-current'),null);
+ await page.locator('.aluno-chip').first().focus();await page.keyboard.press('Space');
+ await page.waitForFunction(()=>currentStudentId==='aluno-a'&&document.getElementById('screen-profile').classList.contains('active'));
+ check(await page.locator('.aluno-chip').first().evaluate(el=>el.tagName),'BUTTON');check(await page.getByLabel('Data do atendimento',{exact:false}).count(),1);
+
  fs.mkdirSync('/tmp/site-results',{recursive:true});await page.screenshot({path:'/tmp/site-results/ficha-visual-desktop.png'});
  const records=()=>page.evaluate(()=>Object.entries(__test.store).filter(([p])=>p.startsWith('alunos/aluno-a/registros/')).map(([id,data])=>({id,data})));
  await page.locator('#entryText').fill('Observação do atendimento tradicional');await page.locator('#entryDate').fill('2026-10-16');await page.locator('#registradoPor').fill('Profissional de teste');

@@ -1,0 +1,17 @@
+/* Ajustes finais de leitura e navegação; não atingem visualizadores. */
+@media screen{
+  #screen-home .aluno-chip{width:100%;text-align:left;font-family:Arial,Helvetica,sans-serif}
+  #screen-home .aluno-chip:focus-visible{outline:3px solid #176b5b;outline-offset:3px}
+  #screen-home #turnoBadge{border:1px solid #ffffff80;min-height:44px;border-radius:8px!important;font:inherit;font-size:13px!important}
+  #screen-home :is(#turnoBadge,#btnLogout):focus-visible{outline:3px solid #fff;outline-offset:3px}
+  #screen-home .tab-btn[aria-current=true]{text-decoration:underline;text-underline-offset:5px;text-decoration-thickness:2px}
+  :is(#screen-profile,#screen-home) .nota-del{min-width:44px;min-height:44px;color:#973737}
+  #screen-home .planos-form{background:#f5f7f8;border:1px solid #dde5e7;border-radius:10px}
+  #screen-home .planos-form :is(input:not([type=file]),textarea),#screen-home .planos-search input{font-size:16px;min-height:44px;border-color:#a7b6bc}
+  #screen-home .recurso-abrir{min-height:44px;line-height:1.5}
+  @media(max-width:600px){
+    #screen-home .tab-btn{scroll-margin-inline:8px}
+    .colaboracao-entrada{padding:12px;max-width:100%}
+    .colaboracao-entrada a{max-width:100%;white-space:normal;overflow-wrap:anywhere;line-height:1.5}
+  }
+}
