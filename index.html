@@ -510,6 +510,8 @@ hr.sep{border:none;border-top:2px dashed rgba(0,0,0,.06);margin:.2rem 0;}
 <script src="frequencia-interface.js"></script>
 <link rel="stylesheet" href="registro-assistido.css">
 <script src="registro-assistido.js"></script>
+<link rel="stylesheet" href="historico-atendimentos.css">
+<script src="historico-atendimentos.js"></script>
 <script src="firebase-ambiente-teste.js"></script>
 <link rel="stylesheet" href="colaboracao.css">
 <script src="pei-visualizacao.js"></script>
@@ -981,6 +983,16 @@ hr.sep{border:none;border-top:2px dashed rgba(0,0,0,.06);margin:.2rem 0;}
         <div class="section-head" style="font-size:14px"><div class="section-badge" style="background:var(--yellow-l);width:28px;height:28px;font-size:14px">📚</div>Histórico de Atendimentos</div>
         <button class="pdf-btn" id="btnExportPDF">📄 Exportar DOCX</button>
       </div>
+      <div id="historicoFiltros" class="historico-filtros" hidden>
+        <div class="historico-campos">
+          <label>Buscar no relato, profissional ou meta<input id="historicoBusca" type="search"></label>
+          <label>Data inicial<input id="historicoInicio" type="date"></label>
+          <label>Data final<input id="historicoFim" type="date"></label>
+          <label>Vínculo com metas<select id="historicoMetas"><option value="">Todos</option><option value="com">Com metas</option><option value="sem">Sem metas</option></select></label>
+        </div>
+        <div class="historico-acoes"><p id="historicoResultado" role="status" aria-live="polite"></p><button type="button" id="historicoLimpar">Limpar filtros</button></div>
+        <p style="font-size:13px;color:var(--muted)">Filtros apenas para consulta nesta tela. A exportação mantém seu próprio conteúdo.</p>
+      </div>
       <div class="entries-list" id="entriesList"></div>
     </div>
   </div>
@@ -1182,7 +1194,7 @@ auth.onAuthStateChanged(async user => {
     hideLoad();
     $('centralAluno').replaceChildren();
     window.MetasAluno.ativar(null);window.ColaboracaoAluno.ativar(null);window.RegistroAssistido.ativar(null);
-    currentStudentId=null;currentProfile={};currentEntries=[];currentPhotoB64=null;contacts=[];
+    currentStudentId=null;currentProfile={};currentEntries=[];currentPhotoB64=null;contacts=[];renderEntriesList();
     $('loginEmail').value='';
     $('loginPassword').value='';
     $('loginError').classList.remove('show');
@@ -2663,7 +2675,7 @@ async function openStudent(id){
   centralRegistrosStatus = 'carregando';
   if(unsubEntries){unsubEntries();unsubEntries=null;}
   showLoad('Carregando aluno...');
-  currentStudentId=id;currentProfile={};currentEntries=[];currentPhotoB64=null;contacts=[];clearForm();
+  currentStudentId=id;currentProfile={};currentEntries=[];currentPhotoB64=null;contacts=[];clearForm();renderEntriesList();
   laudoImagens=[];
   try{
     const snap=await db.collection('alunos').doc(id).get();
@@ -2722,7 +2734,7 @@ function acompanharRegistrosAluno(id, versao = perfilLoadVersion, ownerUid = pro
       renderEntriesList();renderRecentDates();renderCentralAluno();
     }, e=>{
       if (versao !== perfilLoadVersion || professorUid !== ownerUid || currentStudentId !== id) return;
-      console.error(e); centralRegistrosStatus = 'erro'; renderCentralAluno();
+      console.error(e); centralRegistrosStatus = 'erro'; renderEntriesList();renderCentralAluno();
     });
 }
 
@@ -3727,13 +3739,15 @@ function toggleEntry(i){
 
 function renderEntriesList(){
   const list=$('entriesList');
-  if(!currentEntries.length){list.innerHTML=`<div class="empty-state"><span class="emoji">📝</span>Nenhum registro ainda.<br>Faça o primeiro registro acima!</div>`;return;}
-  list.innerHTML=currentEntries.map((e,i)=>{
+  const visiveis=window.HistoricoAtendimentos.filtrar(currentEntries,professorUid&&currentStudentId?JSON.stringify([professorUid,currentStudentId]):null,centralRegistrosStatus);
+  if(!currentEntries.length && centralRegistrosStatus==='pronto'){list.innerHTML=`<div class="empty-state"><span class="emoji">📝</span>Nenhum registro ainda.<br>Faça o primeiro registro acima!</div>`;return;}
+  if(!visiveis.length){list.innerHTML=centralRegistrosStatus==='pronto'?'<div class="empty-state">Nenhum atendimento para exibir nesta consulta.</div>':'';return;}
+  list.innerHTML=visiveis.map((e,i)=>{
     const long=(e.text||'').length>300;
     const hc=humorClass(e.humor);const he=humorEmoji(e.humor);
     return`<div class="entry-card">
       <div class="entry-header">
-        <span class="entry-date-pill">📅 ${fmtShort(e.date)}</span>
+        <span class="entry-date-pill">📅 ${window.HistoricoAtendimentos.dataValida(e.date)?fmtShort(e.date):'Data não informada ou inválida'}</span>
         ${e.humor?`<span class="humor-pill ${hc}">${he} ${esc(e.humor)}</span>`:''}
         ${e.por?`<span class="entry-by">👤 ${esc(e.por)}</span>`:''}
         <button class="del-entry-btn" data-eid="${e._id}">🗑️</button>

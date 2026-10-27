@@ -72,6 +72,29 @@ function mock(){
  await page.locator('#btnSalvarPerfil').click();await page.waitForFunction(()=>currentStudentId&&currentStudentId.startsWith('novo-'));
  check(await page.locator('#entryText').inputValue(),'Rascunho anterior ao cadastro.');
  await page.evaluate(()=>{currentEntries=[{_id:'antigo',date:'2026-10-15',text:'Evidência já salva antes da alteração.',registroRapido:{metas:[{id:'legado',descricao:'Meta antiga'}]}}];renderEntriesList();});check((await page.locator('#entriesList').textContent()).includes('Evidência já salva antes da alteração.'),true);
+ // Filtros locais: interseção, datas inclusivas, acentos e isolamento do aluno.
+ await page.evaluate(()=>{currentEntries=[
+  {_id:'h1',date:'2026-10-15',text:'Organização de materiais',por:'José',metaIds:['m1'],metaVinculos:[{id:'m1',objetivo:'Autonomia'}]},
+  {_id:'h2',date:'2026-10-16',text:'Leitura compartilhada',por:'Ana'},
+  {_id:'h3',date:'inválida',text:'Relato sem data',por:'José'}
+ ];centralRegistrosStatus='pronto';renderEntriesList();});
+ const cards=()=>page.locator('#entriesList .entry-card').count();
+ check(await cards(),3);
+ const callsAntes=await page.evaluate(()=>__test.calls);
+ await page.locator('#historicoBusca').fill('JOSE autonomia');check(await cards(),1);
+ check((await page.locator('#entriesList').textContent()).includes('Organização'),true);
+ await page.locator('#historicoLimpar').click();check(await cards(),3);
+ await page.locator('#historicoInicio').fill('2026-10-15');await page.locator('#historicoFim').fill('2026-10-15');check(await cards(),1);
+ check((await page.locator('#historicoResultado').textContent()).includes('sem data válida'),true);
+ await page.locator('#historicoMetas').selectOption('sem');check(await cards(),0);
+ await page.locator('#historicoLimpar').click();await page.locator('#historicoMetas').selectOption('sem');check(await cards(),2);
+ await page.locator('#historicoInicio').fill('2026-10-17');await page.locator('#historicoFim').fill('2026-10-15');
+ check(await cards(),0);check((await page.locator('#historicoResultado').textContent()).includes('Confira o período'),true);
+ check(await page.evaluate(()=>currentEntries.length),3);check(await page.evaluate(()=>__test.calls),callsAntes);
+ await page.locator('#historicoLimpar').click();await page.locator('#historicoBusca').fill('<script>');check(await cards(),0);
+ await page.evaluate(()=>{centralRegistrosStatus='erro';renderEntriesList();});check((await page.locator('#historicoResultado').textContent()).includes('Não foi possível'),true);
+ await page.evaluate(()=>{centralRegistrosStatus='pronto';currentStudentId='aluno-b';currentEntries=[];renderEntriesList();});
+ check(await page.locator('#historicoBusca').inputValue(),'');check(await page.locator('#historicoMetas').inputValue(),'');check(await cards(),0);
  fs.mkdirSync('/tmp/site-results',{recursive:true});await page.locator('#registroAssistido').screenshot({path:'/tmp/site-results/registro-assistido.png'});
  if(!await page.locator('#registroAssistido details').evaluate(d=>d.open))await page.locator('#registroAssistido summary').click();
  for(const width of [390,320]){await page.setViewportSize({width,height:844});check(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);}
