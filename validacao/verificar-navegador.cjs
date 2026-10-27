@@ -8,7 +8,7 @@ const root=path.resolve(__dirname,'..');
   server=http.createServer((req,res)=>{
    const filename=path.resolve(root,'.'+new URL(req.url,'http://localhost').pathname);
    if(!filename.startsWith(root+path.sep)||!fs.existsSync(filename)||!fs.statSync(filename).isFile()){res.writeHead(404);return res.end();}
-   res.setHeader('Content-Type',filename.endsWith('.js')?'application/javascript':filename.endsWith('.html')?'text/html':'application/octet-stream');res.end(fs.readFileSync(filename));
+   res.setHeader('Content-Type',filename.endsWith('.js')?'application/javascript':filename.endsWith('.html')?'text/html':filename.endsWith('.css')?'text/css':'application/octet-stream');res.end(fs.readFileSync(filename));
   });
   await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));const origin='http://127.0.0.1:'+server.address().port;
   browser=await chromium.launch({executablePath:process.env.CHROMIUM_BIN || '/usr/bin/chromium',headless:true,args:['--no-sandbox']});
@@ -25,7 +25,12 @@ const root=path.resolve(__dirname,'..');
   }
   for(const file of ['diagnostica_formulario.html','paee_formulario_02.html','relatorio_formulario.html']){
    await page.goto(origin+'/'+file,{waitUntil:'networkidle'});
-   await page.evaluate(()=>{state=novoEstado();state.identificacao.nome='Ana São';});
+   await page.evaluate(()=>{state=novoEstado();state.identificacao.nome='Ana São';document.getElementById('screen-login').style.display='none';document.getElementById('app-shell').classList.add('active');showView('form');renderForm();});
+   for(const width of [390,320]){
+    await page.setViewportSize({width,height:844});
+    assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),file+' ultrapassou '+width+' px');
+   }
+   await page.setViewportSize({width:1440,height:1000});
    for(const format of ['docx','odt'])await download(file,format,()=>page.evaluate(format=>document.getElementById('btn-export-'+format).click(),format));
   }
   await page.goto(origin+'/index.html',{waitUntil:'networkidle'});
@@ -41,6 +46,6 @@ const root=path.resolve(__dirname,'..');
    await page.locator('#freqRelDe').fill('2026-10-01');await page.locator('#freqRelAte').fill('2026-10-08');
    await download('Frequência',format,()=>page.locator('#genModalBox button').filter({hasText:'Gerar '+format.toUpperCase()}).evaluate(button=>button.click()));
   }
-  assert.deepEqual(errors,[]);await context.close();console.log('10 downloads DOCX/ODT confirmados sem conversor externo.');
+  assert.deepEqual(errors,[]);await context.close();console.log('10 downloads DOCX/ODT e formulários de PAEE/Diagnóstica/Relatório em 390/320 px confirmados sem conversor externo.');
  } finally {if(server)server.close();if(browser)await browser.close();}
 })().catch(error=>{console.error(error);process.exit(1)});

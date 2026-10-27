@@ -1,0 +1,66 @@
+/* Identidade do Diário; visualizadores de documentos não participam deste tema. */
+body:has(:is(#screen-login,#screen-turno,#screen-home).active)::before{background:#f5f7f8}
+body:has(:is(#screen-login,#screen-turno,#screen-home).active)>.shape{display:none}
+:is(#screen-login,#screen-turno) .login-box{border:1px solid #dde5e7;border-radius:16px;box-shadow:0 6px 24px #24333d0d;color:#24333d;text-align:left}
+:is(#screen-login,#screen-turno) .login-logo{background:#176b5b;box-shadow:none;border-radius:14px}
+:is(#screen-login,#screen-turno) .login-rainbow{background:#dcebe5;height:3px}
+#screen-login .login-field input{border:1px solid #a7b6bc;background:#fff;border-radius:8px;min-height:46px}
+#screen-login .login-btn{background:#176b5b;box-shadow:none;border-radius:8px;min-height:46px}
+#screen-turno .turno-btn{background:#fff;border:1px solid #a7b6bc;border-radius:10px;color:#24333d}
+#screen-turno .turno-btn:hover,#screen-turno .turno-btn.sel{background:#e9f3ef;border-color:#176b5b}
+#screen-home>.wrapper{max-width:1200px;gap:24px}
+#screen-home>.wrapper>.topbar{background:#176b5b;border-radius:12px;box-shadow:none}
+#screen-home>.wrapper>.topbar::before,#screen-home>.wrapper>.topbar::after{display:none}
+#screen-home .topbar h1{font-size:24px}
+#screen-home .topbar p{color:#fff;font-size:14px}
+#screen-home .topbar .user-info{color:#fff;font-size:13px;overflow-wrap:anywhere}
+#screen-home .topbar .cloud-badge{font-size:13px}
+#screen-home #btnLogout{min-height:44px;padding:8px 14px!important}
+#screen-home .tabs-bar{flex-wrap:wrap;border:1px solid #dde5e7;border-radius:12px;box-shadow:none;gap:4px;padding:8px}
+#screen-home .tab-btn{flex:0 1 auto;min-height:44px;font-size:14px;border-radius:8px;color:#52616b;box-shadow:none;padding:10px 14px}
+#screen-home .tab-btn.active{background:#176b5b;color:#fff;box-shadow:none}
+#screen-home .tab-btn:not(.active):hover{background:#e9f3ef;color:#245346}
+#screen-home .tab-panel>.card:not(#peiViewer){
+  --teal:#176b5b;--teal-l:#e9f3ef;--ink:#24333d;--muted:#52616b;
+  --surface:#fff;--surface2:#f5f7f8;--border:#dde5e7;
+  text-align:left;border:1px solid #dde5e7;border-radius:12px;box-shadow:0 2px 8px #24333d0a;padding:24px;
+}
+#screen-home .tab-panel>.card:not(#peiViewer)>.color-strip{display:none}
+#screen-home .tab-panel>.card:not(#peiViewer)>.section-head{font-size:20px}
+#screen-home .tab-panel>.card:not(#peiViewer)>.section-head>.section-badge{background:#e9f3ef!important;border-radius:8px}
+#screen-home .student-item{background:#f5f7f8;border:1px solid #dde5e7;border-radius:10px}
+#screen-home .student-item:hover{background:#e9f3ef;border-color:#176b5b;transform:none;box-shadow:none}
+#screen-home .student-info strong{color:#24333d;line-height:1.5}
+#screen-home .student-info span{font-size:14px;color:#52616b}
+#screen-home .tab-panel>.card:not(#peiViewer) :is(.new-btn,.save-btn){background:#176b5b;color:#fff;box-shadow:none;border-radius:8px;min-height:44px}
+#screen-home .tab-panel>.card:not(#peiViewer) :is(.new-btn,.save-btn):hover{background:#115344;transform:none;box-shadow:none}
+#screen-home :is(.nota-texto,.planner-day textarea){text-align:left}
+#screen-home .nota-card{background:#fffbed;border:1px solid #e7dfbc;box-shadow:none}
+#screen-home .planner-nav-btn{min-width:44px;min-height:44px;background:#fff;border:1px solid #a7b6bc;color:#176b5b}
+#screen-home .planner-day.today{border-color:#176b5b;background:#e9f3ef}
+#screen-home .tab-panel>.card:not(#peiViewer) :is(button,a,input,select,textarea,summary):focus-visible,
+:is(#screen-login,#screen-turno) :is(button,input):focus-visible,#screen-home .tab-btn:focus-visible{outline:3px solid #176b5b;outline-offset:3px}
+@media(max-width:600px){
+  #screen-home{padding-left:12px;padding-right:12px}
+  #screen-home>.wrapper{gap:18px}
+  #screen-home>.wrapper>.topbar{flex-wrap:wrap;padding:18px}
+  #screen-home .topbar-right{flex-basis:100%;align-items:flex-start;margin-left:0}
+  #screen-home .tab-panel>.card:not(#peiViewer){padding:16px}
+  #screen-home .tabs-bar{flex-wrap:nowrap;overflow-x:auto;max-width:100%;padding:6px}
+  #screen-home .tab-btn{flex:0 0 auto;white-space:nowrap}
+}
+@media(prefers-reduced-motion:reduce){:is(#screen-login,#screen-turno,#screen-home) :is(.login-box,.student-item,.tab-btn,.new-btn){animation:none!important;transition:none!important;transform:none!important}}
+#screen-home .day-card{border:1px solid #dde5e7;border-radius:10px;box-shadow:none}
+#screen-home .day-card-header{background:#e9f3ef;color:#245346;border-radius:9px 9px 0 0}
+#screen-home .day-card.quarta .day-card-header{background:#eeeaf6;color:#554179}
+#screen-home .day-card.today{border-color:#176b5b;box-shadow:0 0 0 2px #176b5b18}
+#screen-home .day-slot{border-top:1px solid #dde5e7}
+#screen-home .day-card-header .hoje-tag{background:#176b5b;color:#fff}
+#screen-home .student-actions .icon-btn{min-width:44px;min-height:44px}
+@media(max-width:600px){
+  #screen-home .student-item{display:grid;grid-template-columns:24px 40px minmax(0,1fr);gap:10px;padding:14px}
+  #screen-home .student-avatar{width:40px;height:40px;font-size:14px}
+  #screen-home .student-info{min-width:0;overflow-wrap:anywhere}
+  #screen-home .student-actions{grid-column:3;flex-wrap:wrap}
+}
+#screen-home .tab-panel>.card:not(#peiViewer) .new-btn{border:1px solid #176b5b}
