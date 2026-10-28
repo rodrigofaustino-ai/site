@@ -1,16 +1,14 @@
 # Roteiro de conferência do pacote acumulado
 
-Pacote atual: branch `melhorias/etapa-24-chat-emojis-exclusao`.
-O pacote contém todas as melhorias anteriores. A etapa 23 foi publicada e o
-usuário confirmou as respostas do chat. Emojis e exclusão da etapa 24 ainda
-aguardam publicação. Nada é publicado automaticamente.
+Pacote atual: branch `melhorias/etapa-25-chat-mais-mensagens`.
+O pacote contém todas as melhorias anteriores. A etapa 24 já foi publicada e o
+usuário confirmou o funcionamento. A compactação visual da etapa 25 ainda aguarda
+publicação. Nada é publicado automaticamente.
 
 ## Quando decidir publicar
 
-**A etapa 24 exige atualizar as regras do Firestore de teste para habilitar
-Apagar.** O arquivo completo está em `firebase/chat-emojis-exclusao-teste.rules`;
-seguir `FIREBASE-CHAT-EXCLUSAO.md` antes da publicação no Netlify. Não há novos
-índices ou migração de dados. As mensagens comuns permanecem compatíveis.
+**A etapa 25 é somente visual e não exige novas alterações no Firebase.**
+As regras de emojis/exclusão da etapa 24 já foram publicadas pelo usuário.
 
 No GitHub, abrir a branch atual e usar Code → Download ZIP. Extrair o ZIP e
 localizar a pasta que contém `index.html`, `vendor` e os arquivos JS/CSS.
@@ -79,6 +77,13 @@ Mensagem apagada pelo autor. A outra conta não deve conseguir apagar a mensagem
 alheia. Conferir também uma resposta apontando para o original apagado, a busca
 sem o texto antigo e o rascunho preservado. Repetir os controles principais no
 celular. Usar somente dados fictícios; esta ação não tem restauração na interface.
+
+## Nova conferência do espaço da conversa
+
+Abrir o chat e conferir se mais mensagens ficam visíveis, da mais antiga para a
+mais recente. Conferir o campo menor ao lado de Emojis e Enviar, digitação,
+resposta, seletor e Apagar. Ampliar/reduzir e conferir também no celular.
+A presença pode ser aberta quando necessário. Esta atualização não muda regras.
 
 ## Conferir em ordem
 

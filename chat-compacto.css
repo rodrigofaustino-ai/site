@@ -1,0 +1,43 @@
+/* Mais espaço para a conversa; estilos restritos ao chat. */
+#chatEquipe{font-size:13px}
+#chatEquipe #chatPainel{width:min(640px,calc(100vw - 40px));height:min(720px,calc(100dvh - 150px));max-height:calc(100dvh - 150px - env(safe-area-inset-bottom,0px))}
+#chatEquipe.chat-ampliado #chatPainel{width:min(960px,calc(100vw - 40px));height:calc(100dvh - 150px)}
+#chatEquipe .chat-cabecalho{padding:5px 8px;gap:6px;font-size:13px}
+#chatEquipe .chat-cabecalho button{min-height:30px;padding:3px 8px;font-size:12px}
+#chatEquipe #chatOnline{width:112px;padding:6px;font-size:11px}
+#chatEquipe #chatOnline p{font-size:10px;line-height:1.4}
+#chatEquipe #chatMensagens{padding:8px}
+#chatEquipe .chat-mensagem{padding:6px 8px;margin-bottom:6px;border-radius:8px;font-size:13px;line-height:1.4}
+#chatEquipe .chat-mensagem>strong{font-size:12px;line-height:1.35}
+#chatEquipe .chat-mensagem>p{margin:3px 0;line-height:1.4}
+#chatEquipe .chat-mensagem small{font-size:10px;margin-top:2px;line-height:1.35}
+#chatEquipe .chat-mensagem-acoes{gap:10px}
+#chatEquipe .chat-mensagem-acoes button{min-height:26px;font-size:11px;padding:2px 4px}
+#chatEquipe .chat-dia{font-size:11px;margin:6px 0;padding:3px 6px}
+#chatEquipe #chatBusca{padding:3px 8px}
+#chatEquipe #chatBusca summary{min-height:28px;font-size:12px}
+#chatEquipe #chatHistorico{min-height:30px;padding:3px 8px;font-size:12px}
+#chatEquipe #chatStatus{font-size:11px;line-height:1.35;padding:3px 8px;max-height:36px;overflow:auto}
+#chatEquipe #chatStatus:empty{display:none}
+#chatEquipe #chatForm{position:relative;grid-template-columns:minmax(0,1fr) 44px 68px;grid-template-areas:'resposta resposta resposta' 'texto emojis enviar';padding:6px;gap:4px}
+#chatEquipe #chatForm>label{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+#chatEquipe #chatTexto{grid-area:texto;height:44px;min-height:44px;max-height:96px;resize:vertical;padding:6px 8px;font-size:14px;line-height:1.4}
+#chatEquipe #chatEmojis{grid-area:emojis;position:static;align-self:end}
+#chatEquipe #chatEmojis summary{display:flex;align-items:center;justify-content:center;width:44px;min-height:44px;padding:4px;font-size:21px;list-style:none}
+#chatEquipe #chatEmojis summary::-webkit-details-marker{display:none}
+#chatEquipe #chatEmojis .chat-emojis-grade{left:6px;right:6px;bottom:calc(100% + 6px)}
+#chatEquipe #chatEnviar{grid-area:enviar;align-self:end;min-height:44px;padding:4px 8px;font-size:13px}
+#chatEquipe #chatResposta{grid-area:resposta;padding:6px 8px;gap:2px 6px}
+#chatEquipe #chatResposta strong,#chatEquipe #chatResposta p{font-size:12px}
+#chatEquipe #chatResposta p{margin:2px 0;max-height:3em}
+#chatEquipe #chatRespostaCancelar{min-height:30px;font-size:11px;padding:3px 6px}
+#chatEquipe .chat-referencia{min-height:28px;font-size:11px;padding:4px 6px;margin:4px 0}
+#chatEquipe #chatNovas{min-height:32px;margin:3px 8px;padding:4px 8px;font-size:12px}
+@media(max-width:600px){
+  #chatEquipe #chatPainel{width:calc(100vw - 20px);height:min(640px,calc(100dvh - 150px))}
+  #chatEquipe:is(.chat-ampliado,.chat-buscando,.chat-respondendo) #chatPainel{width:calc(100vw - 20px);height:calc(100dvh - 150px)}
+  #chatEquipe #chatOnline{width:auto;max-height:70px;padding:4px 8px}
+  #chatEquipe #chatTexto{font-size:16px}
+  #chatEquipe .chat-mensagem-acoes button,#chatEquipe .chat-referencia{min-height:32px}
+  #chatEquipe .chat-cabecalho button{min-height:36px}
+}

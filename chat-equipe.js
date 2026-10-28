@@ -14,7 +14,7 @@
   busca.innerHTML='<summary>Buscar mensagens</summary><form id="chatBuscaForm"><label class="chat-label-oculto" for="chatBuscaTermo">Buscar no texto ou autor das mensagens carregadas</label><input id="chatBuscaTermo" type="search" maxlength="200" autocomplete="off" placeholder="Texto ou autor"><button id="chatBuscaAnterior" type="button" aria-label="Resultado anterior" title="Resultado anterior">‹</button><button id="chatBuscaProxima" type="submit" aria-label="Próximo resultado" title="Próximo resultado">›</button><button id="chatBuscaLimpar" type="button" aria-label="Limpar busca" title="Limpar busca">×</button></form><p id="chatBuscaResultado" role="status" aria-live="polite"></p><p id="chatBuscaEscopo"></p>';
   conversation.prepend(busca);
   const sidebar = document.createElement('section'); sidebar.id = 'chatOnline'; sidebar.setAttribute('aria-label','Professores online');
-  sidebar.innerHTML = '<details open><summary><span id="chatOnlineRotulo">Presença indisponível</span> <span id="chatOnlineTotal" hidden></span></summary><p id="chatPresencaStatus">Não é possível confirmar quem está online agora.</p><ul id="chatOnlineLista"></ul></details>'; layout.appendChild(sidebar);
+  sidebar.innerHTML = '<details><summary><span id="chatOnlineRotulo">Presença indisponível</span> <span id="chatOnlineTotal" hidden></span></summary><p id="chatPresencaStatus">Não é possível confirmar quem está online agora.</p><ul id="chatOnlineLista"></ul></details>'; layout.appendChild(sidebar);
   const receiptsPanel = document.createElement('section'); receiptsPanel.id = 'chatLeituras'; receiptsPanel.hidden = true;
   receiptsPanel.innerHTML = '<button type="button" id="chatLeiturasFechar">Fechar leituras ×</button><strong>Quem já leu</strong><p id="chatLeiturasStatus"></p><ul id="chatLeiturasLista"></ul>'; conversation.appendChild(receiptsPanel);
   const respostaPreview=document.createElement('section');respostaPreview.id='chatResposta';respostaPreview.hidden=true;
@@ -22,7 +22,7 @@
   respostaPreview.innerHTML='<strong id="chatRespostaAutor"></strong><p id="chatRespostaTrecho"></p><button id="chatRespostaCancelar" type="button">Cancelar resposta</button>';
   document.getElementById('chatForm').prepend(respostaPreview);
   const emojiPicker=document.createElement('details');emojiPicker.id='chatEmojis';
-  emojiPicker.innerHTML='<summary>😊 Emojis</summary><div class="chat-emojis-grade" role="group" aria-label="Escolher emoji"></div>';
+  emojiPicker.innerHTML='<summary aria-label="Emojis" title="Escolher emojis">😊</summary><div class="chat-emojis-grade" role="group" aria-label="Escolher emoji"></div>';
   document.getElementById('chatTexto').after(emojiPicker);
   const el = id => document.getElementById(id), auth = firebase.auth(), db = firebase.firestore();
   const collection = db.collection('chatEquipe');

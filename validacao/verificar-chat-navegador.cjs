@@ -50,6 +50,13 @@ function mockFirebase(){
   assert.match(await a.locator('#chatBuscaResultado').textContent(),/1 resultado/);assert.match(await a.locator('#chatBuscaEscopo').textContent(),/109 mensagens/);assert(consultas>=consultasBusca+1);
   await a.waitForTimeout(850);assert.equal(receipts.has('historico-0/a'),false);
   const consultasAposHistorico=consultas;
+  const compacto=await a.locator('#chatMensagens').evaluate(el=>el.clientHeight);
+  const alturaAnterior=await a.evaluate(()=>{const link=document.querySelector('link[href="chat-compacto.css"]');link.disabled=true;const altura=document.getElementById('chatMensagens').clientHeight;link.disabled=false;return altura;});
+  assert(compacto>alturaAnterior+80,'A conversa deve ganhar espaço com o compositor compacto');
+  assert(await a.locator('#chatMensagens').evaluate(el=>{const box=el.getBoundingClientRect();return [...el.querySelectorAll('article')].filter(node=>{const r=node.getBoundingClientRect();return r.top>=box.top&&r.bottom<=box.bottom;}).length>=3;}),'Pelo menos três mensagens curtas devem caber inteiras');
+  const tempos=await a.locator('#chatMensagens article').evaluateAll(nodes=>nodes.map(node=>node.dataset.messageId));assert(tempos.every((id,i)=>i===0||records.get(tempos[i-1]).createdAt<=records.get(id).createdAt),'Mensagens devem manter ordem cronológica');
+  fs.mkdirSync('/tmp/site-results',{recursive:true});await a.locator('#chatPainel').screenshot({path:'/tmp/site-results/chat-compacto.png'});
+
   await a.getByRole('button',{name:'Próximo resultado',exact:true}).click();assert.equal(await a.locator('.chat-busca-atual').getAttribute('data-message-id'),'historico-0');
   await a.waitForFunction(async()=>Boolean(await window.chatRPC('getReceipt',{messageId:'historico-0',uid:'a'})));
   await a.locator('#chatBuscaTermo').fill('AUREA');assert.match(await a.locator('#chatBuscaResultado').textContent(),/1 resultado/);await a.locator('#chatBuscaTermo').press('Enter');assert.equal(await a.locator('.chat-busca-atual').getAttribute('data-message-id'),'historico-0');
@@ -109,6 +116,7 @@ function mockFirebase(){
   assert.equal(records.size,tamanho+1);
   await a.locator('#chatBusca summary').click();await a.locator('#chatBuscaTermo').fill('NÃO TRANSPORTAR A CONSULTA');
   await a.locator('#chatTexto').fill('Rascunho privado');await a.evaluate(()=>__test.login('c'));assert.equal(await a.locator('#chatTexto').inputValue(),'');assert.equal(await a.locator('#chatPainel').isVisible(),false);assert.equal(await a.locator('#chatAmpliar').getAttribute('aria-pressed'),'false');assert.equal(await a.locator('#chatNovas').isHidden(),true);assert.equal(await a.locator('#chatBuscaTermo').inputValue(),'');assert.equal(await a.locator('.chat-encontrada').count(),0);assert.deepEqual(errors,[]);
+  console.log('Layout compacto: conversa ganhou mais de 80 px de altura, três ou mais mensagens curtas inteiras e ordem cronológica preservada.');
   console.log('Busca: texto/autor, acentos/maiúsculas, escopo limitado, histórico carregado depois, navegação circular, Enter, texto seguro, rascunho, nenhuma consulta automática e celular passaram.');
   console.log('Leituras: não registra chat fechado/aba oculta/mensagem fora da área de leitura, confirma após exposição, lista leitor com apelido sem @.');
   console.log('Novidades: agrupamento por três datas, aviso sem duplicação, leitura preservada, confirmação somente após exposição, ampliar/reduzir, Escape e presença indisponível passaram.');

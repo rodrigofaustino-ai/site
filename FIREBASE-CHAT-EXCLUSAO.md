@@ -1,6 +1,8 @@
 # Firebase de teste: habilitar Apagar no chat
 
-Esta atualização da etapa 24 ainda não foi aplicada. As regras da etapa 23 já
+Status: o usuário confirmou a publicação e o funcionamento da etapa 24.
+O ajuste visual da etapa 25 não exige nova atualização de regras.
+Este documento registra a preparação anterior. As regras da etapa 23 já
 foram publicadas e conferidas pelo usuário. Emojis não exigem alteração de regra;
 a nova permissão é necessária para apagar o texto das próprias mensagens.
 
