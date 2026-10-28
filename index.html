@@ -523,6 +523,8 @@ hr.sep{border:none;border-top:2px dashed rgba(0,0,0,.06);margin:.2rem 0;}
 <link rel="stylesheet" href="frequencia-visual.css">
 <link rel="stylesheet" href="equipe-visual.css">
 <link rel="stylesheet" href="revisao-interface.css">
+<link rel="stylesheet" href="agenda-dia.css">
+<script src="agenda-dia.js"></script>
 </head>
 <body>
 <nav class="colaboracao-entrada" aria-label="Compartilhamento"><a class="central-btn" href="colaboracao.html">Conteúdos compartilhados comigo</a></nav>
@@ -613,6 +615,7 @@ hr.sep{border:none;border-top:2px dashed rgba(0,0,0,.06);margin:.2rem 0;}
 
     <!-- ABA ALUNOS -->
     <div class="tab-panel active" id="tabAlunos">
+      <section id="agendaDia" class="card" aria-label="Agenda do dia" hidden></section>
       <div class="card">
         <div class="color-strip"></div>
         <div class="section-head"><div class="section-badge" style="background:var(--teal-l)">🧒</div>Alunos em Atendimento</div>
@@ -1183,7 +1186,7 @@ function showScreen(name){
 ════════════════════════════════════════ */
 auth.onAuthStateChanged(async user => {
   if(user){
-    if(professorUid&&professorUid!==user.uid)window.RegistroAssistido.limparSessao();
+    if(professorUid&&professorUid!==user.uid){window.RegistroAssistido.limparSessao();window.AgendaDia.limpar();$('studentsList').replaceChildren();}
     professorUid = user.uid;
     $('userInfoBar').textContent = user.email;
     setBadge('online','Nuvem conectada');
@@ -1193,7 +1196,7 @@ auth.onAuthStateChanged(async user => {
   } else {
     professorUid = null;
     turnoAtual = null;
-    limparFrequencia();window.RegistroAssistido.limparSessao();
+    limparFrequencia();window.RegistroAssistido.limparSessao();window.AgendaDia.limpar();$('studentsList').replaceChildren();
     if(unsubEntries){unsubEntries();unsubEntries=null;}
     perfilLoadVersion++;
     hideLoad();
@@ -2600,10 +2603,16 @@ function openFreqPopover(evt,semanaId,alunoId,dia){
 
 async function renderStudentList(){
   const c=$('studentsList');
+  const uid=professorUid,turno=turnoAtual;
+  if(!uid||!turno){window.AgendaDia.limpar();c.replaceChildren();return;}
+  const vigente=()=>professorUid===uid&&turnoAtual===turno;
+  const agendaToken=window.AgendaDia.carregar({uid,turno,vigente,obter:getAtendimentos,abrir:id=>openStudent(id)});
+  c.innerHTML='<div class="empty-list">Carregando alunos…</div>';
   try{
     const snap=await alunosRef().get();
     let list=[];snap.forEach(d=>list.push({id:d.id,...d.data()}));
     list=filtrarAlunosPorTurno(list);
+    if(!window.AgendaDia.concluir(agendaToken,list))return;
     list.sort((a,b)=>(a.nome||'').localeCompare(b.nome||''));
     if(!list.length){c.innerHTML=`<div class="empty-list"><span class="emoji">🌟</span>Nenhum aluno cadastrado ainda.<br>Clique em "Cadastrar novo aluno" para começar!</div>`;return;}
     c.innerHTML=list.map((s,i)=>{
@@ -2629,7 +2638,7 @@ async function renderStudentList(){
     });
     c.querySelectorAll('[data-open]').forEach(btn=>btn.addEventListener('click', e=>{e.stopPropagation();openStudent(btn.dataset.open);}));
     c.querySelectorAll('[data-del]').forEach(btn=>btn.addEventListener('click', e=>{e.stopPropagation();deleteStudent(btn.dataset.del,btn.dataset.nome);}));
-  }catch(e){c.innerHTML=`<div class="empty-list">⚠️ Erro ao carregar. Verifique a conexão.</div>`;setBadge('offline','Sem conexão');console.error(e);}
+  }catch(e){if(!window.AgendaDia.concluir(agendaToken,[],true))return;c.innerHTML=`<div class="empty-list">⚠️ Erro ao carregar. Verifique a conexão.</div>`;setBadge('offline','Sem conexão');console.error(e);}
 }
 
 async function deleteStudent(id,nome){

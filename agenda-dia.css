@@ -1,0 +1,18 @@
+#agendaDia[hidden]{display:none}
+#agendaDia{margin-bottom:24px}
+#agendaDia h2{font-size:22px;line-height:1.4;color:#24333d;margin:0}
+#agendaDia>p{font-size:14px;line-height:1.6;color:#52616b;margin:0}
+.agenda-toolbar{display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap}
+.agenda-toolbar label{display:flex;flex-direction:column;gap:6px;font-size:14px;font-weight:600}
+.agenda-toolbar input{min-height:44px;border:1px solid #a7b6bc;border-radius:8px;padding:9px 12px;background:#fff;font:16px Arial,sans-serif;color:#24333d}
+#agendaLista{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:14px}
+.agenda-horario{border:1px solid #dde5e7;border-radius:10px;background:#f5f7f8;padding:16px;min-width:0}
+.agenda-horario h3{font-size:16px;color:#245346;margin:0 0 12px}
+.agenda-horario ul{list-style:none;padding:0;margin:0}
+.agenda-horario li{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0}
+.agenda-horario li+li{border-top:1px solid #dde5e7}
+.agenda-horario strong{font-size:15px;overflow-wrap:anywhere;min-width:0}
+.agenda-horario button{flex-shrink:0}
+#agendaDia :focus-visible{outline:3px solid #176b5b;outline-offset:3px}
+@media(max-width:480px){.agenda-horario li{align-items:flex-start;flex-direction:column}.agenda-toolbar label{max-width:100%}.agenda-toolbar input{max-width:100%;box-sizing:border-box}}
+@media print{#agendaDia{display:none}}

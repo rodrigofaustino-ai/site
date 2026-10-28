@@ -1,7 +1,8 @@
 # Roteiro de conferência do pacote acumulado
 
-Pacote atual: branch `melhorias/etapa-18-revisao-interface`.
-O pacote contém todas as melhorias anteriores. Nada é publicado automaticamente.
+Pacote atual: branch `melhorias/etapa-19-agenda-dia`.
+O pacote contém todas as melhorias anteriores. A etapa 18 já foi publicada pelo
+usuário; a agenda da etapa 19 ainda aguarda publicação. Nada é publicado automaticamente.
 
 ## Quando decidir publicar
 
@@ -13,6 +14,15 @@ Não há alteração de regras ou índices necessária para as etapas acumuladas
 após a configuração de compartilhamento já conferida.
 
 Após a publicação, recarregar com Ctrl+Shift+R e usar um aluno fictício.
+
+## Nova conferência da agenda
+
+Na aba Alunos, conferir a agenda do dia e escolher uma data em que o aluno
+fictício tenha horário cadastrado. Conferir horário e turno, usar Abrir ficha,
+voltar e consultar outra data. Usar Hoje para retornar à data atual. Não deve
+haver criação automática de atendimento ou frequência. No celular, conferir
+leitura, botões e abertura da ficha. A consulta segue o cadastro semanal e não
+aplica calendário de feriados.
 
 ## Conferir em ordem
 
