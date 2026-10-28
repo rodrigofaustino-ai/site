@@ -1,14 +1,15 @@
 # Roteiro de conferência do pacote acumulado
 
-Pacote atual: branch `melhorias/etapa-23-chat-respostas`.
-O pacote contém todas as melhorias anteriores. A etapa 18 já foi publicada pelo
-usuário; a agenda (19), o resumo (20) e as melhorias do chat (21 a 23) ainda aguardam publicação. Nada é publicado automaticamente.
+Pacote atual: branch `melhorias/etapa-24-chat-emojis-exclusao`.
+O pacote contém todas as melhorias anteriores. A etapa 23 foi publicada e o
+usuário confirmou as respostas do chat. Emojis e exclusão da etapa 24 ainda
+aguardam publicação. Nada é publicado automaticamente.
 
 ## Quando decidir publicar
 
-**A etapa 23 exige atualizar as regras do Firestore de teste antes de ativar
-respostas vinculadas.** O arquivo completo está em `firebase/chat-respostas-teste.rules`;
-seguir `FIREBASE-CHAT-RESPOSTAS.md` antes da publicação no Netlify. Não há novos
+**A etapa 24 exige atualizar as regras do Firestore de teste para habilitar
+Apagar.** O arquivo completo está em `firebase/chat-emojis-exclusao-teste.rules`;
+seguir `FIREBASE-CHAT-EXCLUSAO.md` antes da publicação no Netlify. Não há novos
 índices ou migração de dados. As mensagens comuns permanecem compatíveis.
 
 No GitHub, abrir a branch atual e usar Code → Download ZIP. Extrair o ZIP e
@@ -66,6 +67,18 @@ Selecionar novamente, enviar e abrir pela outra conta: a referência deve aponta
 ao original correto. Usar Consultar original e conferir a navegação. Fechar e
 reabrir um rascunho com resposta deve preservá-lo; sair da conta deve limpá-lo.
 Não aplicar as regras ao projeto oficial.
+
+## Nova conferência de emojis e exclusão
+
+No chat, digitar um rascunho, posicionar o cursor e escolher um emoji. Conferir
+que não houve envio automático. Selecionar um trecho e inserir outro emoji para
+substituí-lo. Enviar uma mensagem fictícia e conferir na outra conta.
+
+Cancelar Apagar deve manter o texto. Confirmar deve remover o conteúdo e deixar
+Mensagem apagada pelo autor. A outra conta não deve conseguir apagar a mensagem
+alheia. Conferir também uma resposta apontando para o original apagado, a busca
+sem o texto antigo e o rascunho preservado. Repetir os controles principais no
+celular. Usar somente dados fictícios; esta ação não tem restauração na interface.
 
 ## Conferir em ordem
 

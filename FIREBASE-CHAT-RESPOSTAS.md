@@ -1,6 +1,8 @@
 # Preparação do Firebase de teste para respostas do chat
 
-Esta alteração ainda não foi aplicada. Ela é necessária somente para ativar
+Status: o usuário confirmou a publicação e o funcionamento desta etapa 23.
+Para a nova exclusão da etapa 24, usar `FIREBASE-CHAT-EXCLUSAO.md`.
+Este documento registra a atualização anterior. Ela é necessária somente para ativar
 as respostas vinculadas da etapa 23; a mensagem comum continua funcionando.
 A proposta preserva as outras regras da base conhecida da etapa 8.
 

@@ -62,3 +62,14 @@
 #chatResposta p{grid-column:1/-1;grid-row:2;max-height:4.5em;overflow:auto}
 #chatRespostaCancelar{grid-column:2;grid-row:1;min-height:44px}
 .chat-mensagem-acoes button,.chat-referencia{min-height:44px}
+#chatEmojis{position:relative;min-width:0}
+#chatEmojis summary{cursor:pointer;min-height:40px;padding:8px;border:1px solid #a7b6bc;border-radius:8px;color:#245346;font-weight:600;font-size:13px;width:max-content;box-sizing:border-box}
+#chatEmojis .chat-emojis-grade{position:absolute;bottom:calc(100% + 6px);left:0;right:0;z-index:4;display:grid;grid-template-columns:repeat(auto-fit,minmax(44px,1fr));gap:4px;padding:8px;max-height:168px;overflow:auto;background:white;border:1px solid #a7b6bc;border-radius:10px;box-shadow:0 4px 16px #24333d26}
+#chatEmojis:not([open]) .chat-emojis-grade{display:none}
+.chat-emojis-grade button{min-height:44px;min-width:44px;border:1px solid #dde5e7;border-radius:8px;background:#fff;font-size:23px;cursor:pointer}
+.chat-apagar{border:0;background:none;color:#973737;text-decoration:underline;text-underline-offset:2px;font:12px Arial,sans-serif;cursor:pointer;padding:4px;min-height:44px}
+#chatEmojis summary:focus-visible{outline:3px solid #176b5b;outline-offset:2px}
+#chatEquipe:not(.chat-ampliado) #chatResposta p{max-height:1.5em}
+#chatEquipe.chat-ampliado #chatPainel{height:calc(100dvh - 150px)}
+@media(max-width:600px){#chatEquipe.chat-ampliado #chatPainel{height:calc(100dvh - 170px)}}
+.chat-mensagem.chat-apagada>p,.chat-mensagem.chat-indisponivel>p{font-style:italic;color:#52616b}
