@@ -3,14 +3,15 @@
   'use strict';
   const widget = document.createElement('aside'); widget.id = 'chatEquipe'; widget.hidden = true;
   widget.setAttribute('aria-label', 'Chat coletivo da equipe');
-  widget.innerHTML = '<section id="chatPainel" hidden aria-label="Conversa da equipe"><header class="chat-cabecalho"><strong>Chat da equipe</strong><button id="chatFechar" type="button" aria-label="Fechar chat">Fechar ×</button></header><button id="chatHistorico" type="button">Carregar mensagens anteriores</button><div id="chatMensagens" role="log" aria-label="Mensagens da equipe" aria-live="polite" aria-relevant="additions"></div><div id="chatStatus" role="status"></div><form id="chatForm"><label for="chatTexto">Mensagem para a equipe</label><textarea id="chatTexto" maxlength="2000" placeholder="Escreva sua mensagem…" required></textarea><button id="chatEnviar" type="submit">Enviar</button></form></section><button id="chatAbrir" type="button" aria-controls="chatPainel" aria-expanded="false">💬 Chat da equipe <span id="chatNaoLidas" hidden></span></button>';
+  widget.innerHTML = '<section id="chatPainel" hidden aria-label="Conversa da equipe"><header class="chat-cabecalho"><strong>Chat da equipe</strong><button id="chatAmpliar" type="button" aria-pressed="false" aria-label="Ampliar painel do chat">Ampliar</button><button id="chatFechar" type="button" aria-label="Fechar chat">Fechar ×</button></header><button id="chatHistorico" type="button">Carregar mensagens anteriores</button><div id="chatMensagens" role="log" aria-label="Mensagens da equipe" aria-live="polite" aria-relevant="additions"></div><div id="chatStatus" role="status"></div><form id="chatForm"><label for="chatTexto">Mensagem para a equipe</label><textarea id="chatTexto" maxlength="2000" placeholder="Escreva sua mensagem…" required></textarea><button id="chatEnviar" type="submit">Enviar</button></form></section><button id="chatAbrir" type="button" aria-controls="chatPainel" aria-expanded="false">💬 Chat da equipe <span id="chatNaoLidas" hidden></span></button>';
   document.body.appendChild(widget);
   const layout = document.createElement('div'); layout.className = 'chat-conteudo';
   const conversation = document.createElement('div'); conversation.className = 'chat-conversa';
   const header = document.getElementById('chatHistorico');
   header.before(layout); conversation.append(header,document.getElementById('chatMensagens')); layout.appendChild(conversation);
+  const novas=document.createElement('button');novas.id='chatNovas';novas.type='button';novas.setAttribute('aria-live','polite');novas.hidden=true;conversation.appendChild(novas);
   const sidebar = document.createElement('section'); sidebar.id = 'chatOnline'; sidebar.setAttribute('aria-label','Professores online');
-  sidebar.innerHTML = '<details open><summary>Online agora <span id="chatOnlineTotal">0</span></summary><p id="chatPresencaStatus">Configurando presença…</p><ul id="chatOnlineLista"></ul></details>'; layout.appendChild(sidebar);
+  sidebar.innerHTML = '<details open><summary><span id="chatOnlineRotulo">Presença indisponível</span> <span id="chatOnlineTotal" hidden></span></summary><p id="chatPresencaStatus">Não é possível confirmar quem está online agora.</p><ul id="chatOnlineLista"></ul></details>'; layout.appendChild(sidebar);
   const receiptsPanel = document.createElement('section'); receiptsPanel.id = 'chatLeituras'; receiptsPanel.hidden = true;
   receiptsPanel.innerHTML = '<button type="button" id="chatLeiturasFechar">Fechar leituras ×</button><strong>Quem já leu</strong><p id="chatLeiturasStatus"></p><ul id="chatLeiturasLista"></ul>'; conversation.appendChild(receiptsPanel);
   const el = id => document.getElementById(id), auth = firebase.auth(), db = firebase.firestore();
@@ -18,7 +19,27 @@
   let user = null, unsubscribe = null, epoch = 0, opened = false, sending = false, loading = false;
   let receiptUnsubscribe = null, observer = null, readTimers = new Map(), acknowledged = new Set(), readScanTimer = null;
   let messages = new Map(), latest = [], cursor = null, more = false, historyLoaded = false, lastRead = 0, pendingSend = null;
-  const millis = message => message.createdAt && message.createdAt.toMillis ? message.createdAt.toMillis() : 0;
+  let novasPendentes=new Set(),recebeuSnapshot=false;
+  const millis = message => {const value=message.createdAt?.toMillis?.();return Number.isFinite(value)&&value>0?value:0;};
+  function pertoDoFim(){const list=el('chatMensagens');return list.scrollHeight-list.scrollTop-list.clientHeight<70;}
+  function atualizarNovas(){
+    el('chatNovas').hidden=!opened||novasPendentes.size===0;
+    el('chatNovas').textContent=(novasPendentes.size===1?'1 nova mensagem':novasPendentes.size+' novas mensagens')+' · Ir para o fim';
+  }
+  function irParaFim(){el('chatMensagens').scrollTop=el('chatMensagens').scrollHeight;novasPendentes.clear();atualizarNovas();markRead();}
+  function guardarPosicao(){
+    const list=el('chatMensagens'),top=list.getBoundingClientRect().top;
+    const anchor=[...list.querySelectorAll('[data-message-id]')].find(node=>node.getBoundingClientRect().bottom>top);
+    return {fim:pertoDoFim(),scroll:list.scrollTop,id:anchor?.dataset.messageId,offset:anchor?anchor.getBoundingClientRect().top-top:0};
+  }
+  function restaurarPosicao(pos,seguir=true){
+    const list=el('chatMensagens');
+    if(pos.fim&&seguir){list.scrollTop=list.scrollHeight;novasPendentes.clear();}
+    else{const anchor=[...list.querySelectorAll('[data-message-id]')].find(node=>node.dataset.messageId===pos.id);
+      if(anchor)list.scrollTop+=anchor.getBoundingClientRect().top-list.getBoundingClientRect().top-pos.offset;else list.scrollTop=pos.scroll;
+    }
+    atualizarNovas();
+  }
   const key = () => 'ambienteteste-e368e_chat_lido_' + user.uid;
   function status(text) { el('chatStatus').textContent = text; }
   function errorText(error) {
@@ -87,35 +108,46 @@
   }
   el('chatLeiturasFechar').addEventListener('click',closeReceipts);
   document.addEventListener('diario:online',event=>{
+    const available=event.detail.available===true;
     el('chatOnlineLista').replaceChildren();
-    const online = event.detail.users || [];
+    const online=available&&Array.isArray(event.detail.users)?event.detail.users:[];
     online.forEach(person=>{const li=document.createElement('li');li.textContent=person.apelido;el('chatOnlineLista').appendChild(li);});
-    el('chatOnlineTotal').textContent=String(online.length);el('chatPresencaStatus').textContent=event.detail.status || '';
+    el('chatOnlineRotulo').textContent=available?'Online agora':'Presença indisponível';
+    el('chatOnlineTotal').hidden=!available;el('chatOnlineTotal').textContent=available?String(online.length):'';
+    el('chatPresencaStatus').textContent=available?'':'Não é possível confirmar quem está online agora. As mensagens continuam funcionando.';
   });
   function render() {
-    const list = el('chatMensagens'), nearBottom = list.scrollHeight - list.scrollTop - list.clientHeight < 70;
-    const oldScroll = list.scrollTop; list.replaceChildren();
-    const ordered = [...messages.values()].sort((a,b) => (millis(a) || Infinity) - (millis(b) || Infinity) || a.id.localeCompare(b.id));
-    if (!ordered.length) { const p = document.createElement('p'); p.textContent = 'Ainda não há mensagens. Inicie a conversa com a equipe!'; list.appendChild(p); }
-    ordered.forEach(message => {
-      const article = document.createElement('article'); article.className = 'chat-mensagem' + (message.autorUid === user.uid ? ' propria' : '');
-      const name = document.createElement('strong'); name.textContent = message.autorNome + (message.autorEmail && message.autorEmail !== message.autorNome ? ' (' + message.autorEmail + ')' : '');
-      const text = document.createElement('p'); text.textContent = message.texto;
-      const time = document.createElement('small'); time.textContent = millis(message) ? message.createdAt.toDate().toLocaleString('pt-BR') : 'Enviando…';
-      const readers = document.createElement('button'); readers.type='button'; readers.className='chat-ver-leituras'; readers.textContent='Quem já leu'; readers.addEventListener('click',event=>{event.stopPropagation();showReceipts(message);});
-      article.dataset.messageId=message.id;
-      article.addEventListener('click',()=>showReceipts(message));
-      article.append(name,text,time,readers); list.appendChild(article);
+    const list=el('chatMensagens'),pos=guardarPosicao();
+    const focusId=document.activeElement?.closest('[data-message-id]')?.dataset.messageId;
+    stopReadTracking();list.replaceChildren();
+    const ordered=[...messages.values()].sort((a,b)=>(millis(a)||Infinity)-(millis(b)||Infinity)||a.id.localeCompare(b.id));
+    if(!ordered.length){const p=document.createElement('p');p.textContent='Ainda não há mensagens. Inicie a conversa com a equipe!';list.appendChild(p);}
+    let diaAnterior=null;
+    ordered.forEach(message=>{
+      const stamp=millis(message),date=stamp?new Date(stamp):null;
+      const dia=date?[date.getFullYear(),date.getMonth(),date.getDate()].join('-'):'pendente';
+      if(dia!==diaAnterior){const separator=document.createElement('h3');separator.className='chat-dia';separator.textContent=date?date.toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long',year:'numeric'}):'Confirmando data das mensagens';list.appendChild(separator);diaAnterior=dia;}
+      const article=document.createElement('article');article.className='chat-mensagem'+(message.autorUid===user.uid?' propria':'');
+      const name=document.createElement('strong');name.textContent=message.autorNome+(message.autorEmail&&message.autorEmail!==message.autorNome?' ('+message.autorEmail+')':'');
+      const text=document.createElement('p');text.textContent=message.texto;
+      const time=document.createElement('small');time.textContent=stamp?date.toLocaleString('pt-BR'):'Enviando…';
+      const readers=document.createElement('button');readers.type='button';readers.className='chat-ver-leituras';readers.textContent='Quem já leu';readers.addEventListener('click',event=>{event.stopPropagation();showReceipts(message);});
+      article.dataset.messageId=message.id;article.addEventListener('click',()=>showReceipts(message));
+      article.append(name,text,time,readers);list.appendChild(article);
     });
-    if (nearBottom && !loading) list.scrollTop = list.scrollHeight; else list.scrollTop = oldScroll;
-    el('chatHistorico').hidden = !more; unread(); markRead();
+    restaurarPosicao(pos,!loading);
+    if(focusId){const article=[...list.querySelectorAll('[data-message-id]')].find(node=>node.dataset.messageId===focusId);article?.querySelector('button')?.focus({preventScroll:true});}
+    el('chatHistorico').hidden=!more;unread();markRead();
   }
   function listen() {
     if (!user || unsubscribe) return;
     const current = epoch; status('Conectando ao chat…');
     unsubscribe = collection.orderBy('createdAt','desc').limit(100).onSnapshot(snapshot => {
       if (current !== epoch) return;
+      const anteriores=new Set(messages.keys()),avisar=recebeuSnapshot&&opened&&!pertoDoFim();
       latest = snapshot.docs.map(doc => ({...doc.data(),id:doc.id}));
+      if(avisar)latest.forEach(message=>{if(!anteriores.has(message.id)&&message.autorUid!==user.uid)novasPendentes.add(message.id);});
+      recebeuSnapshot=true;
       latest.forEach(message => messages.set(message.id,message));
       if (!historyLoaded) { cursor = snapshot.docs.at(-1) || null; more = snapshot.docs.length === 100; }
       status(snapshot.metadata && snapshot.metadata.fromCache ? 'Mostrando mensagens disponíveis neste navegador. Aguardando conexão…' : 'Conversa compartilhada com todos os professores do Diário.'); render();
@@ -126,24 +158,26 @@
   }
   function toggle(value) {
     opened = value; el('chatPainel').hidden = !value; el('chatAbrir').setAttribute('aria-expanded', String(value));
-    if (!value) { stopReadTracking(); closeReceipts(); }
-    if (value) { listen(); el('chatMensagens').scrollTop = el('chatMensagens').scrollHeight; markRead(); el('chatTexto').focus(); }
+    if (!value) { stopReadTracking(); closeReceipts();novasPendentes.clear();atualizarNovas(); }
+    if (value) { listen(); irParaFim(); el('chatTexto').focus(); }
   }
   el('chatAbrir').addEventListener('click', () => toggle(!opened));
   el('chatFechar').addEventListener('click', () => { toggle(false); el('chatAbrir').focus(); });
-  el('chatMensagens').addEventListener('scroll',()=>{clearTimeout(readScanTimer);readScanTimer=setTimeout(markRead,80);},{passive:true});
+  el('chatNovas').addEventListener('click',()=>{irParaFim();el('chatTexto').focus();});
+  el('chatAmpliar').addEventListener('click',()=>{const pos=guardarPosicao(),ampliado=widget.classList.toggle('chat-ampliado');el('chatAmpliar').setAttribute('aria-pressed',String(ampliado));el('chatAmpliar').textContent=ampliado?'Reduzir':'Ampliar';el('chatAmpliar').setAttribute('aria-label',(ampliado?'Reduzir':'Ampliar')+' painel do chat');restaurarPosicao(pos);markRead();});
+  el('chatMensagens').addEventListener('scroll',()=>{if(pertoDoFim()){novasPendentes.clear();atualizarNovas();}clearTimeout(readScanTimer);readScanTimer=setTimeout(markRead,80);},{passive:true});
   widget.addEventListener('keydown', event => { if (event.key === 'Escape' && opened) { toggle(false); el('chatAbrir').focus(); } });
   document.addEventListener('visibilitychange', markRead);
   el('chatHistorico').addEventListener('click', async () => {
     if (!user || !cursor || loading || !more) return;
-    const current = epoch, list = el('chatMensagens'), height = list.scrollHeight, scroll = list.scrollTop;
+    const current = epoch;
     loading = true; el('chatHistorico').disabled = true;
     try {
       const snapshot = await collection.orderBy('createdAt','desc').startAfter(cursor).limit(50).get();
       if (current !== epoch) return;
       snapshot.docs.forEach(doc => messages.set(doc.id,{...doc.data(),id:doc.id}));
       if (snapshot.docs.length) cursor = snapshot.docs.at(-1); more = snapshot.docs.length === 50; historyLoaded = true;
-      render(); list.scrollTop = scroll + list.scrollHeight - height;
+      render();
     } catch (error) { if (current === epoch) status(errorText(error)); }
     finally { if (current === epoch) { loading = false; el('chatHistorico').disabled = false; } }
   });
@@ -165,7 +199,7 @@
     finally { if (current === epoch) { sending = false; el('chatEnviar').disabled = false; el('chatTexto').disabled = false; } }
   });
   auth.onAuthStateChanged(next => {
-    epoch++; stopReadTracking(); closeReceipts(); acknowledged=new Set(); el('chatOnlineLista').replaceChildren(); el('chatOnlineTotal').textContent='0'; if (unsubscribe) unsubscribe(); unsubscribe = null;
+    epoch++;novasPendentes.clear();recebeuSnapshot=false;widget.classList.remove('chat-ampliado');el('chatAmpliar').textContent='Ampliar';el('chatAmpliar').setAttribute('aria-label','Ampliar painel do chat');el('chatAmpliar').setAttribute('aria-pressed','false');el('chatNovas').hidden=true;stopReadTracking(); closeReceipts(); acknowledged=new Set(); el('chatOnlineLista').replaceChildren(); el('chatOnlineTotal').textContent='';el('chatOnlineTotal').hidden=true;el('chatOnlineRotulo').textContent='Presença indisponível';el('chatPresencaStatus').textContent='Não é possível confirmar quem está online agora.'; if (unsubscribe) unsubscribe(); unsubscribe = null;
     user = next; messages = new Map(); latest = []; cursor = null; more = false; historyLoaded = false; opened = false; sending = false; loading = false; pendingSend = null;
     el('chatMensagens').replaceChildren(); el('chatTexto').value = ''; el('chatTexto').disabled = false; el('chatEnviar').disabled = false; el('chatHistorico').disabled = false; el('chatNaoLidas').hidden = true; el('chatPainel').hidden = true; el('chatAbrir').setAttribute('aria-expanded','false'); status(''); widget.hidden = !next;
     if (user) { try { lastRead = Number(localStorage.getItem(key())) || 0; } catch (_) { lastRead = 0; } unread(); listen(); }

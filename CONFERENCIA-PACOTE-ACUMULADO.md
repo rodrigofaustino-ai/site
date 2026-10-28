@@ -1,8 +1,8 @@
 # Roteiro de conferência do pacote acumulado
 
-Pacote atual: branch `melhorias/etapa-20-resumo-periodo`.
+Pacote atual: branch `melhorias/etapa-21-chat-leitura`.
 O pacote contém todas as melhorias anteriores. A etapa 18 já foi publicada pelo
-usuário; a agenda da etapa 19 e o resumo da etapa 20 ainda aguardam publicação. Nada é publicado automaticamente.
+usuário; a agenda (19), o resumo (20) e a leitura do chat (21) ainda aguardam publicação. Nada é publicado automaticamente.
 
 ## Quando decidir publicar
 
@@ -34,6 +34,16 @@ a data de início da semana inteira, enquanto os relatos usam a data do atendime
 Trocar o período e confirmar que os totais mudam; abrir outra ficha e conferir
 que a frequência do aluno anterior não foi transportada. Documentos exportados
 continuam com os modelos já conferidos; o novo resumo é consulta na tela.
+
+## Nova conferência do chat
+
+Abrir o chat, ampliar/reduzir e conferir que o texto digitado permanece. Verificar
+separadores de data no histórico. Com duas contas fictícias, manter uma lendo
+mensagens anteriores e enviar uma mensagem pela outra: o trecho em leitura deve
+permanecer e o botão de novidade deve permitir ir ao fim. Se o chat já estiver
+no fim, a novidade deve aparecer diretamente. Escape fecha o painel. No celular,
+conferir tamanho e botões. Sem presença configurada, deve aparecer Presença
+indisponível, sem um zero interpretado como consulta confirmada.
 
 ## Conferir em ordem
 

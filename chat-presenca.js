@@ -5,7 +5,7 @@
   let generation=0, own=null, connectedRef=null, root=null, connected=false, currentUser=null;
   let connectedHandler=null, rootHandler=null, list=[], heartbeat=null, refresh=null, offset=0, offsetRef=null, offsetHandler=null,lastSnapshot=null;
   function notify(status='') {
-    document.dispatchEvent(new CustomEvent('diario:online',{detail:{users:connected?list:[],status}}));
+    document.dispatchEvent(new CustomEvent('diario:online',{detail:{users:connected&&lastSnapshot&&!status?list:[],status,available:!!(connected&&lastSnapshot&&!status)}}));
   }
   function release() {
     generation++; connected=false; list=[];lastSnapshot=null;
@@ -46,7 +46,7 @@
         });
         list=users.sort((a,b)=>a.apelido.localeCompare(b.apelido,'pt-BR'));notify();
       };
-      root.on('value',rootHandler,()=>{if(version===generation)notify('Não foi possível consultar quem está online. Confira as regras de presença.');});
+      root.on('value',rootHandler,()=>{if(version===generation){lastSnapshot=null;list=[];notify('Não foi possível consultar quem está online. Confira as regras de presença.');}});
       refresh=setInterval(()=>{if(connected && lastSnapshot)rootHandler(lastSnapshot);},30000);
       connectedHandler=snapshot=>{
         if(version!==generation)return;

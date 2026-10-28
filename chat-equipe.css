@@ -23,3 +23,12 @@
 #chatEquipe button:disabled{opacity:.55;cursor:wait}#chatEquipe button:focus-visible,#chatTexto:focus-visible{outline:3px solid #1e293b;outline-offset:2px}
 @media(max-width:600px){#chatEquipe{right:10px;max-width:calc(100vw - 20px)}#chatPainel{width:calc(100vw - 20px);height:65dvh}.chat-conteudo{flex-direction:column-reverse}#chatOnline{width:auto;max-height:90px;border-left:0;border-bottom:1px solid #dbe4ea;padding:6px 10px}#chatOnline ul{display:flex;flex-wrap:wrap;gap:10px}#chatOnline li{margin:0}}
 @media print{#chatEquipe{display:none!important}}
+/* Leitura da conversa: nenhuma alteração nos modelos de mensagens. */
+#chatEquipe{text-align:left}
+.chat-cabecalho{gap:8px;flex-wrap:wrap}.chat-cabecalho strong{margin-right:auto}
+#chatAmpliar{border:1px solid #ffffff80;border-radius:8px;padding:6px 10px;min-height:44px}
+.chat-dia{font-size:12px;font-weight:600;color:#52616b;text-align:center;line-height:1.5;margin:12px 0;padding:7px;background:#edf2f1;border-radius:8px}
+#chatNovas{min-height:44px;border:1px solid #a7b6bc;border-radius:8px;background:#e9f3ef;color:#245346;font:600 13px/1.5 Arial,sans-serif;padding:8px 12px;margin:6px 10px;cursor:pointer}
+#chatEquipe.chat-ampliado #chatPainel{width:min(960px,calc(100vw - 40px));height:calc(100dvh - 170px)}
+#chatMensagens{overflow-anchor:none}
+@media(max-width:600px){#chatEquipe.chat-ampliado #chatPainel{width:calc(100vw - 20px);height:calc(100dvh - 170px)}}

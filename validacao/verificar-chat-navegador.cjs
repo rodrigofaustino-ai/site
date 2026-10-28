@@ -37,10 +37,44 @@ function mockFirebase(){
   await b.locator('#chatTexto').fill('Recebido!');await b.locator('#chatEnviar').click();await a.waitForFunction(()=>document.querySelectorAll('.chat-mensagem').length===2);assert.match(await a.locator('#chatMensagens').textContent(),/Recebido!/);
   await b.locator('#chatFechar').click();await a.locator('#chatTexto').fill('Mais uma mensagem');await a.locator('#chatEnviar').click();await b.waitForFunction(()=>document.getElementById('chatNaoLidas').textContent==='1');
   failNext=true;await a.locator('#chatTexto').fill('Tentar novamente');await a.locator('#chatEnviar').click();await a.waitForFunction(()=>document.getElementById('chatStatus').textContent.includes('Seu texto foi mantido'));assert.equal(await a.locator('#chatTexto').inputValue(),'Tentar novamente');await a.locator('#chatEnviar').click();await a.waitForFunction(()=>document.getElementById('chatTexto').value==='');assert.equal([...records.values()].filter(item=>item.texto==='Tentar novamente').length,1);
-  for(let i=0;i<105;i++)records.set('historico-'+i,{id:'historico-'+i,texto:'Histórico '+i,autorUid:'b',autorNome:'Professor B',autorEmail:'b@example.test',createdAt:++clock});
+  const meioDia=new Date();meioDia.setHours(12,0,0,0);
+  for(let i=0;i<105;i++)records.set('historico-'+i,{id:'historico-'+i,texto:'Histórico '+i,autorUid:'b',autorNome:'Professor B',autorEmail:'b@example.test',createdAt:meioDia.getTime()-(i<50?2:1)*86400000+i*1000});
   await a.evaluate(()=>firebase.auth().signOut());assert.equal(await a.locator('#chatEquipe').isVisible(),false);assert.equal(await a.locator('#chatMensagens article').count(),0);assert.equal(await a.evaluate(()=>__test.listenerCount()),0);
   await a.evaluate(()=>{__test.login('a');selecionarTurno('Matutino');});await a.locator('#chatAbrir').click();await a.waitForFunction(()=>document.querySelectorAll('#chatMensagens article').length===100);await a.locator('#chatHistorico').click();await a.waitForFunction(()=>document.querySelectorAll('#chatMensagens article').length===109);assert.equal(await a.locator('#chatHistorico').isVisible(),false);
   await a.waitForTimeout(850);assert.equal(receipts.has('historico-0/a'),false);await a.locator('[data-message-id="historico-0"]').scrollIntoViewIfNeeded();await a.waitForFunction(async()=>Boolean(await window.chatRPC('getReceipt',{messageId:'historico-0',uid:'a'})));
+  fs.mkdirSync('/tmp/site-results',{recursive:true});
+  // Agrupamento por data, posição preservada e aviso apenas para novidades.
+  assert.equal(await a.locator('#chatNovas').isHidden(),true);
+  assert.equal(await a.locator('.chat-dia').count(),3);
+  assert.equal(await a.locator('#chatOnlineTotal').isHidden(),true);
+  assert.equal(await a.locator('#chatOnlineRotulo').textContent(),'Presença indisponível');
+  await a.evaluate(()=>document.dispatchEvent(new CustomEvent('diario:online',{detail:{available:true,users:[{apelido:'Professora fictícia'}]}})));
+  assert.equal(await a.locator('#chatOnlineTotal').textContent(),'1');assert.equal(await a.locator('#chatOnlineLista li').count(),1);
+  await a.evaluate(()=>document.dispatchEvent(new CustomEvent('diario:online',{detail:{available:false,users:[{apelido:'DADO ANTIGO'}]}})));
+  assert.equal(await a.locator('#chatOnlineTotal').isHidden(),true);assert.equal(await a.locator('#chatOnlineLista li').count(),0);
+  const anchor=()=>a.evaluate(()=>{const list=document.getElementById('chatMensagens'),top=list.getBoundingClientRect().top,node=[...list.querySelectorAll('[data-message-id]')].find(el=>el.getBoundingClientRect().bottom>top);return {id:node.dataset.messageId,offset:node.getBoundingClientRect().top-top};});
+  const anterior=await anchor();
+  records.set('nova-1',{id:'nova-1',texto:'Nova mensagem enquanto lê o histórico',autorUid:'b',autorNome:'Professor B',autorEmail:'b@example.test',createdAt:++clock});await emit();
+  await a.waitForFunction(()=>!document.getElementById('chatNovas').hidden);
+  const depois=await anchor();assert.equal(depois.id,anterior.id);assert(Math.abs(depois.offset-anterior.offset)<2);
+  assert.match(await a.locator('#chatNovas').textContent(),/^1 nova/);
+  await a.waitForTimeout(850);assert.equal(receipts.has('nova-1/a'),false);
+  records.set('nova-2',{id:'nova-2',texto:'Segunda novidade sem interromper a leitura',autorUid:'b',autorNome:'Professor B',autorEmail:'b@example.test',createdAt:++clock});await emit();await emit();
+  assert.match(await a.locator('#chatNovas').textContent(),/^2 nova/);
+  await a.locator('#chatTexto').fill('Rascunho preservado ao ampliar');
+  const tamanho=records.size;await a.getByRole('button',{name:'Ampliar painel do chat',exact:true}).click();
+  assert.equal(await a.locator('#chatAmpliar').getAttribute('aria-pressed'),'true');assert.equal(records.size,tamanho);assert.equal(await a.locator('#chatTexto').inputValue(),'Rascunho preservado ao ampliar');
+  const posAmpla=await anchor();assert.equal(posAmpla.id,anterior.id);assert(Math.abs(posAmpla.offset-anterior.offset)<2);
+  const amplo=await a.locator('#chatPainel').boundingBox();assert(amplo.width>550&&amplo.x>=0&&amplo.x+amplo.width<=1280);
+  await a.locator('#chatPainel').screenshot({path:'/tmp/site-results/chat-ampliado.png'});
+  await a.getByRole('button',{name:'Reduzir painel do chat',exact:true}).click();assert.equal(await a.locator('#chatAmpliar').getAttribute('aria-pressed'),'false');
+  await a.locator('#chatNovas').click();assert.equal(await a.locator('#chatNovas').isHidden(),true);
+  await a.waitForFunction(async()=>Boolean(await window.chatRPC('getReceipt',{messageId:'nova-2',uid:'a'})));
+  assert(await a.locator('#chatMensagens').evaluate(el=>el.scrollHeight-el.scrollTop-el.clientHeight<5));
+  records.set('nova-3',{id:'nova-3',texto:'Mensagem acompanhada no fim da conversa',autorUid:'b',autorNome:'Professor B',autorEmail:'b@example.test',createdAt:++clock});await emit();
+  assert.equal(await a.locator('#chatNovas').isHidden(),true);assert(await a.locator('#chatMensagens').evaluate(el=>el.scrollHeight-el.scrollTop-el.clientHeight<5));
+  await a.getByRole('button',{name:'Ampliar painel do chat',exact:true}).click();await a.keyboard.press('Escape');assert.equal(await a.locator('#chatPainel').isHidden(),true);assert(await a.locator('#chatAbrir').evaluate(el=>el===document.activeElement));
+  await a.locator('#chatAbrir').click();assert.equal(await a.locator('#chatAmpliar').getAttribute('aria-pressed'),'true');
   fs.mkdirSync('/tmp/site-results',{recursive:true});
   await a.locator('#chatPainel').screenshot({path:'/tmp/site-results/chat-visual.png'});
   for(const width of [390,320]){
@@ -49,8 +83,10 @@ function mockFirebase(){
    assert(await a.locator('#chatEnviar').evaluate(el=>el.getBoundingClientRect().height>=44));
    await a.locator('#chatPainel').screenshot({path:'/tmp/site-results/chat-visual-'+width+'.png'});
   }
-  await a.locator('#chatTexto').fill('Rascunho privado');await a.evaluate(()=>__test.login('c'));assert.equal(await a.locator('#chatTexto').inputValue(),'');assert.equal(await a.locator('#chatPainel').isVisible(),false);assert.deepEqual(errors,[]);
+  assert.equal(records.size,tamanho+1);
+  await a.locator('#chatTexto').fill('Rascunho privado');await a.evaluate(()=>__test.login('c'));assert.equal(await a.locator('#chatTexto').inputValue(),'');assert.equal(await a.locator('#chatPainel').isVisible(),false);assert.equal(await a.locator('#chatAmpliar').getAttribute('aria-pressed'),'false');assert.equal(await a.locator('#chatNovas').isHidden(),true);assert.deepEqual(errors,[]);
   console.log('Leituras: não registra chat fechado/aba oculta/mensagem fora da área de leitura, confirma após exposição, lista leitor com apelido sem @.');
+  console.log('Novidades: agrupamento por três datas, aviso sem duplicação, leitura preservada, confirmação somente após exposição, ampliar/reduzir, Escape e presença indisponível passaram.');
   console.log('Chat: duas sessões, atualização em tempo real, envio explícito, não lidas, texto seguro, data, falha/reenvio sem duplicação, histórico, logout/troca de conta e celular passaram (Firebase simulado).');
  }finally{if(browser)await browser.close();if(server)server.close();}
 })().catch(error=>{console.error(error);process.exitCode=1;});
