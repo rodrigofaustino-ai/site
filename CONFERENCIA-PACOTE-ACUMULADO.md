@@ -1,17 +1,20 @@
 # Roteiro de conferência do pacote acumulado
 
-Pacote atual: branch `melhorias/etapa-22-chat-busca`.
+Pacote atual: branch `melhorias/etapa-23-chat-respostas`.
 O pacote contém todas as melhorias anteriores. A etapa 18 já foi publicada pelo
-usuário; a agenda (19), o resumo (20) e as melhorias do chat (21 e 22) ainda aguardam publicação. Nada é publicado automaticamente.
+usuário; a agenda (19), o resumo (20) e as melhorias do chat (21 a 23) ainda aguardam publicação. Nada é publicado automaticamente.
 
 ## Quando decidir publicar
+
+**A etapa 23 exige atualizar as regras do Firestore de teste antes de ativar
+respostas vinculadas.** O arquivo completo está em `firebase/chat-respostas-teste.rules`;
+seguir `FIREBASE-CHAT-RESPOSTAS.md` antes da publicação no Netlify. Não há novos
+índices ou migração de dados. As mensagens comuns permanecem compatíveis.
 
 No GitHub, abrir a branch atual e usar Code → Download ZIP. Extrair o ZIP e
 localizar a pasta que contém `index.html`, `vendor` e os arquivos JS/CSS.
 Publicar essa pasta no Netlify de teste (`srmteste.netlify.app`). Não enviar o
 pacote para o site oficial: esta cópia usa o Firebase `ambienteteste-e368e`.
-Não há alteração de regras ou índices necessária para as etapas acumuladas
-após a configuração de compartilhamento já conferida.
 
 Após a publicação, recarregar com Ctrl+Shift+R e usar um aluno fictício.
 
@@ -53,6 +56,16 @@ limpar e conferir o rascunho preservado. Se houver mensagens anteriores ainda
 não carregadas, carregar um lote e conferir a atualização dos resultados.
 Fechar/reabrir o chat deve limpar a consulta; ela também não deve passar para
 outra conta. A busca é limitada ao conteúdo carregado e não pesquisa documentos.
+
+## Nova conferência das respostas do chat
+
+Após aplicar as regras de teste e publicar o pacote, enviar uma mensagem comum.
+Digitar um rascunho, escolher Responder em uma mensagem fictícia e conferir que
+texto e referência aparecem separados. Cancelar e conferir o rascunho preservado.
+Selecionar novamente, enviar e abrir pela outra conta: a referência deve apontar
+ao original correto. Usar Consultar original e conferir a navegação. Fechar e
+reabrir um rascunho com resposta deve preservá-lo; sair da conta deve limpá-lo.
+Não aplicar as regras ao projeto oficial.
 
 ## Conferir em ordem
 

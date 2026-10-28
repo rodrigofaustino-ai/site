@@ -17,12 +17,52 @@
   sidebar.innerHTML = '<details open><summary><span id="chatOnlineRotulo">Presença indisponível</span> <span id="chatOnlineTotal" hidden></span></summary><p id="chatPresencaStatus">Não é possível confirmar quem está online agora.</p><ul id="chatOnlineLista"></ul></details>'; layout.appendChild(sidebar);
   const receiptsPanel = document.createElement('section'); receiptsPanel.id = 'chatLeituras'; receiptsPanel.hidden = true;
   receiptsPanel.innerHTML = '<button type="button" id="chatLeiturasFechar">Fechar leituras ×</button><strong>Quem já leu</strong><p id="chatLeiturasStatus"></p><ul id="chatLeiturasLista"></ul>'; conversation.appendChild(receiptsPanel);
+  const respostaPreview=document.createElement('section');respostaPreview.id='chatResposta';respostaPreview.hidden=true;
+  respostaPreview.setAttribute('aria-label','Referência da resposta');
+  respostaPreview.innerHTML='<strong id="chatRespostaAutor"></strong><p id="chatRespostaTrecho"></p><button id="chatRespostaCancelar" type="button">Cancelar resposta</button>';
+  document.getElementById('chatForm').prepend(respostaPreview);
   const el = id => document.getElementById(id), auth = firebase.auth(), db = firebase.firestore();
   const collection = db.collection('chatEquipe');
   let user = null, unsubscribe = null, epoch = 0, opened = false, sending = false, loading = false;
   let receiptUnsubscribe = null, observer = null, readTimers = new Map(), acknowledged = new Set(), readScanTimer = null;
   let messages = new Map(), latest = [], cursor = null, more = false, historyLoaded = false, lastRead = 0, pendingSend = null;
   let novasPendentes=new Set(),recebeuSnapshot=false;
+  let respostaSelecionada=null,referenciaVersao=0,referenciaPendente=false;
+  const idRespostaValido=id=>typeof id==='string'&&/^[A-Za-z0-9_-]{1,128}$/.test(id);
+  const trecho=texto=>String(texto||'').length>180?String(texto).slice(0,180)+'…':String(texto||'');
+  function atualizarResposta(){
+    const original=respostaSelecionada?messages.get(respostaSelecionada):null;
+    respostaPreview.hidden=!original;widget.classList.toggle('chat-respondendo',!!original);
+    el('chatRespostaAutor').textContent=original?'Respondendo a '+(original.autorNome||'Profissional'):'';
+    el('chatRespostaTrecho').textContent=original?trecho(original.texto):'';
+    el('chatRespostaCancelar').disabled=sending;
+  }
+  function selecionarResposta(message){
+    if(!user||sending||!millis(message)||!idRespostaValido(message.id))return;
+    respostaSelecionada=message.id;atualizarResposta();el('chatTexto').focus();
+  }
+  function navegarMensagem(id){
+    const list=el('chatMensagens'),article=[...list.querySelectorAll('[data-message-id]')].find(node=>node.dataset.messageId===id);
+    if(!article)return;
+    list.querySelectorAll('.chat-original-destaque').forEach(node=>node.classList.remove('chat-original-destaque'));
+    article.classList.add('chat-original-destaque');
+    list.scrollTop+=article.getBoundingClientRect().top-list.getBoundingClientRect().top-(list.clientHeight-Math.min(article.offsetHeight,list.clientHeight))/2;
+    article.focus({preventScroll:true});markRead();
+  }
+  async function consultarOriginal(id){
+    if(!user||!opened||referenciaPendente||!idRespostaValido(id))return;
+    const current=epoch,token=++referenciaVersao,owner=user.uid;
+    if(messages.has(id)){navegarMensagem(id);status('Mensagem original localizada.');return;}
+    referenciaPendente=true;status('Consultando mensagem original…');
+    try{
+      const snap=await collection.doc(id).get({source:'server'});
+      if(current!==epoch||token!==referenciaVersao||!opened||auth.currentUser?.uid!==owner)return;
+      if(!snap.exists){status('Mensagem original não encontrada.');return;}
+      messages.set(id,{...snap.data(),id});render();navegarMensagem(id);status('Mensagem original localizada.');
+    }catch(_){if(current===epoch&&token===referenciaVersao)status('Não foi possível abrir a mensagem original. Tente novamente.');}
+    finally{if(current===epoch&&token===referenciaVersao)referenciaPendente=false;}
+  }
+  el('chatRespostaCancelar').addEventListener('click',()=>{if(sending)return;respostaSelecionada=null;atualizarResposta();el('chatTexto').focus();});
   const millis = message => {const value=message.createdAt?.toMillis?.();return Number.isFinite(value)&&value>0?value:0;};
   function pertoDoFim(){const list=el('chatMensagens');return list.scrollHeight-list.scrollTop-list.clientHeight<70;}
   function atualizarNovas(){
@@ -175,7 +215,15 @@
       const time=document.createElement('small');time.textContent=stamp?date.toLocaleString('pt-BR'):'Enviando…';
       const readers=document.createElement('button');readers.type='button';readers.className='chat-ver-leituras';readers.textContent='Quem já leu';readers.addEventListener('click',event=>{event.stopPropagation();showReceipts(message);});
       article.dataset.messageId=message.id;article.tabIndex=-1;article.addEventListener('click',()=>showReceipts(message));
-      article.append(name,text,time,readers);list.appendChild(article);
+      article.append(name);
+      if(idRespostaValido(message.respostaId)){
+        const original=messages.get(message.respostaId),reference=document.createElement('button');reference.type='button';reference.className='chat-referencia';reference.setAttribute('aria-label','Consultar mensagem original');
+        reference.textContent=original?'Em resposta a '+(original.autorNome||'Profissional')+': '+trecho(original.texto):'Resposta a uma mensagem anterior · Consultar original';
+        reference.addEventListener('click',event=>{event.stopPropagation();consultarOriginal(message.respostaId);});article.append(reference);
+      }
+      const reply=document.createElement('button');reply.type='button';reply.className='chat-responder';reply.textContent='Responder';reply.disabled=sending||!millis(message);reply.addEventListener('click',event=>{event.stopPropagation();selecionarResposta(message);});
+      const actions=document.createElement('div');actions.className='chat-mensagem-acoes';actions.append(readers,reply);
+      article.append(text,time,actions);list.appendChild(article);
     });
     atualizarBusca();restaurarPosicao(pos,!loading);
     if(focusId){const article=[...list.querySelectorAll('[data-message-id]')].find(node=>node.dataset.messageId===focusId);(focusNoArtigo?article:article?.querySelector('button'))?.focus({preventScroll:true});}
@@ -200,7 +248,7 @@
   }
   function toggle(value) {
     opened = value; el('chatPainel').hidden = !value; el('chatAbrir').setAttribute('aria-expanded', String(value));
-    if (!value) { stopReadTracking(); closeReceipts();novasPendentes.clear();atualizarNovas();limparBusca(true); }
+    if (!value) { referenciaVersao++;referenciaPendente=false;stopReadTracking(); closeReceipts();novasPendentes.clear();atualizarNovas();limparBusca(true); }
     if (value) { listen(); irParaFim(); el('chatTexto').focus(); }
   }
   el('chatAbrir').addEventListener('click', () => toggle(!opened));
@@ -226,24 +274,26 @@
   el('chatForm').addEventListener('submit', async event => {
     event.preventDefault(); if (!user || sending || !auth.currentUser || auth.currentUser.uid !== user.uid) return;
     const texto = el('chatTexto').value.trim(); if (!texto || texto.length > 2000) { status('Escreva uma mensagem de até 2.000 caracteres.'); return; }
-    const owner = user, current = epoch;
+    const owner = user, current = epoch,respostaId=respostaSelecionada;
     // Reutiliza o ID em tentativas do mesmo envio para evitar mensagens duplicadas após falha de rede.
-    if (!pendingSend || pendingSend.texto !== texto) pendingSend = {texto,ref:collection.doc()};
-    const attempt = pendingSend; sending = true; el('chatEnviar').disabled = true; el('chatTexto').disabled = true; status('Enviando mensagem…');
+    if (!pendingSend || pendingSend.texto !== texto || pendingSend.respostaId!==respostaId) pendingSend = {texto,respostaId,ref:collection.doc()};
+    const attempt = pendingSend; sending = true;atualizarResposta();widget.querySelectorAll('.chat-responder').forEach(button=>button.disabled=true); el('chatEnviar').disabled = true; el('chatTexto').disabled = true; status('Enviando mensagem…');
     try {
       await db.runTransaction(async transaction => {
         if (!auth.currentUser || auth.currentUser.uid !== owner.uid) throw new Error('Sessão encerrada.');
         const existing = await transaction.get(attempt.ref); if (existing.exists) return;
-        transaction.set(attempt.ref,{texto,autorUid:owner.uid,autorNome:(owner.displayName || owner.email || 'Professor').slice(0,200),autorEmail:owner.email,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+        const payload={texto,autorUid:owner.uid,autorNome:(owner.displayName || owner.email || 'Professor').slice(0,200),autorEmail:owner.email,createdAt:firebase.firestore.FieldValue.serverTimestamp()};
+        if(attempt.respostaId)payload.respostaId=attempt.respostaId;
+        transaction.set(attempt.ref,payload);
       });
-      if (current === epoch) { el('chatTexto').value = ''; pendingSend = null; status('Mensagem enviada.'); el('chatTexto').disabled = false; el('chatTexto').focus(); }
-    } catch (error) { if (current === epoch) status(errorText(error) + ' Seu texto foi mantido para tentar novamente.'); }
-    finally { if (current === epoch) { sending = false; el('chatEnviar').disabled = false; el('chatTexto').disabled = false; } }
+      if (current === epoch) { el('chatTexto').value = ''; pendingSend = null;respostaSelecionada=null;atualizarResposta(); status('Mensagem enviada.');if(attempt.respostaId)irParaFim(); el('chatTexto').disabled = false; el('chatTexto').focus(); }
+    } catch (error) { if (current === epoch) status(errorText(error) + (attempt.respostaId?' Seu texto e a referência foram mantidos para tentar novamente.':' Seu texto foi mantido para tentar novamente.')); }
+    finally { if (current === epoch) { sending = false;atualizarResposta();widget.querySelectorAll('.chat-responder').forEach(button=>button.disabled=!millis(messages.get(button.closest('[data-message-id]').dataset.messageId)||{})); el('chatEnviar').disabled = false; el('chatTexto').disabled = false; } }
   });
   auth.onAuthStateChanged(next => {
-    epoch++;novasPendentes.clear();recebeuSnapshot=false;widget.classList.remove('chat-ampliado');el('chatAmpliar').textContent='Ampliar';el('chatAmpliar').setAttribute('aria-label','Ampliar painel do chat');el('chatAmpliar').setAttribute('aria-pressed','false');el('chatNovas').hidden=true;stopReadTracking(); closeReceipts(); acknowledged=new Set(); el('chatOnlineLista').replaceChildren(); el('chatOnlineTotal').textContent='';el('chatOnlineTotal').hidden=true;el('chatOnlineRotulo').textContent='Presença indisponível';el('chatPresencaStatus').textContent='Não é possível confirmar quem está online agora.'; if (unsubscribe) unsubscribe(); unsubscribe = null;
+    epoch++;respostaSelecionada=null;referenciaVersao++;referenciaPendente=false;novasPendentes.clear();recebeuSnapshot=false;widget.classList.remove('chat-ampliado');el('chatAmpliar').textContent='Ampliar';el('chatAmpliar').setAttribute('aria-label','Ampliar painel do chat');el('chatAmpliar').setAttribute('aria-pressed','false');el('chatNovas').hidden=true;stopReadTracking(); closeReceipts(); acknowledged=new Set(); el('chatOnlineLista').replaceChildren(); el('chatOnlineTotal').textContent='';el('chatOnlineTotal').hidden=true;el('chatOnlineRotulo').textContent='Presença indisponível';el('chatPresencaStatus').textContent='Não é possível confirmar quem está online agora.'; if (unsubscribe) unsubscribe(); unsubscribe = null;
     user = next; messages = new Map(); latest = []; cursor = null; more = false; historyLoaded = false; opened = false; sending = false; loading = false; pendingSend = null;
-    el('chatMensagens').replaceChildren();limparBusca(true); el('chatTexto').value = ''; el('chatTexto').disabled = false; el('chatEnviar').disabled = false; el('chatHistorico').disabled = false; el('chatNaoLidas').hidden = true; el('chatPainel').hidden = true; el('chatAbrir').setAttribute('aria-expanded','false'); status(''); widget.hidden = !next;
+    el('chatMensagens').replaceChildren();atualizarResposta();limparBusca(true); el('chatTexto').value = ''; el('chatTexto').disabled = false; el('chatEnviar').disabled = false; el('chatHistorico').disabled = false; el('chatNaoLidas').hidden = true; el('chatPainel').hidden = true; el('chatAbrir').setAttribute('aria-expanded','false'); status(''); widget.hidden = !next;
     if (user) { try { lastRead = Number(localStorage.getItem(key())) || 0; } catch (_) { lastRead = 0; } unread(); listen(); }
   });
 })();

@@ -46,3 +46,19 @@
 #chatMensagens .chat-busca-atual{outline:3px solid #176b5b;outline-offset:-3px}
 #chatBusca :focus-visible{outline:3px solid #176b5b;outline-offset:2px}
 @media(max-width:600px){#chatEquipe.chat-buscando #chatPainel{height:calc(100dvh - 170px)}}
+/* Resposta vinculada: referência separada do texto digitado. */
+#chatResposta{padding:10px;border:1px solid #b7d5c8;border-left:4px solid #176b5b;border-radius:8px;background:#e9f3ef;max-height:150px;overflow:auto}
+#chatResposta strong{font-size:13px;overflow-wrap:anywhere}
+#chatResposta p{font-size:13px;line-height:1.5;margin:6px 0;white-space:pre-wrap;overflow-wrap:anywhere}
+#chatRespostaCancelar{min-height:36px;border:1px solid #a7b6bc;background:#fff;color:#245346;border-radius:6px;font:inherit;font-size:12px;padding:4px 8px;cursor:pointer}
+.chat-mensagem-acoes{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.chat-mensagem-acoes button{min-height:40px}
+.chat-responder{background:none;border:0;color:#176b5b;text-decoration:underline;text-underline-offset:2px;cursor:pointer;font:inherit;font-size:12px;padding:4px}
+.chat-referencia{display:block;width:100%;text-align:left;border:1px solid #b7d5c8;border-left:3px solid #176b5b;border-radius:6px;background:#e9f3ef;color:#245346;white-space:pre-wrap;overflow-wrap:anywhere;cursor:pointer;font:12px/1.5 Arial,sans-serif;padding:8px;margin:8px 0}
+#chatMensagens .chat-original-destaque{outline:3px solid #176b5b;outline-offset:-3px}
+#chatEquipe.chat-respondendo #chatOnline{display:none}
+@media(max-width:600px){#chatEquipe.chat-respondendo #chatPainel{height:calc(100dvh - 170px)}}
+#chatResposta{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:start;gap:4px 8px}
+#chatResposta p{grid-column:1/-1;grid-row:2;max-height:4.5em;overflow:auto}
+#chatRespostaCancelar{grid-column:2;grid-row:1;min-height:44px}
+.chat-mensagem-acoes button,.chat-referencia{min-height:44px}

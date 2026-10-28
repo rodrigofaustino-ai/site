@@ -7,7 +7,7 @@ setLogLevel('silent');
 let count=0;const yes=async p=>{const result=await assertSucceeds(p);count++;return result;},no=async p=>{await assertFails(p);count++;};
 async function main(){
   assert.equal(process.env.FIRESTORE_EMULATOR_HOST,'127.0.0.1:8087');
-  const env=await initializeTestEnvironment({projectId:'demo-colaboracao',firestore:{host:'127.0.0.1',port:8087,rules:fs.readFileSync(path.join(__dirname,'../firebase/compartilhamento-teste.rules'),'utf8')}});
+  const env=await initializeTestEnvironment({projectId:'demo-colaboracao',firestore:{host:'127.0.0.1',port:8087,rules:fs.readFileSync(path.join(__dirname,process.env.SRM_REGRAS_RESPOSTAS==='1'?'../firebase/chat-respostas-teste.rules':'../firebase/compartilhamento-teste.rules'),'utf8')}});
   try{
     await env.clearFirestore();
     const context=(uid,email,verified=true)=>env.authenticatedContext(uid,{email,email_verified:verified}).firestore();
