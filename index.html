@@ -508,6 +508,8 @@ hr.sep{border:none;border-top:2px dashed rgba(0,0,0,.06);margin:.2rem 0;}
 <script src="metas-aluno.js"></script>
 <link rel="stylesheet" href="frequencia-interface.css">
 <script src="frequencia-interface.js"></script>
+<script src="resumo-frequencia.js"></script>
+<link rel="stylesheet" href="resumo-periodo.css">
 <link rel="stylesheet" href="registro-assistido.css">
 <script src="registro-assistido.js"></script>
 <link rel="stylesheet" href="historico-atendimentos.css">
@@ -3778,8 +3780,10 @@ function renderEntriesList(){
 }
 
 function configurarMetasAluno(id){
-  const uid=professorUid;
-  window.MetasAluno.ativar({alunoId:id,uid,db,
+  const uid=professorUid,turno=turnoAtual;
+  const frequencia={uid,alunoId:id,turno,db,aluno:{id,atendimentos:getAtendimentos(currentProfile)},
+    vigente:()=>currentStudentId===id&&professorUid===uid&&turnoAtual===turno&&auth.currentUser?.uid===uid};
+  window.MetasAluno.ativar({alunoId:id,uid,db,frequencia,
     vigente:()=>currentStudentId===id && professorUid===uid,
     alterou:()=>{if(currentStudentId===id && professorUid===uid)renderEntriesList();}
   });

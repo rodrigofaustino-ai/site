@@ -72,7 +72,7 @@
   }
   function renderLista(){
     const statusMetas=loading?'carregando':falhaCarregamento?'erro':metasConfirmadas?'pronto':'carregando';
-    window.AcompanhamentoPeriodo?.render({metas,registros,statusMetas,statusRegistros:registrosStatus});
+    window.AcompanhamentoPeriodo?.render({metas,registros,statusMetas,statusRegistros:registrosStatus,frequencia:config?.frequencia});
     const root=$('metasLista');if(!root)return;root.replaceChildren();
     const filter=$('metasFiltro').value;
     const list=metas.filter(meta=>filter==='todas'||(filter==='atuais'?vinculavel(meta):meta.status===filter));

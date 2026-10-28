@@ -1,8 +1,8 @@
 # Roteiro de conferência do pacote acumulado
 
-Pacote atual: branch `melhorias/etapa-19-agenda-dia`.
+Pacote atual: branch `melhorias/etapa-20-resumo-periodo`.
 O pacote contém todas as melhorias anteriores. A etapa 18 já foi publicada pelo
-usuário; a agenda da etapa 19 ainda aguarda publicação. Nada é publicado automaticamente.
+usuário; a agenda da etapa 19 e o resumo da etapa 20 ainda aguardam publicação. Nada é publicado automaticamente.
 
 ## Quando decidir publicar
 
@@ -23,6 +23,17 @@ voltar e consultar outra data. Usar Hoje para retornar à data atual. Não deve
 haver criação automática de atendimento ou frequência. No celular, conferir
 leitura, botões e abertura da ficha. A consulta segue o cadastro semanal e não
 aplica calendário de feriados.
+
+## Nova conferência do resumo por período
+
+Na ficha fictícia, abrir Metas e acompanhamento → Acompanhamento por período.
+Selecionar datas e conferir os atendimentos e metas. Clicar em Carregar frequência
+do resumo, conferir o turno, as semanas consideradas e os totais diários; os
+registros semanais antigos devem aparecer separados. O filtro da frequência usa
+a data de início da semana inteira, enquanto os relatos usam a data do atendimento.
+Trocar o período e confirmar que os totais mudam; abrir outra ficha e conferir
+que a frequência do aluno anterior não foi transportada. Documentos exportados
+continuam com os modelos já conferidos; o novo resumo é consulta na tela.
 
 ## Conferir em ordem
 

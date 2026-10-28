@@ -16,7 +16,7 @@
   function montar(root){
     mounted=root;periodo={de:hoje().slice(0,8)+'01',ate:hoje()};erroFiltro='';root.replaceChildren();
     const details=n('details'),title=n('summary','Acompanhamento por período');details.append(title);root.append(details);
-    details.append(n('p','Consulte os relatos vinculados às metas em um intervalo de datas. A quantidade de atendimentos indica registros de trabalho, não um percentual de aprendizagem.'));
+    details.append(n('p','Reúna atendimentos, metas e frequência em um intervalo de datas. Consulte abaixo os relatos vinculados às metas. A quantidade de atendimentos indica registros de trabalho, não um percentual de aprendizagem.'));
     const form=n('form');form.className='acompanhamento-filtro';form.noValidate=true;
     const dateField=(id,text,value)=>{const label=n('label',text),input=n('input');input.type='date';input.id=id;input.value=value;label.append(input);form.append(label);return input;};
     const de=dateField('acompanhamentoDe','De',periodo.de),ate=dateField('acompanhamentoAte','Até',periodo.ate);
@@ -75,6 +75,8 @@
         const review=n('td',data(m.revisao));if(pendentes.some(p=>p.id===m.id))review.append(n('span',' · Revisão pendente'));row.append(review);body.append(row);
       }results.append(wrap);
     }
+    const frequencia=n('section');frequencia.id='resumoFrequencia';results.append(frequencia);
+    window.ResumoFrequencia?.render({root:frequencia,periodo,config:dados.frequencia});
     // Histórico sem vínculo também fica consultável, sem associação automática.
     const livres=selecionados.filter(r=>!ids(r).length),details=n('details');details.append(n('summary','Atendimentos sem meta vinculada ('+livres.length+')'));
     if(!livres.length)details.append(n('p','Nenhum atendimento sem vínculo neste período.'));
@@ -84,5 +86,5 @@
     const root=document.getElementById('acompanhamentoPeriodo');if(!root)return;
     if(root!==mounted)montar(root);dados=values;atualizar();
   }
-  window.AcompanhamentoPeriodo={render,limpar(){mounted=null;dados=null;periodo=null;erroFiltro='';}};
+  window.AcompanhamentoPeriodo={render,limpar(){window.ResumoFrequencia?.limpar();mounted=null;dados=null;periodo=null;erroFiltro='';}};
 })();

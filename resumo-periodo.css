@@ -1,0 +1,15 @@
+.resumo-frequencia{margin:20px 0;padding:16px;border:1px solid #dde5e7;border-radius:10px;background:#fff;min-width:0}
+.resumo-frequencia h3{font-size:18px;margin:0 0 12px;color:#24333d}
+.resumo-frequencia p{font-size:14px;line-height:1.6;margin:12px 0}
+.resumo-frequencia-indicadores{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin:16px 0}
+.resumo-frequencia-indicadores>div{display:flex;flex-direction:column;gap:6px;padding:12px;border:1px solid #dde5e7;border-radius:8px;background:#f5f7f8;min-width:0}
+.resumo-frequencia-indicadores strong{font-size:24px;color:#176b5b}
+.resumo-frequencia-indicadores span{font-size:13px;overflow-wrap:anywhere}
+.resumo-frequencia-separado{padding:12px;border-left:3px solid #a7b6bc;background:#f5f7f8;margin-top:12px}
+.resumo-frequencia-separado h4{font-size:14px;margin:0 0 8px}
+.resumo-frequencia-separado ul{padding-left:20px;font-size:14px}
+@media(max-width:600px){.resumo-frequencia{padding:12px}.resumo-frequencia-indicadores{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:360px){
+  .resumo-frequencia-indicadores{grid-template-columns:minmax(0,1fr)}
+  .resumo-frequencia-indicadores>div{display:grid;grid-template-columns:36px minmax(0,1fr);align-items:center;gap:10px;padding:10px}
+}
