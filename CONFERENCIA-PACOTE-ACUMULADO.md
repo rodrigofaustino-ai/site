@@ -1,8 +1,8 @@
 # Roteiro de conferência do pacote acumulado
 
-Pacote atual: branch `melhorias/etapa-21-chat-leitura`.
+Pacote atual: branch `melhorias/etapa-22-chat-busca`.
 O pacote contém todas as melhorias anteriores. A etapa 18 já foi publicada pelo
-usuário; a agenda (19), o resumo (20) e a leitura do chat (21) ainda aguardam publicação. Nada é publicado automaticamente.
+usuário; a agenda (19), o resumo (20) e as melhorias do chat (21 e 22) ainda aguardam publicação. Nada é publicado automaticamente.
 
 ## Quando decidir publicar
 
@@ -44,6 +44,15 @@ permanecer e o botão de novidade deve permitir ir ao fim. Se o chat já estiver
 no fim, a novidade deve aparecer diretamente. Escape fecha o painel. No celular,
 conferir tamanho e botões. Sem presença configurada, deve aparecer Presença
 indisponível, sem um zero interpretado como consulta confirmada.
+
+## Nova conferência da busca do chat
+
+Abrir Buscar mensagens e procurar uma palavra ou autor de uma mensagem fictícia.
+Conferir a quantidade de mensagens carregadas, usar setas e Enter para localizar,
+limpar e conferir o rascunho preservado. Se houver mensagens anteriores ainda
+não carregadas, carregar um lote e conferir a atualização dos resultados.
+Fechar/reabrir o chat deve limpar a consulta; ela também não deve passar para
+outra conta. A busca é limitada ao conteúdo carregado e não pesquisa documentos.
 
 ## Conferir em ordem
 

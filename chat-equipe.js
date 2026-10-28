@@ -10,6 +10,9 @@
   const header = document.getElementById('chatHistorico');
   header.before(layout); conversation.append(header,document.getElementById('chatMensagens')); layout.appendChild(conversation);
   const novas=document.createElement('button');novas.id='chatNovas';novas.type='button';novas.setAttribute('aria-live','polite');novas.hidden=true;conversation.appendChild(novas);
+  const busca=document.createElement('details');busca.id='chatBusca';
+  busca.innerHTML='<summary>Buscar mensagens</summary><form id="chatBuscaForm"><label class="chat-label-oculto" for="chatBuscaTermo">Buscar no texto ou autor das mensagens carregadas</label><input id="chatBuscaTermo" type="search" maxlength="200" autocomplete="off" placeholder="Texto ou autor"><button id="chatBuscaAnterior" type="button" aria-label="Resultado anterior" title="Resultado anterior">‹</button><button id="chatBuscaProxima" type="submit" aria-label="Próximo resultado" title="Próximo resultado">›</button><button id="chatBuscaLimpar" type="button" aria-label="Limpar busca" title="Limpar busca">×</button></form><p id="chatBuscaResultado" role="status" aria-live="polite"></p><p id="chatBuscaEscopo"></p>';
+  conversation.prepend(busca);
   const sidebar = document.createElement('section'); sidebar.id = 'chatOnline'; sidebar.setAttribute('aria-label','Professores online');
   sidebar.innerHTML = '<details open><summary><span id="chatOnlineRotulo">Presença indisponível</span> <span id="chatOnlineTotal" hidden></span></summary><p id="chatPresencaStatus">Não é possível confirmar quem está online agora.</p><ul id="chatOnlineLista"></ul></details>'; layout.appendChild(sidebar);
   const receiptsPanel = document.createElement('section'); receiptsPanel.id = 'chatLeituras'; receiptsPanel.hidden = true;
@@ -40,6 +43,45 @@
     }
     atualizarNovas();
   }
+  let buscaIds=[],buscaAtual=null,buscaPosicao=null;
+  const normalizarBusca=value=>String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+  function atualizarBusca(){
+    const termos=normalizarBusca(el('chatBuscaTermo').value).trim().split(/\s+/).filter(Boolean);
+    buscaIds=termos.length?[...messages.values()].filter(message=>{
+      const texto=normalizarBusca([message.texto,message.autorNome,message.autorEmail].join(' '));return termos.every(t=>texto.includes(t));
+    }).sort((a,b)=>(millis(a)||Infinity)-(millis(b)||Infinity)||a.id.localeCompare(b.id)).map(message=>message.id):[];
+    if(!buscaIds.includes(buscaAtual))buscaAtual=null;
+    const ids=new Set(buscaIds);
+    el('chatMensagens').querySelectorAll('[data-message-id]').forEach(article=>{
+      article.classList.toggle('chat-encontrada',ids.has(article.dataset.messageId));
+      article.classList.toggle('chat-busca-atual',article.dataset.messageId===buscaAtual);
+    });
+    const index=buscaIds.indexOf(buscaAtual);
+    el('chatBuscaResultado').textContent=!termos.length?'Digite uma palavra; use as setas ou Enter para localizar.':!buscaIds.length?'Nenhum resultado nas mensagens carregadas.':index>=0?'Resultado '+(index+1)+' de '+buscaIds.length+'.':buscaIds.length+' resultado(s). Use as setas ou Enter para localizar.';
+    el('chatBuscaEscopo').textContent='Busca somente nas '+messages.size+' mensagens já carregadas.'+(more?' Use Carregar mensagens anteriores para ampliar a busca.':' Mensagens ainda não carregadas não entram na busca.');
+    el('chatBuscaAnterior').disabled=el('chatBuscaProxima').disabled=buscaIds.length===0;
+  }
+  function limparBusca(fechar=false){
+    el('chatBuscaTermo').value='';buscaIds=[];buscaAtual=null;atualizarBusca();
+    if(fechar){buscaPosicao=null;busca.open=false;widget.classList.remove('chat-buscando');}
+  }
+  function localizarResultado(direcao){
+    if(!user||!opened||!buscaIds.length)return;
+    const anterior=buscaIds.indexOf(buscaAtual),index=anterior<0?(direcao>0?0:buscaIds.length-1):(anterior+direcao+buscaIds.length)%buscaIds.length;
+    buscaAtual=buscaIds[index];atualizarBusca();
+    const list=el('chatMensagens'),article=[...list.querySelectorAll('[data-message-id]')].find(node=>node.dataset.messageId===buscaAtual);
+    if(article){list.scrollTop+=article.getBoundingClientRect().top-list.getBoundingClientRect().top-(list.clientHeight-Math.min(article.offsetHeight,list.clientHeight))/2;article.focus({preventScroll:true});markRead();}
+  }
+  busca.querySelector('summary').addEventListener('click',()=>{buscaPosicao=guardarPosicao();});
+  busca.addEventListener('toggle',()=>{
+    const pos=buscaPosicao||guardarPosicao();buscaPosicao=null;
+    widget.classList.toggle('chat-buscando',busca.open);atualizarBusca();
+    if(user&&opened){restaurarPosicao(pos);markRead();if(busca.open)el('chatBuscaTermo').focus({preventScroll:true});}
+  });
+  el('chatBuscaTermo').addEventListener('input',()=>{buscaAtual=null;atualizarBusca();});
+  el('chatBuscaForm').addEventListener('submit',event=>{event.preventDefault();localizarResultado(1);});
+  el('chatBuscaAnterior').addEventListener('click',()=>localizarResultado(-1));
+  el('chatBuscaLimpar').addEventListener('click',()=>{limparBusca();el('chatBuscaTermo').focus();});
   const key = () => 'ambienteteste-e368e_chat_lido_' + user.uid;
   function status(text) { el('chatStatus').textContent = text; }
   function errorText(error) {
@@ -118,7 +160,7 @@
   });
   function render() {
     const list=el('chatMensagens'),pos=guardarPosicao();
-    const focusId=document.activeElement?.closest('[data-message-id]')?.dataset.messageId;
+    const focusId=document.activeElement?.closest('[data-message-id]')?.dataset.messageId,focusNoArtigo=document.activeElement?.matches('[data-message-id]');
     stopReadTracking();list.replaceChildren();
     const ordered=[...messages.values()].sort((a,b)=>(millis(a)||Infinity)-(millis(b)||Infinity)||a.id.localeCompare(b.id));
     if(!ordered.length){const p=document.createElement('p');p.textContent='Ainda não há mensagens. Inicie a conversa com a equipe!';list.appendChild(p);}
@@ -132,11 +174,11 @@
       const text=document.createElement('p');text.textContent=message.texto;
       const time=document.createElement('small');time.textContent=stamp?date.toLocaleString('pt-BR'):'Enviando…';
       const readers=document.createElement('button');readers.type='button';readers.className='chat-ver-leituras';readers.textContent='Quem já leu';readers.addEventListener('click',event=>{event.stopPropagation();showReceipts(message);});
-      article.dataset.messageId=message.id;article.addEventListener('click',()=>showReceipts(message));
+      article.dataset.messageId=message.id;article.tabIndex=-1;article.addEventListener('click',()=>showReceipts(message));
       article.append(name,text,time,readers);list.appendChild(article);
     });
-    restaurarPosicao(pos,!loading);
-    if(focusId){const article=[...list.querySelectorAll('[data-message-id]')].find(node=>node.dataset.messageId===focusId);article?.querySelector('button')?.focus({preventScroll:true});}
+    atualizarBusca();restaurarPosicao(pos,!loading);
+    if(focusId){const article=[...list.querySelectorAll('[data-message-id]')].find(node=>node.dataset.messageId===focusId);(focusNoArtigo?article:article?.querySelector('button'))?.focus({preventScroll:true});}
     el('chatHistorico').hidden=!more;unread();markRead();
   }
   function listen() {
@@ -158,7 +200,7 @@
   }
   function toggle(value) {
     opened = value; el('chatPainel').hidden = !value; el('chatAbrir').setAttribute('aria-expanded', String(value));
-    if (!value) { stopReadTracking(); closeReceipts();novasPendentes.clear();atualizarNovas(); }
+    if (!value) { stopReadTracking(); closeReceipts();novasPendentes.clear();atualizarNovas();limparBusca(true); }
     if (value) { listen(); irParaFim(); el('chatTexto').focus(); }
   }
   el('chatAbrir').addEventListener('click', () => toggle(!opened));
@@ -201,7 +243,7 @@
   auth.onAuthStateChanged(next => {
     epoch++;novasPendentes.clear();recebeuSnapshot=false;widget.classList.remove('chat-ampliado');el('chatAmpliar').textContent='Ampliar';el('chatAmpliar').setAttribute('aria-label','Ampliar painel do chat');el('chatAmpliar').setAttribute('aria-pressed','false');el('chatNovas').hidden=true;stopReadTracking(); closeReceipts(); acknowledged=new Set(); el('chatOnlineLista').replaceChildren(); el('chatOnlineTotal').textContent='';el('chatOnlineTotal').hidden=true;el('chatOnlineRotulo').textContent='Presença indisponível';el('chatPresencaStatus').textContent='Não é possível confirmar quem está online agora.'; if (unsubscribe) unsubscribe(); unsubscribe = null;
     user = next; messages = new Map(); latest = []; cursor = null; more = false; historyLoaded = false; opened = false; sending = false; loading = false; pendingSend = null;
-    el('chatMensagens').replaceChildren(); el('chatTexto').value = ''; el('chatTexto').disabled = false; el('chatEnviar').disabled = false; el('chatHistorico').disabled = false; el('chatNaoLidas').hidden = true; el('chatPainel').hidden = true; el('chatAbrir').setAttribute('aria-expanded','false'); status(''); widget.hidden = !next;
+    el('chatMensagens').replaceChildren();limparBusca(true); el('chatTexto').value = ''; el('chatTexto').disabled = false; el('chatEnviar').disabled = false; el('chatHistorico').disabled = false; el('chatNaoLidas').hidden = true; el('chatPainel').hidden = true; el('chatAbrir').setAttribute('aria-expanded','false'); status(''); widget.hidden = !next;
     if (user) { try { lastRead = Number(localStorage.getItem(key())) || 0; } catch (_) { lastRead = 0; } unread(); listen(); }
   });
 })();

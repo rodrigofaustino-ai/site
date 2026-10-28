@@ -32,3 +32,17 @@
 #chatEquipe.chat-ampliado #chatPainel{width:min(960px,calc(100vw - 40px));height:calc(100dvh - 170px)}
 #chatMensagens{overflow-anchor:none}
 @media(max-width:600px){#chatEquipe.chat-ampliado #chatPainel{width:calc(100vw - 20px);height:calc(100dvh - 170px)}}
+/* Busca local nas mensagens carregadas. */
+#chatBusca{flex-shrink:0;padding:6px 10px;border-bottom:1px solid #dde5e7;background:#fff}
+#chatBusca summary{cursor:pointer;min-height:32px;display:list-item;line-height:1.6;font-size:13px;font-weight:600;color:#245346}
+#chatBuscaForm{display:grid;grid-template-columns:minmax(0,1fr) repeat(3,44px);gap:4px;margin:4px 0}
+#chatBuscaTermo{width:100%;min-width:0;min-height:44px;padding:8px;border:1px solid #a7b6bc;border-radius:8px;font:16px Arial,sans-serif;color:#24333d}
+#chatBuscaForm button{min-height:44px;border:1px solid #a7b6bc;border-radius:8px;background:#fff;color:#245346;font-size:22px;cursor:pointer}
+#chatBuscaResultado{font-size:12px;line-height:1.4;margin:6px 0}
+#chatBuscaEscopo{font-size:11px;line-height:1.4;color:#52616b;margin:6px 0}
+.chat-label-oculto{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+#chatEquipe.chat-buscando #chatOnline{display:none}
+#chatMensagens .chat-encontrada{background:#fff9e8;box-shadow:inset 0 0 0 1px #b68523}
+#chatMensagens .chat-busca-atual{outline:3px solid #176b5b;outline-offset:-3px}
+#chatBusca :focus-visible{outline:3px solid #176b5b;outline-offset:2px}
+@media(max-width:600px){#chatEquipe.chat-buscando #chatPainel{height:calc(100dvh - 170px)}}
