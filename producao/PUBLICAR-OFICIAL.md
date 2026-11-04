@@ -10,6 +10,10 @@ A Diagnóstica tem uma conexão opcional e explícita ao Diário para preencher 
 
 A antiga transferência administrativa reutilizava UIDs entre projetos e procurava formulários por nome. Sua rotina de gravação está removida nesta versão: a consulta permanece, a transferência está bloqueada até uma revisão própria. As contas administrativas e permissões do banco continuam preservadas.
 
+## Backup complementar dos formulários
+
+Use [BACKUP-PAEE-SPARK.md](BACKUP-PAEE-SPARK.md) para a cópia das três coleções dos formulários sem mudar o plano. Essa cópia própria tem escopo e restauração diferentes da exportação gerenciada; leia os limites antes de considerar o backup completo.
+
 ## Ordem de publicação manual
 
 1. Guardar o ZIP oficial recebido (19-10-2026.zip), os textos completos das regras atuais dos dois projetos e o identificador da última publicação oficial no Netlify. Guardar backup dos registros dos dois bancos e dos arquivos relevantes do Storage por ferramenta autorizada do projeto. ZIP do site não contém os dados do banco. A preparação local não realizou esse backup dos dados.
