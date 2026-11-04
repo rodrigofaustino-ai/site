@@ -35,10 +35,10 @@
     $('registradoPor').addEventListener('input',()=>{if(ctx?.uid)responsavel=$('registradoPor').value;});
     window.addEventListener('beforeunload',event=>{if(rascunho()){event.preventDefault();event.returnValue='';}});
   }
-  function rascunho(){return !!($('entryText')?.value.trim()||campos.some(([id])=>$('roteiro-'+id)?.value.trim())||$('humorVal')?.value||window.MetasAluno?.selecionadas().length);}
+  function rascunho(){return !!($('entryText')?.value.trim()||$('entryProximoPasso')?.value.trim()||campos.some(([id])=>$('roteiro-'+id)?.value.trim())||$('humorVal')?.value||window.MetasAluno?.selecionadas().length);}
   function bloquear(value){
     busy=value;
-    if(value){disabled=new Map();for(const el of document.querySelectorAll('#entryDate,#entryText,#registradoPor,#btnHoje,#btnMelhorarIA,#btnAceitarIA,#btnDescartarIA,#btnSalvarRegistro,#registroAssistido textarea,#registroAssistido button')){disabled.set(el,el.disabled);el.disabled=true;}
+    if(value){disabled=new Map();for(const el of document.querySelectorAll('#entryDate,#entryText,#entryProximoPasso,#registradoPor,#btnHoje,#btnMelhorarIA,#btnAceitarIA,#btnDescartarIA,#btnSalvarRegistro,#registroAssistido textarea,#registroAssistido button')){disabled.set(el,el.disabled);el.disabled=true;}
       document.querySelectorAll('.humor-opt').forEach(el=>el.setAttribute('aria-disabled','true'));
     }else{for(const [el,previous]of disabled)if(el.isConnected)el.disabled=previous;disabled.clear();document.querySelectorAll('.humor-opt').forEach(el=>el.removeAttribute('aria-disabled'));if($('btnMelhorarIA'))$('btnMelhorarIA').disabled=!!window.iaRegistroEmCurso?.();}
     window.MetasAluno?.atualizarVinculos?.();
@@ -48,14 +48,14 @@
     const promover=previous?.uid&&previous.uid===options?.uid&&!previous.alunoId&&options.alunoId;
     generation++;key=next;bloquear(false);tentativa=null;limparIA();
     if(options?.uid&&options.uid!==lastUid){responsavel='';lastUid=options.uid;}
-    if(!promover){resetRoteiro();if($('entryText')){$('entryText').value='';$('charCount').textContent='0 caracteres';}$('humorVal').value='';document.querySelectorAll('.humor-opt').forEach(el=>el.classList.remove('sel'));}
+    if(!promover){resetRoteiro();if($('entryProximoPasso'))$('entryProximoPasso').value='';if($('entryText')){$('entryText').value='';$('charCount').textContent='0 caracteres';}$('humorVal').value='';document.querySelectorAll('.humor-opt').forEach(el=>el.classList.remove('sel'));}
     else invalidarRoteiro();
     $('registroAssistido')?.querySelectorAll('details').forEach(d=>d.open=false);
     if($('roteiroPrevia')){$('roteiroPrevia').hidden=true;$('roteiroPrevia').textContent='';}
     if($('registradoPor'))$('registradoPor').value=responsavel;
     mensagem(options?.alunoId?'Preencha o relato e salve para registrar o atendimento.':'Salve o cadastro do aluno antes de registrar o atendimento.');
   }
-  function assinatura(d){return JSON.stringify({date:d.date,text:d.text,humor:d.humor||'',por:d.por||'',createdAt:d.createdAt,
+  function assinatura(d){return JSON.stringify({date:d.date,text:d.text,humor:d.humor||'',por:d.por||'',proximoPasso:d.proximoPasso||'',createdAt:d.createdAt,
     metaIds:Array.isArray(d.metaIds)?d.metaIds:[],metaVinculos:Array.isArray(d.metaVinculos)?d.metaVinculos.map(m=>({id:m.id,objetivo:m.objetivo,revision:m.revision||0})):[]});}
   function preparar(payload){
     const base={...payload,createdAt:''},fingerprint=assinatura(base);
@@ -78,6 +78,6 @@
   function confirmado(){tentativa=null;responsavel=$('registradoPor').value;mensagem('Registro salvo. O relato está disponível no histórico abaixo.');}
   function podeSair(){if(busy){mensagem('Aguarde a confirmação do salvamento antes de sair.');return false;}return !rascunho()||confirm('Há um atendimento ainda não salvo. Deseja sair e descartar esse preenchimento?');}
   window.RegistroAssistido={iniciar,ativar,hoje,dataValida,preparar,salvarBanco,assinatura,valido,bloquear,mensagem,confirmado,limparIA,podeSair,salvando:()=>busy,roteiroPendente:()=>campos.some(([id])=>$('roteiro-'+id)?.value.trim()),
-    limparSessao(){generation++;ctx=null;key=null;lastUid=null;responsavel='';tentativa=null;bloquear(false);window.MetasAluno?.limparSelecao();limparIA();resetRoteiro();if($('entryText')){$('entryText').value='';$('charCount').textContent='0 caracteres';}if($('registradoPor'))$('registradoPor').value='';if($('humorVal'))$('humorVal').value='';document.querySelectorAll('.humor-opt').forEach(el=>el.classList.remove('sel'));mensagem('');}};
+    limparSessao(){generation++;ctx=null;key=null;lastUid=null;responsavel='';tentativa=null;bloquear(false);window.MetasAluno?.limparSelecao();limparIA();resetRoteiro();if($('entryProximoPasso'))$('entryProximoPasso').value='';if($('entryText')){$('entryText').value='';$('charCount').textContent='0 caracteres';}if($('registradoPor'))$('registradoPor').value='';if($('humorVal'))$('humorVal').value='';document.querySelectorAll('.humor-opt').forEach(el=>el.classList.remove('sel'));mensagem('');}};
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',iniciar,{once:true});else iniciar();
 })();

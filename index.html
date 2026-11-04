@@ -512,6 +512,8 @@ hr.sep{border:none;border-top:2px dashed rgba(0,0,0,.06);margin:.2rem 0;}
 <link rel="stylesheet" href="resumo-periodo.css">
 <link rel="stylesheet" href="registro-assistido.css">
 <script src="registro-assistido.js"></script>
+<link rel="stylesheet" href="proximo-passo.css">
+<script src="proximo-passo.js"></script>
 <link rel="stylesheet" href="historico-atendimentos.css">
 <script src="historico-atendimentos.js"></script>
 <script src="firebase-producao.js"></script>
@@ -950,6 +952,7 @@ hr.sep{border:none;border-top:2px dashed rgba(0,0,0,.06);margin:.2rem 0;}
     <div class="card">
       <div class="color-strip" style="background:linear-gradient(90deg,var(--teal),var(--blue),var(--green))"></div>
       <div class="section-head"><div class="section-badge" style="background:var(--teal-l)">✏️</div>Registro do Atendimento</div>
+      <section id="continuidadeAtendimento" aria-label="Continuidade do acompanhamento" hidden></section>
       <div>
         <div class="date-area">
           <div class="field"><label for="entryDate">📅 Data do atendimento</label><input type="date" id="entryDate"></div>
@@ -977,6 +980,7 @@ hr.sep{border:none;border-top:2px dashed rgba(0,0,0,.06);margin:.2rem 0;}
           </div>
         </div>
       </div>
+      <div class="field proximo-passo-campo"><label for="entryProximoPasso">Próximo passo — opcional</label><textarea id="entryProximoPasso" rows="3" maxlength="2000" aria-describedby="entryProximoPassoAjuda"></textarea><p id="entryProximoPassoAjuda">Qual proposta ou apoio pretende retomar no próximo encontro? O texto será salvo com este atendimento, acrescentado ao final do relato e ficará disponível nas exportações. Se já escreveu essa orientação no relato, este campo pode ficar em branco.</p></div>
       <div class="field">
         <label>😊 Estado emocional / Humor</label>
         <div class="humor-grid">
@@ -3776,12 +3780,13 @@ async function saveEntry(){
   if(!registro.dataValida(date)){registro.mensagem('Selecione uma data válida para o atendimento.',true);return;}
   if(!text){registro.mensagem('Escreva o relato antes de salvar.',true);return;}
   const metaVinculos=window.MetasAluno.vinculosSelecionados(),metaIds=metaVinculos.map(meta=>meta.id);
-  const ticket=registro.preparar({date,text,humor:val('humorVal'),por:val('registradoPor'),...(metaIds.length?{metaIds,metaVinculos}:{})});
+  let continuidade;try{continuidade=ProximoPasso.compor(text,val('entryProximoPasso'));}catch(e){registro.mensagem(e.message,true);return;}
+  const ticket=registro.preparar({date,...continuidade,humor:val('humorVal'),por:val('registradoPor'),...(metaIds.length?{metaIds,metaVinculos}:{})});
   registro.bloquear(true);registro.limparIA();registro.mensagem('Salvando atendimento…');setBadge('syncing','Salvando...');
   try{
     await registro.salvarBanco({db,alunoId:studentId,uid:ownerUid,ticket,vigente:()=>registro.valido(ticket)&&currentStudentId===studentId&&professorUid===ownerUid});
     if(!registro.valido(ticket))return;
-    $('entryText').value='';$('charCount').textContent='0 caracteres';
+    $('entryText').value='';$('entryProximoPasso').value='';$('charCount').textContent='0 caracteres';
     document.querySelectorAll('.humor-opt').forEach(o=>o.classList.remove('sel'));$('humorVal').value='';
     $('entryDate').value=registro.hoje();window.MetasAluno.limparSelecao();
     registro.confirmado();setBadge('online','Nuvem conectada');showToast('✓ Registro salvo na nuvem!');
@@ -3803,6 +3808,7 @@ function toggleEntry(i){
 }
 
 function renderEntriesList(){
+  window.ProximoPasso.render({registros:currentEntries,status:centralRegistrosStatus,contexto:professorUid&&currentStudentId?JSON.stringify([professorUid,currentStudentId]):null});
   const list=$('entriesList');
   const visiveis=window.HistoricoAtendimentos.filtrar(currentEntries,professorUid&&currentStudentId?JSON.stringify([professorUid,currentStudentId]):null,centralRegistrosStatus);
   if(!currentEntries.length && centralRegistrosStatus==='pronto'){list.innerHTML=`<div class="empty-state"><span class="emoji">📝</span>Nenhum registro ainda.<br>Faça o primeiro registro acima!</div>`;return;}
