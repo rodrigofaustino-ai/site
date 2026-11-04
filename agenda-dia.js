@@ -20,7 +20,7 @@
   }
   function render(){
     const root=document.getElementById('agendaDia');if(!root)return;root.replaceChildren();root.hidden=!contexto;if(!contexto)return;
-    root.append(n('h2','Agenda do dia'));
+    root.append(n('h3','Agenda do dia'));
     root.append(n('p','Horários previstos conforme o cadastro semanal e o turno selecionado. A agenda não confirma presença nem atendimento realizado.'));
     const toolbar=n('div');toolbar.className='agenda-toolbar';const label=n('label','Data do encontro'),input=n('input');input.id='agendaData';input.type='date';input.value=data;label.htmlFor=input.id;label.append(input);toolbar.append(label);
     const button=n('button','Hoje');button.type='button';button.className='central-btn';button.addEventListener('click',()=>{data=hoje();render();document.getElementById('agendaData')?.focus();});toolbar.append(button);root.append(toolbar);

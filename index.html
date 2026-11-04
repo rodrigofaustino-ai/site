@@ -528,6 +528,9 @@ hr.sep{border:none;border-top:2px dashed rgba(0,0,0,.06);margin:.2rem 0;}
 <link rel="stylesheet" href="chat-compacto.css">
 <link rel="stylesheet" href="agenda-dia.css">
 <script src="agenda-dia.js"></script>
+<link rel="stylesheet" href="meu-dia.css">
+<script src="meu-dia-modelo.js"></script>
+<script src="meu-dia.js"></script>
 <script src="arquivamento-alunos.js"></script>
 <link rel="stylesheet" href="estatisticas.css">
 <script src="estatisticas-modelo.js"></script>
@@ -625,7 +628,7 @@ hr.sep{border:none;border-top:2px dashed rgba(0,0,0,.06);margin:.2rem 0;}
 
     <!-- ABA ALUNOS -->
     <div class="tab-panel active" id="tabAlunos">
-      <section id="agendaDia" class="card" aria-label="Agenda do dia" hidden></section>
+      <section id="meuDia" class="card" aria-label="Meu dia" hidden><h2>Meu dia</h2><p class="meu-dia-intro">Organize os encontros e as revisões do seu planejamento. A agenda usa a data do encontro selecionada; as revisões de metas usam a data de hoje.</p><section id="agendaDia" aria-label="Agenda do dia" hidden></section><section id="meuDiaRevisoes" aria-label="Revisões de metas"></section></section>
       <div class="card">
         <div class="color-strip"></div>
         <div class="section-head"><div class="section-badge" style="background:var(--teal-l)">🧒</div><span id="alunosListaTitulo">Alunos em atendimento</span></div>
@@ -1198,6 +1201,7 @@ function showScreen(name){
 ════════════════════════════════════════ */
 auth.onAuthStateChanged(async user => {
   limparArquivamentoAlunos();
+  window.MeuDia.limpar();
   window.Estatisticas.limpar();
   if(user){
     if(professorUid&&professorUid!==user.uid){window.RegistroAssistido.limparSessao();window.AgendaDia.limpar();$('studentsList').replaceChildren();}
@@ -1244,6 +1248,7 @@ function mostrarSelecaoTurno(user){
 
 function selecionarTurno(turno){
   limparArquivamentoAlunos();
+  window.MeuDia.limpar();
   window.Estatisticas.limpar();
   turnoAtual = turno;
   localStorage.setItem(TURNO_KEY, turno);
@@ -2635,8 +2640,9 @@ async function renderStudentList(){
   const c=$('studentsList');
   $('alunosListaTitulo').textContent=({ativos:'Alunos em atendimento',arquivados:'Alunos arquivados',todos:'Todos os alunos'})[$('alunosSituacao').value]||'Alunos';
   const uid=professorUid,turno=turnoAtual;
-  if(!uid||!turno){window.AgendaDia.limpar();c.replaceChildren();return;}
+  if(!uid||!turno){window.AgendaDia.limpar();window.MeuDia.limpar();c.replaceChildren();return;}
   const vigente=()=>professorUid===uid&&turnoAtual===turno;
+  const diaToken=window.MeuDia.preparar({uid,turno,db,vigente,abrir:async id=>{await openStudent(id);if(professorUid===uid&&turnoAtual===turno&&currentStudentId===id&&$('screen-profile').classList.contains('active')){$('metasAluno').scrollIntoView({behavior:'auto',block:'start'});$('metasAluno').tabIndex=-1;$('metasAluno').focus({preventScroll:true});}}});
   const agendaToken=window.AgendaDia.carregar({uid,turno,vigente,obter:getAtendimentos,abrir:id=>openStudent(id)});
   c.innerHTML='<div class="empty-list">Carregando alunos…</div>';
   try{
@@ -2644,6 +2650,7 @@ async function renderStudentList(){
     let list=[];snap.forEach(d=>list.push({id:d.id,...d.data()}));
     list=filtrarAlunosPorTurno(list);
     if(!window.AgendaDia.concluir(agendaToken,ArquivamentoAlunos.filtrar(list,'ativos')))return;
+    window.MeuDia.concluir(diaToken,ArquivamentoAlunos.filtrar(list,'ativos'));
     list=ArquivamentoAlunos.filtrar(list,$('alunosSituacao').value);
     list.sort((a,b)=>(a.nome||'').localeCompare(b.nome||''));
     if(!list.length){c.innerHTML=`<div class="empty-list"><span class="emoji">🌟</span>Nenhum aluno neste filtro.<br>Você pode trocar o filtro ou cadastrar um novo aluno.</div>`;return;}
@@ -2670,7 +2677,7 @@ async function renderStudentList(){
     });
     c.querySelectorAll('[data-open]').forEach(btn=>btn.addEventListener('click', e=>{e.stopPropagation();openStudent(btn.dataset.open);}));
     c.querySelectorAll('[data-arquivar]').forEach(btn=>btn.addEventListener('click', e=>{e.stopPropagation();alterarArquivamentoAluno(btn.dataset.arquivar,btn.dataset.nome,btn.dataset.alvo==='true');}));
-  }catch(e){if(!window.AgendaDia.concluir(agendaToken,[],true))return;c.innerHTML=`<div class="empty-list">⚠️ Erro ao carregar. Verifique a conexão.</div>`;setBadge('offline','Sem conexão');console.error(e);}
+  }catch(e){if(!window.AgendaDia.concluir(agendaToken,[],true))return;window.MeuDia.concluir(diaToken,[],true);c.innerHTML=`<div class="empty-list">⚠️ Erro ao carregar. Verifique a conexão.</div>`;setBadge('offline','Sem conexão');console.error(e);}
 }
 
 async function alterarArquivamentoAluno(id,nome,alvo){
@@ -3825,7 +3832,7 @@ function configurarMetasAluno(id){
     vigente:()=>currentStudentId===id&&professorUid===uid&&turnoAtual===turno&&auth.currentUser?.uid===uid};
   window.MetasAluno.ativar({alunoId:id,uid,db,frequencia,
     vigente:()=>currentStudentId===id && professorUid===uid,
-    alterou:()=>{if(currentStudentId===id && professorUid===uid)renderEntriesList();}
+    alterou:()=>{if(currentStudentId===id && professorUid===uid){renderEntriesList();window.MeuDia.invalidar();}}
   });
 }
 
