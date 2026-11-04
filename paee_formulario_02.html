@@ -310,7 +310,7 @@
 </style>
 <script src="exportacao.js"></script>
 <script src="vinculo-aluno.js"></script>
-<script src="firebase-ambiente-teste.js"></script>
+<script src="firebase-producao.js"></script>
 <link rel="stylesheet" href="orientacoes-preenchimento.css">
 <script src="orientacoes-preenchimento.js" defer></script>
 <link rel="stylesheet" href="formularios-visual.css">
@@ -442,7 +442,7 @@ let db = null;
 let firebaseReady = false;
 let auth = null;
 try{
-  window.SRMInicializarFirebase();
+  window.SRMInicializarFirebase('documentos');
   db = firebase.firestore();
   auth = firebase.auth();
   firebaseReady = true;

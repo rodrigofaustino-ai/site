@@ -5,8 +5,8 @@ const {doc,collection,getDoc,getDocs,query,limit,where,documentId,setDoc,updateD
 let count=0;const yes=async p=>{const r=await assertSucceeds(p);count++;return r;},no=async p=>{await assertFails(p);count++;};
 (async()=>{
  assert.equal(process.env.FIRESTORE_EMULATOR_HOST,'127.0.0.1:8087');
- const read=name=>fs.readFileSync(path.join(__dirname,'../firebase/'+name),'utf8'),rules=read('chat-emojis-exclusao-teste.rules'),previous=read('chat-respostas-teste.rules');
- const normalize=s=>s.replace(/match \/chatEquipe\/\{mensagemId\} \{[\s\S]*?(?=\/\/ Insira este bloco DENTRO)/,'<CHAT>');assert.equal(normalize(rules),normalize(previous));count++;
+ const read=name=>fs.readFileSync(path.join(__dirname,'../firebase/'+name),'utf8'),rules=process.env.SRM_PRODUCAO === '1' ? fs.readFileSync(path.join(__dirname,'../producao/salamulti.rules'),'utf8') : read('chat-emojis-exclusao-teste.rules'),previous=read('chat-respostas-teste.rules');
+ const normalize=s=>s.replace(/match \/chatEquipe\/\{mensagemId\} \{[\s\S]*?(?=\/\/ Insira este bloco DENTRO)/,'<CHAT>');if(process.env.SRM_PRODUCAO !== '1') { assert.equal(normalize(rules),normalize(previous));count++; }
  const env=await initializeTestEnvironment({projectId:'demo-colaboracao',firestore:{host:'127.0.0.1',port:8087,rules}});
  try{await env.clearFirestore();const a=env.authenticatedContext('a',{email:'a@example.test'}).firestore(),b=env.authenticatedContext('b',{email:'b@example.test'}).firestore(),anon=env.unauthenticatedContext().firestore();
  const data=(uid,texto='Mensagem de teste 🙂 👍')=>({texto,autorUid:uid,autorNome:'Profissional '+uid,autorEmail:uid+'@example.test',createdAt:serverTimestamp()});

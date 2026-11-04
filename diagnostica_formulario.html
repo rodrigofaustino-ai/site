@@ -209,7 +209,7 @@
 </style>
 <script src="exportacao.js"></script>
 <script src="vinculo-aluno.js"></script>
-<script src="firebase-ambiente-teste.js"></script>
+<script src="firebase-producao.js"></script>
 <link rel="stylesheet" href="orientacoes-preenchimento.css">
 <script src="orientacoes-preenchimento.js" defer></script>
 <link rel="stylesheet" href="formularios-visual.css">
@@ -315,7 +315,7 @@ const COLLECTION = 'diagnostica_srm';
 
 let db=null, auth=null, firebaseReady=false, professorUid=null;
 try{
-  window.SRMInicializarFirebase();
+  window.SRMInicializarFirebase('documentos');
   db=firebase.firestore();
   auth=firebase.auth();
   firebaseReady=true;
@@ -1356,26 +1356,58 @@ function abrirViaParametro(){
 }
 
 /* ════════════════════════════════════════════════════════════
-   INTEGRAÇÃO COM O DIÁRIO DE BORDO (mesmo projeto de teste)
+   INTEGRAÇÃO COM O DIÁRIO DE BORDO (autenticação própria)
 ════════════════════════════════════════════════════════════ */
-let dbDiario = null;
+let dbDiario = null, authDiario = null;
 (function iniciarDiario(){
-  // Neste ambiente, formulários e Diário compartilham projeto e autenticação.
-  dbDiario = db;
+  if (!window.SRMFirebaseConfig || !firebaseReady) return;
+  const app = firebase.apps.find(a => a.name === 'diario') || firebase.initializeApp(window.SRMFirebaseConfig, 'diario');
+  dbDiario = firebase.firestore(app);
+  authDiario = firebase.auth(app);
 })();
+
+// Opcional: conexão explícita ao Diário para preencher apenas campos vazios.
+document.addEventListener('DOMContentLoaded', () => {
+  const section = document.createElement('details');
+  section.style.cssText = 'max-width:900px;margin:12px auto;padding:12px';
+  section.id = 'conexao-diario';
+  const style = document.createElement('style'); style.textContent = '#conexao-diario{box-sizing:border-box}#conexao-diario input,#conexao-diario button{max-width:100%;box-sizing:border-box}#conexao-diario form{display:flex;gap:10px;flex-wrap:wrap}#conexao-diario label{display:grid}@media print{#conexao-diario{display:none!important}}'; document.head.appendChild(style);
+  section.innerHTML = '<summary>Preencher identificação com dados do Diário</summary><p>O Diário e os documentos têm contas separadas. Entre no Diário com o mesmo e-mail para consultar o cadastro deste aluno. Apenas os campos vazios serão preenchidos; salve o formulário para gravar.</p><form><label>E-mail do Diário <input name="email" type="email" autocomplete="username" required></label> <label>Senha do Diário <input name="senha" type="password" autocomplete="current-password" required></label> <button type="submit">Conectar e preencher campos vazios</button></form><p role="status"></p>';
+  document.body.appendChild(section);
+  const form = section.querySelector('form'), status = section.querySelector('[role=status]');
+  form.addEventListener('submit', async event => {
+    event.preventDefault();
+    if (!auth.currentUser || !state?.alunoId) { status.textContent = 'Entre no formulário e abra o aluno pelo Diário primeiro.'; return; }
+    const email = form.elements.email.value.trim();
+    if (email.toLowerCase() !== auth.currentUser.email?.toLowerCase()) { status.textContent = 'Use o mesmo e-mail da conta conectada ao formulário.'; return; }
+    const original = state, uid = auth.currentUser.uid, button = form.querySelector('button');
+    button.disabled = true; status.textContent = 'Conectando ao Diário…';
+    try {
+      await authDiario.signInWithEmailAndPassword(email, form.elements.senha.value);
+      if (state !== original || auth.currentUser?.uid !== uid) return;
+      await preencherDoPerfilDiario(state.identificacao.nome, true);
+      status.textContent = 'Consulta concluída. Confira a identificação antes de salvar. Campos preenchidos anteriormente foram preservados.';
+    } catch (_) { status.textContent = 'Não foi possível consultar o Diário. Confira o acesso; você pode continuar preenchendo manualmente.'; }
+    finally { form.elements.senha.value = ''; button.disabled = false; }
+  });
+  auth?.onAuthStateChanged(() => { form.reset(); status.textContent = ''; if (authDiario?.currentUser) authDiario.signOut().catch(() => {}); });
+});
 
 function normNomeDiario(s){
   return (s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase().replace(/\s+/g,' ');
 }
 
 async function buscarPerfilDiario(nomeAluno, alunoId){
-  if(!dbDiario||!professorUid||!nomeAluno) return null;
+  if(!dbDiario||!authDiario?.currentUser||!professorUid||!nomeAluno) return null;
+  const usuarioDiario = authDiario.currentUser;
+  if (usuarioDiario.email?.toLowerCase() !== auth.currentUser?.email?.toLowerCase()) return null;
   try{
-    const snap = await dbDiario.collection('alunos').where('professorUid','==',professorUid).get();
+    const snap = await dbDiario.collection('alunos').where('professorUid','==',usuarioDiario.uid).get();
     const alvo = normNomeDiario(nomeAluno);
     const candidatos = snap.docs.filter(d => alunoId ? d.id === alunoId : normNomeDiario(d.data().nome) === alvo);
     const doc = candidatos.length === 1 ? candidatos[0] : null;
     if(!doc) return null;
+    if (authDiario.currentUser !== usuarioDiario) return null;
     const perfil = {id:doc.id,...doc.data()};
     try{
       const regSnap = await dbDiario.collection('alunos').doc(doc.id)
@@ -1387,9 +1419,9 @@ async function buscarPerfilDiario(nomeAluno, alunoId){
 }
 
 async function preencherDoPerfilDiario(nomeAluno, apenasVazios){
-  const estadoOriginal = state;
+  const estadoOriginal = state, uidDocumentos = auth?.currentUser?.uid, uidDiario = authDiario?.currentUser?.uid;
   const perfil = await buscarPerfilDiario(nomeAluno, estadoOriginal.alunoId);
-  if(!perfil || state !== estadoOriginal) return;
+  if(!perfil || state !== estadoOriginal || auth.currentUser?.uid !== uidDocumentos || authDiario.currentUser?.uid !== uidDiario || !auth.currentUser || authDiario.currentUser?.email?.toLowerCase() !== auth.currentUser.email?.toLowerCase()) return;
   const mapa = {
     'identificacao.dataNascimento': 'dataNasc',
     'identificacao.escolaRegular':  'escola',

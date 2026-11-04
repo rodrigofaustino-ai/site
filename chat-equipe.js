@@ -185,7 +185,7 @@
   el('chatBuscaForm').addEventListener('submit',event=>{event.preventDefault();localizarResultado(1);});
   el('chatBuscaAnterior').addEventListener('click',()=>localizarResultado(-1));
   el('chatBuscaLimpar').addEventListener('click',()=>{limparBusca();el('chatBuscaTermo').focus();});
-  const key = () => 'ambienteteste-e368e_chat_lido_' + user.uid;
+  const key = () => 'salamulti_chat_lido_' + user.uid;
   function status(text) { el('chatStatus').textContent = text; }
   function errorText(error) {
     return /permission-denied/.test(error.code || '') ? 'O chat precisa de permissão no Firestore. Confira a configuração com o administrador.' : 'Não foi possível conectar ao chat. Confira sua conexão e tente novamente.';
