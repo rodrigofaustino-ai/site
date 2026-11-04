@@ -528,6 +528,9 @@ hr.sep{border:none;border-top:2px dashed rgba(0,0,0,.06);margin:.2rem 0;}
 <link rel="stylesheet" href="chat-compacto.css">
 <link rel="stylesheet" href="agenda-dia.css">
 <script src="agenda-dia.js"></script>
+<link rel="stylesheet" href="estatisticas.css">
+<script src="estatisticas-modelo.js"></script>
+<script src="estatisticas.js"></script>
 </head>
 <body>
 <nav class="colaboracao-entrada" aria-label="Compartilhamento"><a class="central-btn" href="colaboracao.html">Conteúdos compartilhados comigo</a></nav>
@@ -614,7 +617,10 @@ hr.sep{border:none;border-top:2px dashed rgba(0,0,0,.06);margin:.2rem 0;}
       <button class="tab-btn" id="tabBtnDiagnostica" onclick="switchTab('diagnostica')">📊 Diagnóstica</button>
       <button class="tab-btn" id="tabBtnPlanos" onclick="switchTab('planos')">📚 Planos de Aula</button>
       <button class="tab-btn" id="tabBtnRecursos" onclick="switchTab('recursos')">🔗 Recursos Didáticos</button>
+      <button class="tab-btn" id="tabBtnEstatisticas" onclick="switchTab('estatisticas')">📈 Estatísticas</button>
     </nav>
+
+    <div class="tab-panel" id="tabEstatisticas"><section id="estatisticasRaiz" class="card" aria-label="Estatísticas do meu trabalho"></section></div>
 
     <!-- ABA ALUNOS -->
     <div class="tab-panel active" id="tabAlunos">
@@ -1188,6 +1194,7 @@ function showScreen(name){
    AUTH — onAuthStateChanged é a única fonte da verdade
 ════════════════════════════════════════ */
 auth.onAuthStateChanged(async user => {
+  window.Estatisticas.limpar();
   if(user){
     if(professorUid&&professorUid!==user.uid){window.RegistroAssistido.limparSessao();window.AgendaDia.limpar();$('studentsList').replaceChildren();}
     professorUid = user.uid;
@@ -1232,6 +1239,7 @@ function mostrarSelecaoTurno(user){
 }
 
 function selecionarTurno(turno){
+  window.Estatisticas.limpar();
   turnoAtual = turno;
   localStorage.setItem(TURNO_KEY, turno);
   // Atualiza badge no topbar
@@ -1240,6 +1248,7 @@ function selecionarTurno(turno){
   badge.style.display = 'inline-flex';
   showScreen('home');
   renderStudentList();
+  if ($('tabEstatisticas').classList.contains('active')) abrirEstatisticas();
 }
 
 function mostrarTrocaTurno(){
@@ -1346,13 +1355,19 @@ document.addEventListener('DOMContentLoaded', () => {
 /* ════════════════════════════════════════
    TABS
 ════════════════════════════════════════ */
+function abrirEstatisticas(){
+  const uid=professorUid,turno=turnoAtual;
+  if(!uid||!turno)return;
+  window.Estatisticas.ativar({uid,turno,db,vigente:()=>professorUid===uid&&auth.currentUser?.uid===uid&&turnoAtual===turno});
+}
 function switchTab(name){
-  ['alunos','grade','frequencia','paee','pei','relatorio','diagnostica','planner','notas','planos','recursos'].forEach(t=>{
+  ['alunos','grade','frequencia','paee','pei','relatorio','diagnostica','planner','notas','planos','recursos','estatisticas'].forEach(t=>{
     const botao=$('tabBtn'+t.charAt(0).toUpperCase()+t.slice(1));
     botao.classList.toggle('active',t===name);
     if(t===name)botao.setAttribute('aria-current','true');else botao.removeAttribute('aria-current');
     $('tab'+t.charAt(0).toUpperCase()+t.slice(1)).classList.toggle('active',t===name);
   });
+  if(name==='estatisticas') abrirEstatisticas();
   if(name==='planos') window.PlanosAula.activate();
   if(name==='recursos') window.RecursosDidaticos.activate();
   if(name==='grade') renderGrade();
