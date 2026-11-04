@@ -8,4 +8,10 @@ eq(r.alunos,2);eq(r.semTurno,1);eq(r.atendimentos,2);eq(r.alunosComRegistro,1);e
 const todos=modelo.consolidar(dados,{de:'2026-01-01',ate:'2026-02-28',turno:''},'2026-02-01');eq(todos.atendimentos,4);eq(todos.diarios.presente,1);eq(todos.diarios.falta,0);eq(todos.diarios.justificado,1);eq(todos.meses,{'2026-01':3,'2026-02':1});
 const vazio=modelo.consolidar(dados,{de:'2025-12-01',ate:'2025-12-31',turno:'Matutino'},'2026-02-01');eq(vazio.atendimentos,0);eq(vazio.meses,{'2025-12':0});eq(vazio.metas.ativa,1);eq(vazio.semanas,0);
 for(const f of [{de:'2026-02-30',ate:'2026-03-01'},{de:'2026-02-01',ate:'2026-01-01'},{de:'2000-01-01',ate:'2026-01-01'}]){assert.throws(()=>modelo.consolidar(dados,f,'2026-02-01'));n++;}
+const comArquivo=structuredClone(dados);comArquivo.alunos[0].arquivado=true;
+const filtroBase={de:'2026-01-01',ate:'2026-01-31',turno:'Matutino'};
+eq(modelo.consolidar(comArquivo,{...filtroBase,situacao:'ativos'},'2026-02-01').alunos,1);
+eq(modelo.consolidar(comArquivo,{...filtroBase,situacao:'ativos'},'2026-02-01').atendimentos,0);
+eq(modelo.consolidar(comArquivo,{...filtroBase,situacao:'arquivados'},'2026-02-01').atendimentos,2);
+eq(modelo.consolidar(comArquivo,{...filtroBase,situacao:'todos'},'2026-02-01').alunos,2);
 console.log(n+' verificações de consolidação, período, turno, duplicidade diária, legado e metas atuais passaram.');

@@ -528,6 +528,7 @@ hr.sep{border:none;border-top:2px dashed rgba(0,0,0,.06);margin:.2rem 0;}
 <link rel="stylesheet" href="chat-compacto.css">
 <link rel="stylesheet" href="agenda-dia.css">
 <script src="agenda-dia.js"></script>
+<script src="arquivamento-alunos.js"></script>
 <link rel="stylesheet" href="estatisticas.css">
 <script src="estatisticas-modelo.js"></script>
 <script src="estatisticas.js"></script>
@@ -627,7 +628,9 @@ hr.sep{border:none;border-top:2px dashed rgba(0,0,0,.06);margin:.2rem 0;}
       <section id="agendaDia" class="card" aria-label="Agenda do dia" hidden></section>
       <div class="card">
         <div class="color-strip"></div>
-        <div class="section-head"><div class="section-badge" style="background:var(--teal-l)">🧒</div>Alunos em Atendimento</div>
+        <div class="section-head"><div class="section-badge" style="background:var(--teal-l)">🧒</div><span id="alunosListaTitulo">Alunos em atendimento</span></div>
+        <div class="alunos-arquivo-filtros"><label for="alunosSituacao">Mostrar alunos <select id="alunosSituacao"><option value="ativos">Em atendimento</option><option value="arquivados">Arquivados</option><option value="todos">Todos</option></select></label></div>
+        <p id="arquivoAlunosStatus" role="status" aria-live="polite">Arquivar mantém os documentos e o histórico. Use Arquivados para consultar ou reativar um cadastro.</p>
         <div class="students-grid" id="studentsList">
           <div class="empty-list"><div class="spinner" style="margin:0 auto 8px"></div>Carregando...</div>
         </div>
@@ -828,7 +831,7 @@ hr.sep{border:none;border-top:2px dashed rgba(0,0,0,.06);margin:.2rem 0;}
     </div>
     <div class="topbar" style="background:linear-gradient(135deg,var(--coral),#c0392b)">
       <div class="topbar-icon">⭐</div>
-      <div><h1 id="profileTitle">Informações do Aluno</h1><p>Visão geral, documentos e acompanhamento do aluno</p></div>
+      <div><h1 id="profileTitle">Informações do Aluno</h1><p>Visão geral, documentos e acompanhamento do aluno</p><p id="perfilArquivoAviso" class="aluno-arquivado-badge" hidden>Cadastro arquivado. O histórico e os documentos permanecem disponíveis. Para voltar à programação atual, reative pela lista de alunos.</p></div>
     </div>
 
     <section class="central-aluno" id="centralAluno"></section>
@@ -1194,6 +1197,7 @@ function showScreen(name){
    AUTH — onAuthStateChanged é a única fonte da verdade
 ════════════════════════════════════════ */
 auth.onAuthStateChanged(async user => {
+  limparArquivamentoAlunos();
   window.Estatisticas.limpar();
   if(user){
     if(professorUid&&professorUid!==user.uid){window.RegistroAssistido.limparSessao();window.AgendaDia.limpar();$('studentsList').replaceChildren();}
@@ -1239,6 +1243,7 @@ function mostrarSelecaoTurno(user){
 }
 
 function selecionarTurno(turno){
+  limparArquivamentoAlunos();
   window.Estatisticas.limpar();
   turnoAtual = turno;
   localStorage.setItem(TURNO_KEY, turno);
@@ -1316,6 +1321,7 @@ document.addEventListener('DOMContentLoaded', () => {
   $('btnLogout').addEventListener('click', doLogout);
   $('loginPassword').addEventListener('keydown', e=>{if(e.key==='Enter')doLogin();});
   $('btnNovoAluno').addEventListener('click', goNewStudent);
+  $('alunosSituacao').addEventListener('change',renderStudentList);
   $('btnVoltar').addEventListener('click', goHome);
   $('btnAddContato').addEventListener('click', ()=>addContact());
   $('btnAddAtendimento').addEventListener('click', ()=>addAtendimento());
@@ -1893,7 +1899,7 @@ async function renderGrade(){
     const snap=await alunosRef().get();
     let alunos=[];
     snap.forEach(d=>alunos.push({id:d.id,...d.data()}));
-    alunos=filtrarAlunosPorTurno(alunos);
+    alunos=ArquivamentoAlunos.filtrar(filtrarAlunosPorTurno(alunos),'ativos');
 
     // monta mapa: dia -> horario -> [alunos]
     const grade={};
@@ -2619,8 +2625,15 @@ function openFreqPopover(evt,semanaId,alunoId,dia){
   setTimeout(()=>{if(freqPopoverEl===pop&&pop.isConnected)document.addEventListener('click',onDocClickCloseFreqPopover,true);},0);
 }
 
+let arquivoAlunosVersao=0,arquivoAlunosSalvando=false;
+function limparArquivamentoAlunos(){
+  arquivoAlunosVersao++;arquivoAlunosSalvando=false;
+  if($('alunosSituacao'))$('alunosSituacao').value='ativos';
+  if($('arquivoAlunosStatus'))$('arquivoAlunosStatus').textContent='Arquivar mantém os documentos e o histórico. Use Arquivados para consultar ou reativar um cadastro.';
+}
 async function renderStudentList(){
   const c=$('studentsList');
+  $('alunosListaTitulo').textContent=({ativos:'Alunos em atendimento',arquivados:'Alunos arquivados',todos:'Todos os alunos'})[$('alunosSituacao').value]||'Alunos';
   const uid=professorUid,turno=turnoAtual;
   if(!uid||!turno){window.AgendaDia.limpar();c.replaceChildren();return;}
   const vigente=()=>professorUid===uid&&turnoAtual===turno;
@@ -2630,9 +2643,10 @@ async function renderStudentList(){
     const snap=await alunosRef().get();
     let list=[];snap.forEach(d=>list.push({id:d.id,...d.data()}));
     list=filtrarAlunosPorTurno(list);
-    if(!window.AgendaDia.concluir(agendaToken,list))return;
+    if(!window.AgendaDia.concluir(agendaToken,ArquivamentoAlunos.filtrar(list,'ativos')))return;
+    list=ArquivamentoAlunos.filtrar(list,$('alunosSituacao').value);
     list.sort((a,b)=>(a.nome||'').localeCompare(b.nome||''));
-    if(!list.length){c.innerHTML=`<div class="empty-list"><span class="emoji">🌟</span>Nenhum aluno cadastrado ainda.<br>Clique em "Cadastrar novo aluno" para começar!</div>`;return;}
+    if(!list.length){c.innerHTML=`<div class="empty-list"><span class="emoji">🌟</span>Nenhum aluno neste filtro.<br>Você pode trocar o filtro ou cadastrar um novo aluno.</div>`;return;}
     c.innerHTML=list.map((s,i)=>{
       const av=s.photoB64?`<img src="${s.photoB64}" style="width:100%;height:100%;object-fit:cover;border-radius:50%" alt="">`:`<span>${initials(s.nome)}</span>`;
       const lt=s.laudo?`<span class="laudo-tag">${esc(s.laudo.split(',')[0].trim())}</span>`:'';
@@ -2641,34 +2655,42 @@ async function renderStudentList(){
         <div class="student-num">${num}</div>
         <div class="student-avatar ${avColor(s.nome)}">${av}</div>
         <div class="student-info"><strong>${esc(s.nome||'Sem nome')}</strong>
-        <span>${esc(s.turma||'')}${s.turma?' · ':''}Último atendimento: ${s.ultimoRegistro?fmtShort(s.ultimoRegistro):'Sem registros'}</span>${lt}</div>
+        <span>${esc(s.turma||'')}${s.turma?' · ':''}Último atendimento: ${s.ultimoRegistro?fmtShort(s.ultimoRegistro):'Sem registros'}</span>${lt}${ArquivamentoAlunos.arquivado(s)?'<span class="aluno-arquivado-badge">Arquivado</span>':''}</div>
         <div class="student-actions">
           <button class="icon-btn open" data-open="${esc(s.id)}" aria-label="Abrir ficha de ${esc(s.nome||'aluno')}" title="Abrir">🗂️</button>
-          <button class="icon-btn del" data-del="${s.id}" data-nome="${esc(s.nome||'')}" aria-label="Excluir cadastro de ${esc(s.nome||'aluno')}" title="Excluir">🗑️</button>
+          <button class="icon-btn arquivo" data-arquivar="${esc(s.id)}" data-alvo="${!ArquivamentoAlunos.arquivado(s)}" data-nome="${esc(s.nome||'')}" aria-label="${ArquivamentoAlunos.arquivado(s)?'Reativar':'Arquivar'} cadastro de ${esc(s.nome||'aluno')}" title="${ArquivamentoAlunos.arquivado(s)?'Reativar':'Arquivar'}" ${arquivoAlunosSalvando?'disabled':''}>${ArquivamentoAlunos.arquivado(s)?'↩️':'📦'}</button>
         </div></div>`;
     }).join('');
     // eventos via delegação
     c.querySelectorAll('.student-item').forEach(el=>{
       el.addEventListener('click', e=>{
-        if(e.target.closest('[data-del]'))return;
+        if(e.target.closest('[data-arquivar]'))return;
         openStudent(el.dataset.id);
       });
     });
     c.querySelectorAll('[data-open]').forEach(btn=>btn.addEventListener('click', e=>{e.stopPropagation();openStudent(btn.dataset.open);}));
-    c.querySelectorAll('[data-del]').forEach(btn=>btn.addEventListener('click', e=>{e.stopPropagation();deleteStudent(btn.dataset.del,btn.dataset.nome);}));
+    c.querySelectorAll('[data-arquivar]').forEach(btn=>btn.addEventListener('click', e=>{e.stopPropagation();alterarArquivamentoAluno(btn.dataset.arquivar,btn.dataset.nome,btn.dataset.alvo==='true');}));
   }catch(e){if(!window.AgendaDia.concluir(agendaToken,[],true))return;c.innerHTML=`<div class="empty-list">⚠️ Erro ao carregar. Verifique a conexão.</div>`;setBadge('offline','Sem conexão');console.error(e);}
 }
 
-async function deleteStudent(id,nome){
-  if(!confirm(`Excluir "${nome}" e todos os registros? Esta ação não pode ser desfeita.`))return;
-  showLoad('Excluindo aluno...');
+async function alterarArquivamentoAluno(id,nome,alvo){
+  if(arquivoAlunosSalvando||!professorUid||!turnoAtual)return;
+  const uid=professorUid,turno=turnoAtual,ticket=arquivoAlunosVersao;
+  const vigente=()=>ticket===arquivoAlunosVersao&&professorUid===uid&&auth.currentUser?.uid===uid&&turnoAtual===turno;
+  if(!confirm(alvo?'Arquivar "'+nome+'"? O aluno sairá da lista Em atendimento, da agenda e da grade atuais. Documentos, relatos, metas, laudos e frequência serão mantidos. Você poderá reativá-lo em Arquivados. Os acessos já concedidos não são alterados pelo arquivamento.':'Reativar "'+nome+'"? O cadastro voltará à lista Em atendimento e à programação atual. O histórico será mantido.'))return;
+  arquivoAlunosSalvando=true;
+  $('studentsList').querySelectorAll('[data-arquivar]').forEach(b=>b.disabled=true);
+  $('arquivoAlunosStatus').textContent=alvo?'Arquivando cadastro…':'Reativando cadastro…';
   try{
-    const sub=await db.collection('alunos').doc(id).collection('registros').get();
-    await Promise.all(sub.docs.map(d=>d.ref.delete()));
-    await db.collection('alunos').doc(id).delete();
-    showToast('Aluno removido');await renderStudentList();
-  }catch(e){showToast('Erro ao excluir');console.error(e);}
-  hideLoad();
+    await ArquivamentoAlunos.alterar({db,uid,id,alvo,vigente});
+    if(!vigente())return;
+    // Invalidar totais já consultados, que dependem da situação atual do cadastro.
+    window.Estatisticas.limpar();
+    await renderStudentList();
+    if(!vigente())return;
+    $('arquivoAlunosStatus').textContent=alvo?'Cadastro arquivado. Para consultar ou reativar, selecione Arquivados.':'Cadastro reativado. Ele está disponível em Em atendimento.';
+  }catch(e){if(vigente())$('arquivoAlunosStatus').textContent='Não foi possível confirmar a alteração. Recarregue a lista para conferir a situação antes de tentar novamente. Nenhum documento foi excluído.';}
+  finally{if(vigente()){arquivoAlunosSalvando=false;$('studentsList').querySelectorAll('[data-arquivar]').forEach(b=>b.disabled=false);}}
 }
 
 /* ════════════════════════════════════════
@@ -2716,6 +2738,7 @@ async function openStudent(id){
     if (versao !== perfilLoadVersion || professorUid !== ownerUid) return;
     if (!snap.exists) throw new Error('Aluno não encontrado');
     currentProfile=snap.data();fillForm(currentProfile);
+    $('perfilArquivoAviso').hidden=!ArquivamentoAlunos.arquivado(currentProfile);
   }catch(e){
     if (versao !== perfilLoadVersion || professorUid !== ownerUid) return;
     console.error(e); currentStudentId=null; currentProfile={};
@@ -3651,6 +3674,7 @@ async function melhorarObsClinicasIA(){
 
 const FIELDS={nomeAluno:'nome',dataNasc:'dataNasc',turma:'turma',escola:'escola',municipio:'municipio',periodo:'periodo',laudo:'laudo',cid:'cid',cid11:'cid11',dataLaudo:'dataLaudo',obsClinicas:'obsClinicas'};
 function clearForm(){
+  $('perfilArquivoAviso').hidden=true;
   Object.keys(FIELDS).forEach(f=>$(f).value='');
   ['pdfLocal','pdfProfessor','pdfCargo','entryText','registradoPor'].forEach(f=>$(f).value='');
   $('charCount').textContent='0 caracteres';

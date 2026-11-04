@@ -14,12 +14,13 @@
   const form=n('form');form.id='estatisticasFiltros';form.className='estatisticas-filtros';form.noValidate=true;
   for(const [id,label,value]of [['estatDe','De',hoje().slice(0,8)+'01'],['estatAte','Até',hoje()]]){const l=n('label',label),i=n('input');i.type='date';i.id=id;i.value=value;l.append(i);form.append(l);}
   const label=n('label','Turno'),select=n('select');select.id='estatTurno';for(const [v,t]of [['','Todos os turnos'],['Matutino','Matutino'],['Vespertino','Vespertino']]){const o=n('option',t);o.value=v;select.append(o);}select.value=config.turno||'';label.append(select);form.append(label);
+  const situacaoLabel=n('label','Situação do cadastro'),situacao=n('select');situacao.id='estatSituacao';for(const [v,t]of [['ativos','Em atendimento'],['arquivados','Arquivados'],['todos','Todos']]){const o=n('option',t);o.value=v;situacao.append(o);}situacaoLabel.append(situacao);form.append(situacaoLabel);
   const aplicar=n('button','Aplicar filtros');aplicar.type='submit';aplicar.className='central-btn';form.append(aplicar);form.addEventListener('submit',e=>{e.preventDefault();render();});root.append(form);
   const carregar=n('button','Carregar estatísticas');carregar.type='button';carregar.id='estatCarregar';carregar.className='central-btn';carregar.addEventListener('click',consultar);root.append(carregar);
   root.append(n('p','O botão consulta todos os alunos da sua conta, suas metas, registros de atendimentos e semanas de frequência. Os filtros são aplicados na memória, sem novas leituras. Recarregue após alterações. Nenhum dado é gravado.'));
   const status=n('p');status.id='estatStatus';status.setAttribute('role','status');status.setAttribute('aria-live','polite');const resultado=n('div');resultado.id='estatResultado';root.append(status,resultado);render();
  }
- function filtro(){return {de:$('estatDe').value,ate:$('estatAte').value,turno:$('estatTurno').value};}
+ function filtro(){return {de:$('estatDe').value,ate:$('estatAte').value,turno:$('estatTurno').value,situacao:$('estatSituacao').value};}
  function grafico(root,titulo,itens,descricao,modo='barras'){
   const section=n('section');section.className='estat-grafico';section.append(n('h3',titulo),n('p',descricao));
   const cores={'Presenças':'#238a68','Faltas':'#b95570','Justificativas':'#b37b1e','Sem atendimento pedagógico':'#3f7fba','Sem marcação (grade atual)':'#778697','Situação não reconhecida':'#8864ae','Ativas':'#238a68','Em revisão':'#b37b1e','Concluídas':'#536fbe','Arquivadas':'#778697'};
@@ -53,7 +54,7 @@
   if(ocupado){s.textContent='Lendo os registros da sua conta. Aguarde…';return;}
   if(erro){s.textContent=erro;return;}if(!dados){s.textContent='Clique em Carregar estatísticas para iniciar a consulta.';return;}
   let r;try{r=EstatisticasModelo.consolidar(dados,filtro(),hoje());}catch(e){s.textContent=e.message;return;}
-  s.textContent='Última leitura: '+carregado+'. Os resultados usam o cadastro e o turno atuais dos alunos.';
+  s.textContent='Última leitura: '+carregado+'. Os resultados usam o cadastro, a situação de arquivamento e o turno atuais dos alunos.';
   const cards=n('div');cards.className='estat-indicadores';for(const [label,value]of [['Alunos no recorte atual',r.alunos],['Atendimentos registrados no período',r.atendimentos],['Alunos com registro no período',r.alunosComRegistro],['Alunos sem registro no período',r.semRegistro],['Metas ativas ou em revisão com revisão vencida hoje',r.revisoes]]){const card=n('div');card.append(n('strong',String(value)),n('span',label));cards.append(card);}output.append(cards);
   output.append(n('p','Ausência de registro não significa falta. A quantidade de atendimentos não mede aprendizagem. Alunos sem turno definido entram em qualquer filtro de turno ('+r.semTurno+' neste recorte). O cadastro atual não comprova matrícula histórica.'));
   if(r.registrosSemData||r.semanasSemData)output.append(n('p',r.registrosSemData+' registro(s) de atendimento e '+r.semanasSemData+' semana(s) sem data válida foram excluídos do período.'));
@@ -71,7 +72,7 @@
   try{
    const snap=await config.db.collection('alunos').where('professorUid','==',config.uid).get({source:'server'});if(!vigente())return;
    if(snap.metadata?.fromCache)throw Error('cache');
-   const alunos=snap.docs.map(d=>{const a=d.data();return {id:d.id,professorUid:a.professorUid,turno:a.turno,atendimentos:a.atendimentos,diaAtendimento:a.diaAtendimento};});if(alunos.some(a=>a.professorUid!==config.uid))throw Error('proprietário');
+   const alunos=snap.docs.map(d=>{const a=d.data();return {id:d.id,professorUid:a.professorUid,turno:a.turno,arquivado:a.arquivado,atendimentos:a.atendimentos,diaAtendimento:a.diaAtendimento};});if(alunos.some(a=>a.professorUid!==config.uid))throw Error('proprietário');
    const semanasSnap=await config.db.collection('frequenciaSemanas').where('professorUid','==',config.uid).get({source:'server'});if(!vigente())return;if(semanasSnap.metadata?.fromCache)throw Error('cache');
    const semanas=semanasSnap.docs.map(d=>({...d.data(),id:d.id}));if(semanas.some(s=>s.professorUid!==config.uid))throw Error('proprietário');
    const resultado={alunos,semanas,registros:Object.create(null),metas:Object.create(null)};let proximo=0;

@@ -64,3 +64,5 @@ body:has(:is(#screen-login,#screen-turno,#screen-home).active)>.shape{display:no
   #screen-home .student-actions{grid-column:3;flex-wrap:wrap}
 }
 #screen-home .tab-panel>.card:not(#peiViewer) .new-btn{border:1px solid #176b5b}
+
+.alunos-arquivo-filtros{margin:14px 0;display:flex;gap:10px;flex-wrap:wrap}.alunos-arquivo-filtros label{font-weight:600}.alunos-arquivo-filtros select{font:inherit;padding:8px;border:1px solid #b8cec2;border-radius:6px;margin-left:8px;max-width:100%}#arquivoAlunosStatus{font-size:13px;color:#52655c;line-height:1.5}.aluno-arquivado-badge{display:inline-block;margin-top:5px;padding:3px 7px;border-radius:5px;background:#edf0f5;color:#45536b;font-size:12px}.icon-btn.arquivo{background:#edf5f0;color:#265c47}.icon-btn.arquivo:disabled{opacity:.5;cursor:default}@media(max-width:480px){.alunos-arquivo-filtros select{display:block;margin:6px 0 0}}
