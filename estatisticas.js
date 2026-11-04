@@ -61,7 +61,7 @@
   grafico(output,'Frequência diária',Object.entries(labels).map(([k,t])=>[t,r.diarios[k]]),'Inclui '+r.semanas+' semana(s) pela data de início, considerando a semana inteira. Um aluno/dia conta uma vez por semana, mesmo com dois horários. Sem marcação usa a grade atual e não equivale a falta.','pizza');
   for(const [key,title]of [['antigos','Marcações semanais antigas'],['semDia','Marcações sem dia reconhecido']])if(Object.values(r[key]).some(v=>v))grafico(output,title,Object.entries(labels).map(([k,t])=>[t,r[key][k]]),'Contagens separadas da frequência diária para evitar somar registros com unidades diferentes.');
   if(!r.semanas)output.append(n('p','Não há semanas com data válida nesse intervalo e turno. Isso não significa ausência dos alunos.'));
-  grafico(output,'Situação atual das metas',Object.entries(metaLabels).map(([k,t])=>[t,r.metas[k]]),'Retrato atual das metas dos alunos no turno selecionado; não é filtrado pela data de criação nem representa a situação histórica no período.');
+  grafico(output,'Situação atual das metas',Object.entries(metaLabels).map(([k,t])=>[t,r.metas[k]]),'Retrato atual das metas dos alunos no turno selecionado; não é filtrado pela data de criação nem representa a situação histórica no período.','pizza');
   output.append(n('p',r.metasSemRevisao+' meta(s) ativa(s) ou em revisão sem data de revisão válida. Os gráficos indicam organização do trabalho, não percentual de evolução pedagógica.'));
  }
  async function consultar(){
