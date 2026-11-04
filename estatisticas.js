@@ -20,12 +20,32 @@
   const status=n('p');status.id='estatStatus';status.setAttribute('role','status');status.setAttribute('aria-live','polite');const resultado=n('div');resultado.id='estatResultado';root.append(status,resultado);render();
  }
  function filtro(){return {de:$('estatDe').value,ate:$('estatAte').value,turno:$('estatTurno').value};}
- function grafico(root,titulo,itens,descricao){
+ function grafico(root,titulo,itens,descricao,modo='barras'){
   const section=n('section');section.className='estat-grafico';section.append(n('h3',titulo),n('p',descricao));
   const cores={'Presenças':'#238a68','Faltas':'#b95570','Justificativas':'#b37b1e','Sem atendimento pedagógico':'#3f7fba','Sem marcação (grade atual)':'#778697','Situação não reconhecida':'#8864ae','Ativas':'#238a68','Em revisão':'#b37b1e','Concluídas':'#536fbe','Arquivadas':'#778697'};
+  const cor=label=>cores[label]||'#238a68',soma=itens.reduce((a,i)=>a+i[1],0),pizza=modo==='pizza';
   const max=Math.max(1,...itens.map(i=>i[1])),table=n('table'),caption=n('caption',titulo+' — valores');table.append(caption);
-  const head=n('tr');for(const t of ['Categoria','Quantidade']){const th=n('th',t);th.scope='col';head.append(th);}const thead=n('thead');thead.append(head);table.append(thead);const body=n('tbody');
-  for(const [label,total]of itens){const row=n('tr'),th=n('th',label),td=n('td');th.scope='row';const bar=n('span');bar.className='estat-barra';bar.style.width=(total/max*100)+'%';bar.style.setProperty('--estat-cor',cores[label]||'#238a68');if(total===0)bar.classList.add('estat-barra-zero');bar.setAttribute('aria-hidden','true');td.append(n('strong',String(total)),bar);row.append(th,td);body.append(row);}table.append(body);section.append(table);root.append(section);
+  const layout=n('div');layout.className=pizza?'estat-pizza-layout':'';
+  if(pizza){
+   const visual=n('div');visual.className='estat-pizza-visual';
+   if(soma){
+    let acumulado=0;const fatias=[];
+    for(const [label,total]of itens){if(!total)continue;const inicio=acumulado/soma*360;acumulado+=total;fatias.push(cor(label)+' '+inicio+'deg '+acumulado/soma*360+'deg');}
+    const disco=n('div');disco.className='estat-pizza';disco.setAttribute('aria-hidden','true');disco.style.setProperty('--fatias','conic-gradient('+fatias.join(',')+')');
+    const base=n('div'),topo=n('div');base.className='estat-pizza-base';topo.className='estat-pizza-topo';disco.append(base,topo);visual.append(disco);
+   }else visual.append(n('p','Sem dados para compor a pizza neste recorte.'));
+   visual.append(n('strong','Total: '+soma),n('small','Percentuais sobre o total desta distribuição. Valores arredondados a uma casa decimal.'));layout.append(visual);
+  }
+  const head=n('tr');for(const t of pizza?['Categoria','Quantidade','Percentual']:['Categoria','Quantidade']){const th=n('th',t);th.scope='col';head.append(th);}const thead=n('thead');thead.append(head);table.append(thead);const body=n('tbody');
+  for(const [label,total]of itens){
+   const row=n('tr'),th=n('th'),td=n('td');th.scope='row';
+   if(pizza){const ponto=n('span');ponto.className='estat-pizza-cor';ponto.style.backgroundColor=cor(label);ponto.setAttribute('aria-hidden','true');th.append(ponto);}
+   th.append(document.createTextNode(label));td.append(n('strong',String(total)));row.append(th,td);
+   if(pizza)row.append(n('td',soma?(total/soma*100).toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1})+'%':'—'));
+   else{const bar=n('span');bar.className='estat-barra';bar.style.width=(total/max*100)+'%';bar.style.setProperty('--estat-cor',cor(label));if(total===0)bar.classList.add('estat-barra-zero');bar.setAttribute('aria-hidden','true');td.append(bar);}
+   body.append(row);
+  }
+  table.append(body);layout.append(table);section.append(layout);root.append(section);
  }
  function render(){
   if(!ctx?.vigente()||!$('estatResultado'))return;
@@ -38,7 +58,7 @@
   output.append(n('p','Ausência de registro não significa falta. A quantidade de atendimentos não mede aprendizagem. Alunos sem turno definido entram em qualquer filtro de turno ('+r.semTurno+' neste recorte). O cadastro atual não comprova matrícula histórica.'));
   if(r.registrosSemData||r.semanasSemData)output.append(n('p',r.registrosSemData+' registro(s) de atendimento e '+r.semanasSemData+' semana(s) sem data válida foram excluídos do período.'));
   grafico(output,'Atendimentos por mês',Object.entries(r.meses).map(([mes,v])=>[mes.slice(5)+'/'+mes.slice(0,4),v]),'Contagem dos registros pela data do atendimento, incluindo somente os dias do intervalo selecionado. Meses sem registro aparecem com zero.');
-  grafico(output,'Frequência diária',Object.entries(labels).map(([k,t])=>[t,r.diarios[k]]),'Inclui '+r.semanas+' semana(s) pela data de início, considerando a semana inteira. Um aluno/dia conta uma vez por semana, mesmo com dois horários. Sem marcação usa a grade atual e não equivale a falta.');
+  grafico(output,'Frequência diária',Object.entries(labels).map(([k,t])=>[t,r.diarios[k]]),'Inclui '+r.semanas+' semana(s) pela data de início, considerando a semana inteira. Um aluno/dia conta uma vez por semana, mesmo com dois horários. Sem marcação usa a grade atual e não equivale a falta.','pizza');
   for(const [key,title]of [['antigos','Marcações semanais antigas'],['semDia','Marcações sem dia reconhecido']])if(Object.values(r[key]).some(v=>v))grafico(output,title,Object.entries(labels).map(([k,t])=>[t,r[key][k]]),'Contagens separadas da frequência diária para evitar somar registros com unidades diferentes.');
   if(!r.semanas)output.append(n('p','Não há semanas com data válida nesse intervalo e turno. Isso não significa ausência dos alunos.'));
   grafico(output,'Situação atual das metas',Object.entries(metaLabels).map(([k,t])=>[t,r.metas[k]]),'Retrato atual das metas dos alunos no turno selecionado; não é filtrado pela data de criação nem representa a situação histórica no período.');
