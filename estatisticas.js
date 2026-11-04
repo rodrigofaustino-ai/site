@@ -22,9 +22,10 @@
  function filtro(){return {de:$('estatDe').value,ate:$('estatAte').value,turno:$('estatTurno').value};}
  function grafico(root,titulo,itens,descricao){
   const section=n('section');section.className='estat-grafico';section.append(n('h3',titulo),n('p',descricao));
+  const cores={'Presenças':'#238a68','Faltas':'#b95570','Justificativas':'#b37b1e','Sem atendimento pedagógico':'#3f7fba','Sem marcação (grade atual)':'#778697','Situação não reconhecida':'#8864ae','Ativas':'#238a68','Em revisão':'#b37b1e','Concluídas':'#536fbe','Arquivadas':'#778697'};
   const max=Math.max(1,...itens.map(i=>i[1])),table=n('table'),caption=n('caption',titulo+' — valores');table.append(caption);
   const head=n('tr');for(const t of ['Categoria','Quantidade']){const th=n('th',t);th.scope='col';head.append(th);}const thead=n('thead');thead.append(head);table.append(thead);const body=n('tbody');
-  for(const [label,total]of itens){const row=n('tr'),th=n('th',label),td=n('td');th.scope='row';const bar=n('span');bar.className='estat-barra';bar.style.width=(total/max*100)+'%';bar.setAttribute('aria-hidden','true');td.append(n('strong',String(total)),bar);row.append(th,td);body.append(row);}table.append(body);section.append(table);root.append(section);
+  for(const [label,total]of itens){const row=n('tr'),th=n('th',label),td=n('td');th.scope='row';const bar=n('span');bar.className='estat-barra';bar.style.width=(total/max*100)+'%';bar.style.setProperty('--estat-cor',cores[label]||'#238a68');if(total===0)bar.classList.add('estat-barra-zero');bar.setAttribute('aria-hidden','true');td.append(n('strong',String(total)),bar);row.append(th,td);body.append(row);}table.append(body);section.append(table);root.append(section);
  }
  function render(){
   if(!ctx?.vigente()||!$('estatResultado'))return;

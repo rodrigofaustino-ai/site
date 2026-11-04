@@ -8,7 +8,7 @@ Preparada sobre a etapa 26 já publicada no oficial. Esta etapa ainda não foi p
 - Nova aba Estatísticas: cada conta consulta somente seus alunos, mesmo quando administradora. Não há panorama coletivo nesta etapa.
 - Carregamento por botão; filtro local por datas e turno (inclusive Todos). Recarregar após inserir ou alterar dados. Até 120 meses no gráfico mensal.
 - Indicadores: alunos no cadastro atual, quantidade de atendimentos, alunos com/sem registro no intervalo, metas ativas/em revisão com data de revisão vencida hoje.
-- Gráficos em barras com tabelas acessíveis: atendimentos por mês, frequência diária e situação atual das metas. Marcações semanais antigas e dias não reconhecidos ficam em quadros separados.
+- Gráficos em barras com efeito 3D (faces superior/lateral, gradientes e sombras), cores por situação e tabelas acessíveis: atendimentos por mês, frequência diária e situação atual das metas. Marcações semanais antigas e dias não reconhecidos ficam em quadros separados.
 
 ## Definições
 
@@ -32,3 +32,5 @@ Consulta alunos e semanas por professorUid, depois registros e metas de cada alu
 - verificar-firebase-producao.cjs: configuração e sintaxe, requisições externas bloqueadas.
 
 Sem uso de dados reais nos testes. Configuração remota, permissões reais e dados reais não foram consultados. Publicação manual somente quando solicitada pelo usuário.
+
+Ajuste visual 3D: comprimentos permanecem proporcionais aos totais; zero não ganha volume artificial. Valores textuais e tabelas continuam acessíveis. Testes de consolidação (27) e navegador (19) passaram após o ajuste, incluindo celular.
