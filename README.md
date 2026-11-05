@@ -1,3 +1,5 @@
+> **Etapa 32 preparada, ainda não publicada:** [downloads individuais como padrão, sem exigir ZIP](ETAPA-32-DOWNLOADS-INDIVIDUAIS.md). Inclui todas as etapas anteriores e usa os projetos oficiais.
+
 > **Etapa 31 preparada, ainda não publicada:** [Exportar Documentos](ETAPA-31-EXPORTAR-DOCUMENTOS.md), com seleção de documentos, formato e alunos. Inclui todas as etapas anteriores. Esta branch usa os projetos oficiais.
 
 > **Etapa 30 preparada, ainda não publicada:** [Próximo passo e continuidade do encontro](ETAPA-30-PROXIMO-PASSO.md). Inclui estatísticas, arquivamento e Meu dia. Esta branch usa os projetos oficiais.

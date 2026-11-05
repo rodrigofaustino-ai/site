@@ -1,3 +1,5 @@
+> Atualização na etapa 32: arquivos individuais são o padrão; ZIP passou a ser opcional. Consulte [downloads individuais](ETAPA-32-DOWNLOADS-INDIVIDUAIS.md). O fluxo descrito abaixo é a implementação anterior.
+
 # Etapa 31 — Exportar Documentos
 
 Acumulada sobre a etapa 30. Etapas 27–31 ainda não publicadas. A etapa 26 continua sendo o oficial confirmado. Esta branch usa os dois projetos oficiais; não publicar como teste isolado sem adaptar configuração.
