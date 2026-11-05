@@ -5,7 +5,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const http = require('node:http');
 const acorn = require('acorn');
-const root = path.resolve(__dirname, '..');
+const root = process.env.SRM_SITE_ROOT ? path.resolve(process.env.SRM_SITE_ROOT) : path.resolve(__dirname, '..');
 const paginas = ['index.html','pei_formulario.html','paee_formulario_02.html',
   'diagnostica_formulario.html','relatorio_formulario.html','colaboracao.html','admin_transferencia.html'];
 let total = 0;
