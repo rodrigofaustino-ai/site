@@ -1,3 +1,5 @@
+> **Etapa 31 preparada, ainda não publicada:** [Exportar Documentos](ETAPA-31-EXPORTAR-DOCUMENTOS.md), com seleção de documentos, formato e alunos. Inclui todas as etapas anteriores. Esta branch usa os projetos oficiais.
+
 > **Etapa 30 preparada, ainda não publicada:** [Próximo passo e continuidade do encontro](ETAPA-30-PROXIMO-PASSO.md). Inclui estatísticas, arquivamento e Meu dia. Esta branch usa os projetos oficiais.
 
 > **Etapa 29 preparada, ainda não publicada:** [painel Meu dia](ETAPA-29-MEU-DIA.md), com agenda e revisões de metas. Inclui gráficos e arquivamento das etapas 27/28. Esta branch usa os projetos oficiais.

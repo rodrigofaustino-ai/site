@@ -514,6 +514,9 @@ hr.sep{border:none;border-top:2px dashed rgba(0,0,0,.06);margin:.2rem 0;}
 <script src="registro-assistido.js"></script>
 <link rel="stylesheet" href="proximo-passo.css">
 <script src="proximo-passo.js"></script>
+<link rel="stylesheet" href="exportar-documentos.css">
+<script src="exportacao-lote-modelo.js"></script>
+<script src="exportar-documentos.js"></script>
 <link rel="stylesheet" href="historico-atendimentos.css">
 <script src="historico-atendimentos.js"></script>
 <script src="firebase-producao.js"></script>
@@ -624,6 +627,7 @@ hr.sep{border:none;border-top:2px dashed rgba(0,0,0,.06);margin:.2rem 0;}
       <button class="tab-btn" id="tabBtnPlanos" onclick="switchTab('planos')">📚 Planos de Aula</button>
       <button class="tab-btn" id="tabBtnRecursos" onclick="switchTab('recursos')">🔗 Recursos Didáticos</button>
       <button class="tab-btn" id="tabBtnEstatisticas" onclick="switchTab('estatisticas')">📈 Estatísticas</button>
+      <button class="tab-btn" id="btnExportarDocumentos" aria-haspopup="dialog" aria-controls="exportarDocumentosDialog" onclick="abrirExportacaoDocumentos()">📤 Exportar Documentos</button>
     </nav>
 
     <div class="tab-panel" id="tabEstatisticas"><section id="estatisticasRaiz" class="card" aria-label="Estatísticas do meu trabalho"></section></div>
@@ -1204,6 +1208,7 @@ function showScreen(name){
    AUTH — onAuthStateChanged é a única fonte da verdade
 ════════════════════════════════════════ */
 auth.onAuthStateChanged(async user => {
+  window.ExportarDocumentos.fechar();
   limparArquivamentoAlunos();
   window.MeuDia.limpar();
   window.Estatisticas.limpar();
@@ -1251,6 +1256,7 @@ function mostrarSelecaoTurno(user){
 }
 
 function selecionarTurno(turno){
+  window.ExportarDocumentos.fechar();
   limparArquivamentoAlunos();
   window.MeuDia.limpar();
   window.Estatisticas.limpar();
@@ -1370,6 +1376,11 @@ document.addEventListener('DOMContentLoaded', () => {
 /* ════════════════════════════════════════
    TABS
 ════════════════════════════════════════ */
+function abrirExportacaoDocumentos(){
+  const uid=professorUid,email=auth.currentUser?.email,turno=turnoAtual;
+  if(!uid||!email||!turno)return;
+  window.ExportarDocumentos.abrir({uid,email,turno,db,vigente:()=>professorUid===uid&&auth.currentUser?.uid===uid&&auth.currentUser?.email===email&&turnoAtual===turno});
+}
 function abrirEstatisticas(){
   const uid=professorUid,turno=turnoAtual;
   if(!uid||!turno)return;

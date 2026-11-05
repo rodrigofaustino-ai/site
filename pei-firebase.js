@@ -1,2 +1,2 @@
-// Mesmo projeto e autenticação do Diário de Bordo de teste.
-window.SRMInicializarFirebase();
+// PEI e colaboração usam o projeto do Diário; a geração em lote não inicia Firebase.
+if(!window.SRMExportacaoWorker)window.SRMInicializarFirebase();

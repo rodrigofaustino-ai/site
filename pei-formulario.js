@@ -1,7 +1,7 @@
 (() => {
   'use strict';
   const $ = id => document.getElementById(id);
-  const auth = firebase.auth(), db = firebase.firestore();
+  const auth = window.SRMExportacaoWorker?null:firebase.auth(), db = window.SRMExportacaoWorker?null:firebase.firestore();
   const grupos = [
     {id:'sec-id', titulo:'I. Identificação', campos:[
       ['identificacao.nome','Nome do aluno','text'],
@@ -278,6 +278,7 @@
     }
     return html;
   }
+  if(window.SRMExportacaoWorker){window.PEIFormulario={grupos,criarEstado,conteudo};return;}
   async function salvar() {
     if(busy||!user||!alunoId||!estado)return;
     if(!estado.identificacao.nome.trim()){erro('Informe o nome do aluno.');$('field-identificacao-nome').focus();return;}

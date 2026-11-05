@@ -18,6 +18,7 @@
     return pending[name];
   }
   function download(blob, name) {
+    if(window.SRMExportacaoWorker){if(typeof window.SRMExportacaoCapturar!=='function')throw new Error('Captura indisponível.');return window.SRMExportacaoCapturar(blob,name);}
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement('a');
     anchor.href = url; anchor.download = name; document.body.appendChild(anchor);
@@ -179,7 +180,7 @@
     const result = await converter.convertToHtml({arrayBuffer:await blob.arrayBuffer()});
     return fromHtml(result.value,format,filename);
   }
-  window.SRMExport = {fromDocx,fromHtml};
+  window.SRMExport = {fromDocx,fromHtml,prepararPei:preparePei};
   function preparePei(html) {
     const root=clean(html);
     // Ler cada célula na ordem das linhas, preservando os parágrafos e imagens.

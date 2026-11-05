@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+<script src="exportacao-lote-worker.js"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>PAEE · Sala de Recursos Multifuncionais</title>
@@ -442,10 +443,10 @@ let db = null;
 let firebaseReady = false;
 let auth = null;
 try{
-  window.SRMInicializarFirebase('documentos');
+  if(!window.SRMExportacaoWorker){window.SRMInicializarFirebase('documentos');
   db = firebase.firestore();
   auth = firebase.auth();
-  firebaseReady = true;
+  firebaseReady = true;}
 }catch(e){ console.warn('Firebase não inicializado — configure firebaseConfig.', e); }
 
 const COLLECTION = 'paee_alunos';
@@ -1807,12 +1808,13 @@ function exportDOCX(s, formato='docx'){
     }],
   });
 
-  Packer.toBlob(doc).then(async blob=>{
+  return Packer.toBlob(doc).then(async blob=>{
     const nome = (s.identificacao.nome||'PAEE')
       .normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9]+/g,'_');
     await SRMExport.fromDocx(blob, formato, `PAEE_${nome}`);
     showToast(formato.toUpperCase()+' gerado com sucesso.');
   }).catch(err=>{
+    if(window.SRMExportacaoWorker)throw err;
     console.error(err);
     showToast('Erro ao gerar '+formato.toUpperCase()+': '+err.message);
   });

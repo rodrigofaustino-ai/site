@@ -1,0 +1,111 @@
+/* Coordenador de exportação: leitura dos documentos salvos; nunca salva ou vincula. */
+(() => {
+ 'use strict';
+ const M=()=>window.ExportacaoLoteModelo,n=(tag,text)=>{const e=document.createElement(tag);if(text!=null)e.textContent=text;return e;};
+ let ctx=null,dialog=null,corpo=null,status=null;
+ const vigente=c=>ctx===c&&!c.cancelado&&c.config.vigente();
+ function mensagem(text){if(status)status.textContent=text;}
+ function fechar(){
+  const devolverFoco=!!dialog?.open;const anterior=ctx;ctx=null;if(anterior){anterior.cancelado=true;anterior.abortar?.();if(anterior.app)Promise.resolve(anterior.login).catch(()=>{}).then(()=>anterior.auth.signOut()).catch(()=>{}).then(()=>anterior.app.delete()).catch(()=>{});}
+  if(dialog?.open)dialog.close();corpo?.replaceChildren();mensagem('');if(devolverFoco)document.getElementById('btnExportarDocumentos')?.focus();
+ }
+ function botao(label,fn){const b=n('button',label);b.type='button';b.className='central-btn';b.addEventListener('click',fn);return b;}
+ function acoes(...b){const box=n('div');box.className='exportar-acoes';box.append(...b);corpo.append(box);}
+ function campo(text,input){const l=n('label',text);l.className='exportar-campo';l.append(input);return l;}
+ function criar(){if(dialog)return;dialog=n('dialog');dialog.id='exportarDocumentosDialog';dialog.setAttribute('aria-labelledby','exportarDocumentosTitulo');const header=n('div');header.className='exportar-cabecalho';const h=n('h2','Exportar Documentos');h.id='exportarDocumentosTitulo';header.append(h,botao('Fechar',fechar));corpo=n('div');corpo.className='exportar-corpo';status=n('p');status.id='exportarDocumentosStatus';status.setAttribute('role','status');status.setAttribute('aria-live','polite');dialog.append(header,corpo,status);document.body.append(dialog);dialog.addEventListener('cancel',e=>{e.preventDefault();fechar();});}
+ async function abrir(config){
+  fechar();criar();const c={config,nonce:crypto.randomUUID(),etapa:1,tipos:new Set(),formato:'docx',selecionados:new Set(),alunos:[],cancelado:false,busy:false};ctx=c;dialog.showModal();tela1(c);
+ }
+ function tela1(c){if(!vigente(c)||c.busy)return;corpo.replaceChildren();mensagem('');corpo.append(n('h3','1. Escolha os documentos'),n('p','Serão exportados os conteúdos já salvos. Rascunhos abertos em outros formulários não são incluídos. Esta operação não altera os documentos.'));
+  const opcoes=n('div');opcoes.className='exportar-opcoes';for(const [key,tipo]of Object.entries(M().tipos)){const label=n('label');label.className='exportar-opcao';const input=n('input');input.type='checkbox';input.value=key;input.checked=c.tipos.has(key);input.addEventListener('change',()=>{if(input.checked)c.tipos.add(key);else c.tipos.delete(key);});label.append(input,n('span',tipo.nome));opcoes.append(label);}corpo.append(opcoes);
+  acoes(botao('Próximo: formato',()=>{if(!c.tipos.size){mensagem('Selecione pelo menos um documento.');return;}tela2(c);}));
+ }
+ function tela2(c){if(!vigente(c)||c.busy)return;corpo.replaceChildren();mensagem('');corpo.append(n('h3','2. Escolha o formato'));for(const [value,text]of [['docx','Word — DOCX'],['odt','LibreOffice — ODT']]){const label=n('label');label.className='exportar-opcao';const i=n('input');i.type='radio';i.name='exportar-formato';i.value=value;i.checked=c.formato===value;i.addEventListener('change',()=>c.formato=value);label.append(i,n('span',text));corpo.append(label);}
+  corpo.append(n('p','Um arquivo pode ser baixado diretamente; vários arquivos serão reunidos em um ZIP. Os modelos são os mesmos dos formulários.'));
+  acoes(botao('Voltar',()=>tela1(c)),botao('Próximo: alunos',()=>carregarAlunos(c)));
+ }
+ async function carregarAlunos(c){
+  if(c.busy||!vigente(c))return;c.busy=true;corpo.replaceChildren();corpo.append(n('p','Carregando os alunos…'),botao('Cancelar',fechar));mensagem('Carregando os alunos da sua conta…');
+  try{const snap=await c.config.db.collection('alunos').where('professorUid','==',c.config.uid).get({source:'server'});if(!vigente(c))return;if(snap.metadata?.fromCache)throw Error('cache');c.alunos=snap.docs.map(d=>{const a=d.data();if(a.professorUid!==c.config.uid)throw Error('responsável');return {id:d.id,nome:a.nome||'Sem nome',escola:a.escola||'',turno:a.turno||'',arquivado:a.arquivado===true};}).sort((a,b)=>a.nome.localeCompare(b.nome,'pt-BR'));c.busy=false;tela3(c);}catch(_){if(vigente(c)){mensagem('Não foi possível carregar os alunos. Confira a conexão e tente novamente.');acoes(botao('Voltar ao formato',()=>tela2(c)));}}finally{c.busy=false;}
+ }
+ function tela3(c){
+  if(!vigente(c)||c.busy)return;corpo.replaceChildren();mensagem('');corpo.append(n('h3','3. Escolha um ou mais alunos'));
+  const busca=n('input');busca.type='search';busca.placeholder='Buscar pelo nome';busca.setAttribute('aria-label','Buscar aluno para exportar');const turno=n('select');for(const [v,t]of [['','Todos os turnos'],['Matutino','Matutino'],['Vespertino','Vespertino']]){const o=n('option',t);o.value=v;turno.append(o);}turno.value=c.config.turno||'';
+  const arquivo=n('input');arquivo.type='checkbox';arquivo.id='exportarIncluirArquivados';const label=n('label');label.className='exportar-opcao';label.append(arquivo,n('span','Incluir alunos arquivados na lista'));corpo.append(campo('Buscar aluno',busca),campo('Turno',turno),label);const lista=n('div');lista.className='exportar-alunos';const contagem=n('p');corpo.append(contagem,lista);
+  function mostrar(){lista.replaceChildren();const termos=M().normalizar(busca.value).split(' ').filter(Boolean),visiveis=c.alunos.filter(a=>(arquivo.checked||!a.arquivado)&&(!turno.value||!a.turno||a.turno===turno.value)&&termos.every(t=>M().normalizar(a.nome).includes(t)));
+   contagem.textContent=c.selecionados.size+' aluno(s) selecionado(s). Filtrar a lista não desmarca seleções anteriores.';
+   if(!visiveis.length)lista.append(n('p','Nenhum aluno nesse filtro.'));for(const a of visiveis){const l=n('label');l.className='exportar-opcao';const i=n('input');i.type='checkbox';i.value=a.id;i.checked=c.selecionados.has(a.id);i.addEventListener('change',()=>{if(i.checked)c.selecionados.add(a.id);else c.selecionados.delete(a.id);contagem.textContent=c.selecionados.size+' aluno(s) selecionado(s). Filtrar a lista não desmarca seleções anteriores.';});l.append(i,n('span',a.nome+(a.escola?' · '+a.escola:'')+(a.arquivado?' · Arquivado':'')));lista.append(l);}
+   c.visiveis=visiveis;
+  }
+  busca.addEventListener('input',mostrar);turno.addEventListener('change',mostrar);arquivo.addEventListener('change',mostrar);mostrar();
+  acoes(botao('Selecionar os exibidos',()=>{c.visiveis.forEach(a=>c.selecionados.add(a.id));mostrar();}),botao('Limpar seleção',()=>{c.selecionados.clear();mostrar();}));
+  corpo.append(n('p','Até 100 arquivos por pacote. Documentos não encontrados serão informados, sem gerar formulários vazios.'));
+  acoes(botao('Voltar',()=>tela2(c)),botao('Conferir documentos',()=>{if(!c.selecionados.size){mensagem('Selecione ao menos um aluno.');return;}if(c.selecionados.size*c.tipos.size>100){mensagem('Selecione até 100 combinações de alunos e documentos por pacote.');return;}if([...c.tipos].some(t=>t!=='pei')&&!c.auth?.currentUser)loginFormularios(c);else conferir(c);}));
+ }
+ function loginFormularios(c){
+  if(!vigente(c))return;corpo.replaceChildren();mensagem('');corpo.append(n('h3','Acesso aos formulários'),n('p','PAEE, Diagnóstica e Relatório usam o projeto paee-3fea6. Entre com a conta dos formulários que tem o mesmo e-mail da sua conta do Diário. Esta sessão é separada e fica só na memória.'));
+  const form=n('form'),email=n('input'),senha=n('input'),entrar=n('button','Entrar e conferir documentos');email.type='email';email.value=c.config.email;email.readOnly=true;senha.type='password';senha.autocomplete='current-password';senha.required=true;entrar.type='submit';entrar.className='central-btn';form.append(campo('E-mail dos formulários',email),campo('Senha dos formulários',senha),entrar);corpo.append(form);
+  form.addEventListener('submit',async e=>{e.preventDefault();if(c.busy||!vigente(c))return;c.busy=true;entrar.disabled=true;mensagem('Conectando aos formulários…');
+   try{if(!c.app){c.app=firebase.initializeApp(window.SRMDocumentosConfig,'exportacao-'+c.nonce);c.auth=firebase.auth(c.app);c.dbDocumentos=firebase.firestore(c.app);await c.auth.setPersistence(firebase.auth.Auth.Persistence.NONE);}if(!vigente(c))return;c.login=c.auth.signInWithEmailAndPassword(email.value,senha.value);await c.login;senha.value='';if(!vigente(c))return;if(c.auth.currentUser?.email?.toLowerCase()!==c.config.email.toLowerCase())throw Error('Conta incompatível');c.uidDocumentos=c.auth.currentUser.uid;c.busy=false;await conferir(c);}catch(_){if(vigente(c))mensagem('Não foi possível entrar nos formulários. Confira o acesso dessa conta. Nenhuma senha foi salva.');}finally{senha.value='';c.busy=false;entrar.disabled=false;}
+  });acoes(botao('Voltar aos alunos',()=>tela3(c)));
+ }
+ async function conferir(c){
+  if(c.busy||!vigente(c))return;c.busy=true;corpo.replaceChildren();corpo.append(n('p','Conferindo os documentos salvos…'),botao('Cancelar',fechar));mensagem('Conferindo os documentos salvos…');
+  try{
+   const fontes={};for(const t of c.tipos){if(t==='pei')continue;const snap=await c.dbDocumentos.collection(M().tipos[t].colecao).where('professorUid','==',c.uidDocumentos).get({source:'server'});if(!vigente(c))return;if(snap.metadata?.fromCache)throw Error('cache');fontes[t]=snap.docs.map(d=>({id:d.id,dados:d.data()}));if(fontes[t].some(d=>d.dados.professorUid!==c.uidDocumentos))throw Error('responsável');}
+   const itens=[];for(const aluno of c.alunos.filter(a=>c.selecionados.has(a.id))){for(const tipo of c.tipos){
+    if(!vigente(c))return;
+    if(tipo==='pei'){const doc=await c.config.db.collection('alunos').doc(aluno.id).collection('pei').doc('atual').get({source:'server'});if(!vigente(c))return;itens.push({aluno,tipo,escolha:doc.exists?'atual':'',candidatos:doc.exists?[{id:'atual',dados:doc.data()}]:[],legado:false});}
+    else{const found=M().candidatos(fontes[tipo],aluno);itens.push({aluno,tipo,candidatos:found.itens,legado:found.legado,escolha:!found.legado&&found.itens.length===1?found.itens[0].id:''});}
+   }}
+   if(!vigente(c))return;c.itens=itens;c.busy=false;telaConferencia(c);
+  }catch(_){if(vigente(c)){mensagem('Não foi possível conferir todos os documentos. Nenhum arquivo foi gerado. Volte e tente novamente.');acoes(botao('Voltar aos alunos',()=>tela3(c)));}}finally{c.busy=false;}
+ }
+ function dataDocumento(d){try{const v=d.updatedAt||d.createdAt||d.peiData;const date=typeof v?.toDate==='function'?v.toDate():typeof v==='string'?new Date(v):null;return date&&!Number.isNaN(date.getTime())?' · '+date.toLocaleString('pt-BR'):'';}catch(_){return '';}}
+ function telaConferencia(c){
+  if(!vigente(c))return;corpo.replaceChildren();mensagem('');corpo.append(n('h3','4. Confira antes de exportar'),n('p','Formato: '+c.formato.toUpperCase()+'. Documentos antigos sem vínculo exigem confirmação nesta lista. Ela vale apenas para esta exportação e não altera o cadastro. Confira nomes e escola, especialmente em casos de homônimos.'));
+  for(const item of c.itens){const box=n('div');box.className='exportar-revisao';box.append(n('strong',item.aluno.nome+(item.aluno.arquivado?' (arquivado)':'')+' — '+M().tipos[item.tipo].nome));
+   box.append(n('small','Cadastro do Diário: '+(item.aluno.escola||'escola não informada')+' · aluno '+item.aluno.id));
+   if(!item.candidatos.length){box.append(n('small','Não encontrado para este aluno. Este item não será exportado.'));corpo.append(box);continue;}
+   if(item.legado)box.append(n('small','Documento antigo sem alunoId: escolha e confirme somente se pertence a este aluno.'));
+   else if(item.candidatos.length>1)box.append(n('small','Há mais de um documento vinculado. Escolha a versão desejada.'));
+   const s=n('select');s.setAttribute('aria-label','Documento de '+item.aluno.nome+' — '+M().tipos[item.tipo].nome);const vazio=n('option',item.legado?'Selecione para confirmar ou não exportar':'Não exportar este item');vazio.value='';s.append(vazio);
+   for(const d of item.candidatos){const id=d.dados.identificacao||{},o=n('option',(id.nome||id.nomeAluno||item.aluno.nome)+(id.escolaRegular?' · '+id.escolaRegular:'')+dataDocumento(d.dados)+' · documento '+d.id);o.value=d.id;s.append(o);}s.value=item.escolha;s.addEventListener('change',()=>item.escolha=s.value);box.append(s);corpo.append(box);
+  }
+  corpo.append(n('p','A geração lê novamente os conteúdos salvos e não inclui rascunhos. Arquivos de alunos contêm informações pessoais; guarde o download em local protegido.'));
+  acoes(botao('Voltar aos alunos',()=>tela3(c)),botao('Gerar e baixar',()=>gerar(c)));
+ }
+ async function renderizar(c,tipo,dados){
+  return new Promise((resolve,reject)=>{
+   const frame=n('iframe');frame.className='exportar-worker';frame.title='Gerador de documento';frame.tabIndex=-1;frame.setAttribute('aria-hidden','true');frame.src=M().tipos[tipo].pagina+'#exportacao-lote='+c.nonce;
+   let terminado=false;const limpar=()=>{removeEventListener('message',receber);clearTimeout(timer);frame.remove();c.abortar=null;};
+   const fim=(erro,valor)=>{if(terminado)return;terminado=true;limpar();erro?reject(erro):resolve(valor);};
+   const receber=e=>{const m=e.data;if(e.origin!==location.origin||e.source!==frame.contentWindow||m?.canal!=='srm-exportacao'||m.token!==c.nonce)return;if(!vigente(c)){fim(Error('cancelado'));return;}if(m.acao==='pronto')frame.contentWindow.postMessage({canal:'srm-exportacao',token:c.nonce,acao:'gerar',tipo,formato:c.formato,dados},location.origin);else if(m.acao==='arquivo'&&m.blob instanceof Blob)fim(null,m.blob);else if(m.acao==='erro')fim(Error('geração'));};
+   const timer=setTimeout(()=>fim(Error('tempo excedido')),60000);c.abortar=()=>fim(Error('cancelado'));addEventListener('message',receber);document.body.append(frame);
+  });
+ }
+ async function carregarZip(){if(window.JSZip)return window.JSZip;await new Promise((resolve,reject)=>{const s=n('script');s.src='vendor/jszip.min.js';s.onload=resolve;s.onerror=reject;document.head.append(s);});if(!window.JSZip)throw Error('ZIP indisponível');return window.JSZip;}
+ async function gerar(c){
+  if(c.busy||!vigente(c))return;const jobs=c.itens.filter(i=>i.escolha),usados=new Set();if(!jobs.length){mensagem('Nenhum documento escolhido. Confira a lista.');return;}
+  for(const item of jobs){const k=item.tipo+'/'+item.escolha;if(item.tipo!=='pei'&&usados.has(k)){mensagem('O mesmo documento foi escolhido para mais de um aluno. Confira os homônimos antes de continuar.');return;}usados.add(k);}
+  c.busy=true;corpo.replaceChildren();corpo.append(n('h3','Gerando documentos'),n('p','Aguarde o download. Fechar esta caixa cancela a geração pendente; nenhum documento será alterado.'),botao('Cancelar geração',fechar));const arquivos=[],relatorio=[];let bytes=0;
+  try{
+   for(const item of jobs){if(!vigente(c))return;mensagem('Gerando '+(arquivos.length+relatorio.length+1)+' de '+jobs.length+': '+item.aluno.nome+' — '+M().tipos[item.tipo].nome);
+    try{
+     const aluno=await c.config.db.collection('alunos').doc(item.aluno.id).get({source:'server'});if(!vigente(c))return;if(!aluno.exists||aluno.metadata?.fromCache||aluno.data().professorUid!==c.config.uid)throw Error('acesso');
+     const ref=item.tipo==='pei'?c.config.db.collection('alunos').doc(item.aluno.id).collection('pei').doc('atual'):c.dbDocumentos.collection(M().tipos[item.tipo].colecao).doc(item.escolha);
+     const doc=await ref.get({source:'server'});if(!vigente(c))return;if(!doc.exists||doc.metadata?.fromCache)throw Error('não encontrado');const dados=doc.data();
+     if(item.tipo!=='pei'&&(c.auth.currentUser?.uid!==c.uidDocumentos||dados.professorUid!==c.uidDocumentos||!M().compativel(dados,{...item.aluno,nome:aluno.data().nome||''},item.legado)))throw Error('vínculo mudou');
+     const blob=await renderizar(c,item.tipo,dados);if(!vigente(c))return;if(bytes+blob.size>150*1024*1024)throw Error('limite do pacote');bytes+=blob.size;arquivos.push({nome:String(c.alunos.findIndex(a=>a.id===item.aluno.id)+1).padStart(3,'0')+'_'+M().seguro(item.aluno.nome)+'_'+M().seguro(item.aluno.id)+'/'+M().seguro(M().tipos[item.tipo].nome)+'.'+c.formato,blob});
+    }catch(_){if(!vigente(c))return;relatorio.push(item.aluno.nome+' — '+M().tipos[item.tipo].nome+': não gerado; confira acesso, vínculo e conteúdo no formulário.');}
+   }
+   if(!vigente(c))return;if(!arquivos.length){mensagem('Nenhum arquivo pôde ser gerado.\n'+relatorio.join('\n'));c.busy=false;acoes(botao('Voltar à conferência',()=>telaConferencia(c)));return;}
+   const omitidos=c.itens.filter(i=>!i.escolha).map(i=>i.aluno.nome+' — '+M().tipos[i.tipo].nome+': '+(i.candidatos.length?'não selecionado/confirmado':'não encontrado'));
+   let blob,nome;if(arquivos.length===1&&!relatorio.length&&!omitidos.length){blob=arquivos[0].blob;nome=arquivos[0].nome.replaceAll('/','_');}else{
+    mensagem('Preparando o ZIP…');const Zip=await carregarZip(),zip=new Zip();for(const a of arquivos)zip.file(a.nome,a.blob);zip.file('RELATORIO_DA_EXPORTACAO.txt','Exportação de documentos salvos — '+new Date().toLocaleString('pt-BR')+'\nArquivos gerados: '+arquivos.length+'\n\n'+[...relatorio,...omitidos].join('\n'));blob=await zip.generateAsync({type:'blob',compression:'DEFLATE'});nome='Documentos_SRM_'+new Date().toISOString().slice(0,10)+'.zip';
+   }
+   if(!vigente(c))return;const solicitarDownload=()=>{if(!vigente(c))return;const url=URL.createObjectURL(blob),a=n('a');a.href=url;a.download=nome;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),30000);};solicitarDownload();mensagem('Download solicitado: '+arquivos.length+' arquivo(s). Confira a pasta Downloads.\n'+(relatorio.length||omitidos.length?'Há itens não incluídos; consulte o relatório dentro do ZIP.':'Todos os documentos escolhidos foram gerados.'));c.busy=false;acoes(botao('Baixar novamente',solicitarDownload),botao('Nova seleção',()=>tela1(c)));
+  }catch(_){if(vigente(c)){c.busy=false;mensagem('Não foi possível preparar o pacote. Nenhum dado foi alterado.');acoes(botao('Voltar à conferência',()=>telaConferencia(c)));}}
+ }
+ window.ExportarDocumentos=Object.freeze({abrir,fechar});
+})();
