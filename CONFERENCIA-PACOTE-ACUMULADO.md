@@ -1,3 +1,5 @@
+> **Etapa 34 preparada, ainda não publicada:** [correções de assinaturas no PEI e Relatório](ETAPA-34-ASSINATURAS.md). Inclui todas as melhorias anteriores.
+
 > **Etapa 33 preparada, ainda não publicada:** [associação automática dos documentos antigos sem pop-up](ETAPA-33-VINCULO-AUTOMATICO.md), conforme nomes únicos confirmados pelo usuário. Inclui todas as melhorias anteriores.
 
 > **Etapa 32 preparada, ainda não publicada:** [downloads individuais como padrão, sem exigir ZIP](ETAPA-32-DOWNLOADS-INDIVIDUAIS.md). Inclui todas as etapas anteriores e usa os projetos oficiais.

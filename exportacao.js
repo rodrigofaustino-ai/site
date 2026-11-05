@@ -57,6 +57,8 @@
       if (node.nodeType === 3) return node.textContent.trim() ? `<text:p>${inline(node)}</text:p>` : '';
       if (node.nodeType !== 1) return '';
       const tag = node.tagName.toLowerCase();
+      if(node.hasAttribute('data-srm-sign-data'))return '<text:p text:style-name="'+(node.getAttribute('data-srm-sign-data')==='left'?'SrmSignDataLeft':'SrmSignData')+'">'+inline(node)+'</text:p>';
+      if (tag === 'table' && node.hasAttribute('data-srm-assinaturas') && window.AssinaturasDocumentos) return AssinaturasDocumentos.odt(node);
       if (tag === 'table') {
         const occupied = [];
         const rows = Array.from(node.rows).map((row,rowIndex) => {
@@ -80,7 +82,7 @@
     }).join('');
     const ns = 'xmlns:draw="urn:oasis:names:tc:opendocument:xmlns:drawing:1.0" xmlns:svg="urn:oasis:names:tc:opendocument:xmlns:svg-compatible:1.0" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0" xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0" xmlns:table="urn:oasis:names:tc:opendocument:xmlns:table:1.0" xmlns:style="urn:oasis:names:tc:opendocument:xmlns:style:1.0" xmlns:fo="urn:oasis:names:tc:opendocument:xmlns:xsl-fo-compatible:1.0"';
     zip.file('mimetype', 'application/vnd.oasis.opendocument.text', {compression:'STORE'});
-    zip.file('content.xml', `<?xml version="1.0" encoding="UTF-8"?><office:document-content ${ns} office:version="1.2"><office:automatic-styles><style:style style:name="Bold" style:family="text"><style:text-properties fo:font-weight="bold"/></style:style><style:style style:name="Italic" style:family="text"><style:text-properties fo:font-style="italic"/></style:style><style:style style:name="Underline" style:family="text"><style:text-properties style:text-underline-style="solid"/></style:style></office:automatic-styles><office:body><office:text>${blocks(root)}</office:text></office:body></office:document-content>`);
+    zip.file('content.xml', `<?xml version="1.0" encoding="UTF-8"?><office:document-content ${ns} office:version="1.2"><office:automatic-styles>${window.AssinaturasDocumentos?AssinaturasDocumentos.estilosOdt:''}<style:style style:name="Bold" style:family="text"><style:text-properties fo:font-weight="bold"/></style:style><style:style style:name="Italic" style:family="text"><style:text-properties fo:font-style="italic"/></style:style><style:style style:name="Underline" style:family="text"><style:text-properties style:text-underline-style="solid"/></style:style></office:automatic-styles><office:body><office:text>${blocks(root)}</office:text></office:body></office:document-content>`);
     zip.file('META-INF/manifest.xml', '<?xml version="1.0"?><manifest:manifest xmlns:manifest="urn:oasis:names:tc:opendocument:xmlns:manifest:1.0" manifest:version="1.2"><manifest:file-entry manifest:full-path="/" manifest:media-type="application/vnd.oasis.opendocument.text"/><manifest:file-entry manifest:full-path="content.xml" manifest:media-type="text/xml"/>' + imageEntries.map(i => `<manifest:file-entry manifest:full-path="${i.path}" manifest:media-type="${i.type}"/>`).join('') + '</manifest:manifest>');
     return zip.generateAsync({type:'blob',mimeType:'application/vnd.oasis.opendocument.text',compression:'DEFLATE'});
   }
@@ -141,7 +143,8 @@
       return Array.from(container.childNodes).flatMap(node => {
         if (node.nodeType === 3) return node.textContent.trim() ? [new Paragraph({children:runs(node,container.tagName==='TH'?{bold:true}:{}),spacing:{before:40,after:40},alignment:AlignmentType.JUSTIFIED})] : [];
         if (node.nodeType !== 1) return [];
-        if (node.tagName === 'TABLE') return [table(node)];
+        if(node.hasAttribute('data-srm-sign-data'))return [new Paragraph({children:runs(node),alignment:node.getAttribute('data-srm-sign-data')==='left'?AlignmentType.LEFT:AlignmentType.CENTER,keepNext:true,spacing:{before:40,after:40}})];
+        if (node.tagName === 'TABLE') return [node.hasAttribute('data-srm-assinaturas')&&window.AssinaturasDocumentos?AssinaturasDocumentos.docx(AssinaturasDocumentos.gruposDoHtml(node)):table(node)];
         if (/^(DIV|SECTION|ARTICLE|UL|OL|LI)$/.test(node.tagName)) return blocks(node);
         return [new Paragraph({children:runs(node,container.tagName==='TH'?{bold:true}:{}),spacing:{before:40,after:40},alignment:AlignmentType.JUSTIFIED,...(/^H[1-6]$/.test(node.tagName)?{style:'PEIHeading'+node.tagName[1],spacing:{before:200,after:60}}:{})})];
       });
@@ -173,18 +176,20 @@
     if (format === 'docx') return download(await htmlDocx(root),filename+'.docx');
     if (format === 'odt') return download(await odt(root),filename+'.odt');
   }
-  async function fromDocx(blob,format,filename) {
+  async function fromDocx(blob,format,filename,options={}) {
     if (!['docx','odt'].includes(format)) throw new Error('Formato inválido.');
     if (format === 'docx') return download(blob,filename+'.docx');
     const converter = await load('mammoth');
     const result = await converter.convertToHtml({arrayBuffer:await blob.arrayBuffer()});
-    return fromHtml(result.value,format,filename);
+    let html=result.value;
+    if(options.assinaturasHtml){const root=clean(html),tables=root.querySelectorAll('table'),last=tables[tables.length-1];if(!last)throw new Error('Bloco de assinaturas não encontrado.');const data=last.previousElementSibling;if(data&&data.textContent.trim()===options.assinaturasLocalData)data.setAttribute('data-srm-sign-data','true');last.replaceWith(document.createRange().createContextualFragment(options.assinaturasHtml));html=root.innerHTML;}
+    return fromHtml(html,format,filename);
   }
   window.SRMExport = {fromDocx,fromHtml,prepararPei:preparePei};
   function preparePei(html) {
     const root=clean(html);
     // Ler cada célula na ordem das linhas, preservando os parágrafos e imagens.
-    Array.from(root.querySelectorAll('table')).reverse().forEach(table=>{
+    Array.from(root.querySelectorAll('table:not([data-srm-assinaturas])')).reverse().forEach(table=>{
       const text=document.createElement('div');
       Array.from(table.rows).forEach(row=>{
         Array.from(row.cells).forEach(cell=>{
@@ -249,6 +254,7 @@
       if(cursor<node.textContent.length)fragment.appendChild(document.createTextNode(node.textContent.slice(cursor)));
       node.replaceWith(fragment);
     });
+    if(window.AssinaturasDocumentos)AssinaturasDocumentos.normalizarPei(root);
     return root.innerHTML;
   }
   window.exportarPei = async function (format) {

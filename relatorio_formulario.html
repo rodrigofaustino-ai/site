@@ -259,6 +259,7 @@
     .sign-grid{grid-template-columns:1fr;}
   }
 </style>
+<script src="assinaturas-documentos.js"></script>
 <script src="exportacao.js"></script>
 <script src="vinculo-aluno.js"></script>
 <link rel="stylesheet" href="vinculo-aluno.css">
@@ -824,6 +825,7 @@ function renderForm(){
         </div>
         <div class="field-row">
           <div class="field-group"><label>Nº de atendimentos realizados</label><input type="number" data-bind="identificacao.atendimentosRealizados" value="${esc(id.atendimentosRealizados)}" min="0"></div>
+          <div class="field-group"><label for="relatorioNomeCoordenacao">Nome da coordenação pedagógica — assinatura</label><input id="relatorioNomeCoordenacao" type="text" data-bind="assinaturas.nomeCoordenador" value="${esc(assr.nomeCoordenador)}"><small>Este nome será impresso no bloco de assinatura da coordenação.</small></div>
           <div></div>
         </div>
       </div>
@@ -902,7 +904,7 @@ function renderForm(){
           <div class="field-group"><label>Cargo / Função</label><input type="text" data-bind="assinaturas.cargoProfessor" value="${esc(assr.cargoProfessor)}"></div>
         </div>
         <div class="field-row">
-          <div class="field-group"><label>Nome do(a) coordenador(a)</label><input type="text" data-bind="assinaturas.nomeCoordenador" value="${esc(assr.nomeCoordenador)}"></div>
+          <div class="field-group"><p>O nome da coordenação para a assinatura é preenchido na seção Identificação.</p></div>
           <div class="field-group"><label>Cargo / Função</label><input type="text" data-bind="assinaturas.cargoCoordenador" value="${esc(assr.cargoCoordenador)}"></div>
         </div>
         <div class="notice" style="margin-top:14px;">
@@ -1197,49 +1199,18 @@ function exportDOCX(s, formato='docx'){
   children.push(sectionTitle('V – PARECER FINAL'));
   children.push(bodyPara(s.parecerFinal));
 
-  // Data/local e assinaturas
-  children.push(separator());
+  // Data/local e assinaturas, sem quadro ou divisor de borda.
   // Data e local em parágrafo
   const dataFmt = assr.data ? new Date(assr.data+'T00:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'}) : '_____________________';
   const localStr = (assr.local||'_________')+', '+dataFmt+'.';
   children.push(new Paragraph({
     children:[new TextRun({text:localStr,size:24,italics:true})],
-    alignment:AlignmentType.CENTER,
+    alignment:AlignmentType.CENTER,keepNext:true,
     spacing:{before:120,after:160},
   }));
 
-  // Duas linhas de assinatura lado a lado (tabela)
-  const signW=uniformColW(2);
-  children.push(new Table({
-    columnWidths:signW,
-    rows:[
-      new TableRow({
-        height:{value:600,rule:HeightRule.ATLEAST},
-        children:[
-          new TableCell({
-            width:{size:signW[0],type:WidthType.DXA},
-            borders:{top:{style:BorderStyle.SINGLE,size:4,color:'555555',space:4},bottom:{style:BorderStyle.NONE},left:{style:BorderStyle.NONE},right:{style:BorderStyle.NONE}},
-            margins:{top:60,bottom:30,left:0,right:40},
-            children:[
-              new Paragraph({children:[new TextRun({text:assr.nomeProfessor||'_______________________________',size:24,bold:!!assr.nomeProfessor})],spacing:{before:30,after:10}}),
-              new Paragraph({children:[new TextRun({text:assr.cargoProfessor||'Professora SRM',size:22,color:'555555'})],spacing:{before:0,after:0}}),
-            ],
-          }),
-          new TableCell({
-            width:{size:signW[1],type:WidthType.DXA},
-            borders:{top:{style:BorderStyle.SINGLE,size:4,color:'555555',space:4},bottom:{style:BorderStyle.NONE},left:{style:BorderStyle.NONE},right:{style:BorderStyle.NONE}},
-            margins:{top:60,bottom:30,left:40,right:0},
-            children:[
-              new Paragraph({children:[new TextRun({text:assr.nomeCoordenador||'_______________________________',size:24,bold:!!assr.nomeCoordenador})],spacing:{before:30,after:10}}),
-              new Paragraph({children:[new TextRun({text:assr.cargoCoordenador||'Coordenadora Pedagógica',size:22,color:'555555'})],spacing:{before:0,after:0}}),
-            ],
-          }),
-        ],
-      }),
-    ],
-    width:{size:TABLE_W,type:WidthType.DXA},
-    layout:TableLayoutType.FIXED,
-  }));
+  const assinantes=[[{nome:assr.nomeProfessor||id.professorSRM||'',cargo:assr.cargoProfessor||'Professor(a) SRM'},{nome:assr.nomeCoordenador||'',cargo:assr.cargoCoordenador||'Coordenação pedagógica'}]];
+  children.push(AssinaturasDocumentos.docx(assinantes));
 
   const doc = new Document({
     styles:{
@@ -1269,7 +1240,7 @@ function exportDOCX(s, formato='docx'){
   return Packer.toBlob(doc).then(async blob=>{
     const nome=(s.identificacao.nome||'Relatório')
       .normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9]+/g,'_');
-    await SRMExport.fromDocx(blob, formato, `Relatorio_SRM_${nome}`);
+    await SRMExport.fromDocx(blob, formato, `Relatorio_SRM_${nome}`,{assinaturasHtml:AssinaturasDocumentos.html(assinantes),assinaturasLocalData:localStr});
     showToast(formato.toUpperCase()+' gerado com sucesso.');
   }).catch(err=>{
     if(window.SRMExportacaoWorker)throw err;

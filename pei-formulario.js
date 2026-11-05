@@ -272,10 +272,8 @@
     }
     const date=valor(data,'assinaturas.data');
     const written=/^\d{4}-\d{2}-\d{2}$/.test(date)?new Intl.DateTimeFormat('pt-BR',{day:'numeric',month:'long',year:'numeric'}).format(new Date(date+'T12:00:00')):'____ de __________________ de ______';
-    html+='<p>'+esc(valor(data,'assinaturas.local')||'Cambé')+', '+esc(written)+'.</p>';
-    for(const [key,label] of [['regente','Professor(a) regente'],['apoio','Professor(a) de apoio'],['coordenador','Coordenador(a) pedagógico(a)']]){
-      html+='<p>________________________________________</p><p>Nome: '+esc(valor(data,'assinaturas.'+key))+'</p><p>'+label+'</p>';
-    }
+    html+='<p data-srm-sign-data="left">'+esc(valor(data,'assinaturas.local')||'Cambé')+', '+esc(written)+'.</p>';
+    html+=AssinaturasDocumentos.html([[{nome:valor(data,'assinaturas.regente'),cargo:'Professor(a) regente'},{nome:valor(data,'assinaturas.apoio'),cargo:'Professor(a) de apoio'}],[{nome:valor(data,'assinaturas.coordenador'),cargo:'Coordenador(a) pedagógico(a)'}]]);
     return html;
   }
   if(window.SRMExportacaoWorker){window.PEIFormulario={grupos,criarEstado,conteudo};return;}

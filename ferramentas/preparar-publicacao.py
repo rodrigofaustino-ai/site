@@ -1,6 +1,7 @@
 """Gera uma pasta nova e um ZIP de publicação, sem tocar em serviços remotos."""
 from pathlib import Path
 import argparse, datetime, hashlib, json, re, shutil, subprocess, zipfile
+from zoneinfo import ZoneInfo
 from html.parser import HTMLParser
 from urllib.parse import unquote, urlsplit
 
@@ -36,7 +37,7 @@ def validar(pasta):
     if faltantes:raise ValueError('Referências locais ausentes: '+repr(faltantes))
 
 def main():
-    p=argparse.ArgumentParser();p.add_argument('destino',type=Path);p.add_argument('zip',type=Path);args=p.parse_args()
+    p=argparse.ArgumentParser();p.add_argument('destino',type=Path);p.add_argument('zip',type=Path);p.add_argument('--etapa',type=int,default=34);args=p.parse_args()
     destino=args.destino.resolve();arquivo_zip=args.zip.resolve()
     if destino==ROOT or destino.is_relative_to(ROOT):raise ValueError('Use uma pasta nova fora do repositório de fonte.')
     if destino.exists() and any(destino.iterdir()):raise ValueError('A pasta de destino precisa estar vazia ou não existir.')
@@ -68,6 +69,11 @@ Exportar Documentos oferece DOCX/ODT individuais por padrão. ZIP é opcional.
 A associação de documentos antigos únicos pelo nome ocorre na primeira abertura:
 ela grava apenas alunoId, sem exigir Salvar e sem alterar o texto do documento.
 
+ASSINATURAS
+No Relatório, o nome da coordenação fica na seção Identificação. Preencha e salve
+para o nome aparecer também na exportação em lote. PEI e Relatório reservam
+espaço para assinatura e centralizam linha, nome e cargo, sem quadro de bordas.
+
 OBSERVAÇÕES
 Os backups de dados e arquivos devem ser guardados separadamente. Este ZIP contém
 somente o código do site e seus recursos estáticos; não contém registros do banco.
@@ -75,10 +81,10 @@ A transferência administrativa permanece temporariamente bloqueada.
 Uma reversão de deploy retorna o código, mas não desfaz gravações feitas no banco.
 Os testes foram locais, com dados fictícios; não validam credenciais reais, índices,
 serviços externos de IA ou a configuração remota atual de todos os serviços.
-''')
+'''.replace('etapa 33','etapa '+str(args.etapa)))
     validar(destino)
     files={str(f.relative_to(destino)):hashlib.sha256(f.read_bytes()).hexdigest() for f in sorted(destino.rglob('*')) if f.is_file()}
-    manifest={'versao':'etapa-33','site':'https://saladerecursos.netlify.app/','commit_fonte':commit,'preparado_em':'2026-11-05','arquivos_sha256':files}
+    manifest={'versao':'etapa-'+str(args.etapa),'site':'https://saladerecursos.netlify.app/','commit_fonte':commit,'preparado_em':datetime.datetime.now(ZoneInfo('America/Sao_Paulo')).date().isoformat(),'arquivos_sha256':files}
     (destino/'PUBLICACAO.json').write_text(json.dumps(manifest,ensure_ascii=False,indent=2)+'\n')
     with zipfile.ZipFile(arquivo_zip,'w',zipfile.ZIP_DEFLATED) as z:
         for arq in sorted(destino.rglob('*')):
