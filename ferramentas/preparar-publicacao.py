@@ -37,7 +37,7 @@ def validar(pasta):
     if faltantes:raise ValueError('Referências locais ausentes: '+repr(faltantes))
 
 def main():
-    p=argparse.ArgumentParser();p.add_argument('destino',type=Path);p.add_argument('zip',type=Path);p.add_argument('--etapa',type=int,default=34);args=p.parse_args()
+    p=argparse.ArgumentParser();p.add_argument('destino',type=Path);p.add_argument('zip',type=Path);p.add_argument('--etapa',type=int,default=36);args=p.parse_args()
     destino=args.destino.resolve();arquivo_zip=args.zip.resolve()
     if destino==ROOT or destino.is_relative_to(ROOT):raise ValueError('Use uma pasta nova fora do repositório de fonte.')
     if destino.exists() and any(destino.iterdir()):raise ValueError('A pasta de destino precisa estar vazia ou não existir.')
@@ -53,7 +53,13 @@ def main():
 
 Inclui as melhorias acumuladas até a etapa 33.
 Conexões: salamulti (Diário/PEI) e paee-3fea6 (PAEE/Diagnóstica/Relatório).
-Não é uma cópia isolada de teste. Não é necessário alterar regras do Firebase.
+Não é uma cópia isolada de teste.
+ATENÇÃO — QUESTIONÁRIO DA FAMÍLIA
+Antes de publicar esta versão, guarde as regras atuais e atualize somente as regras
+DO CLOUD FIRESTORE do projeto salamulti com o arquivo completo revisado:
+https://github.com/rodrigofaustino-ai/site/blob/melhorias/etapa-36-questionario-familia/producao/salamulti.rules
+Não altere o projeto paee-3fea6, Storage ou Realtime Database nesta etapa.
+As regras são preparadas no código; a publicação delas no Firebase é manual.
 
 PARA PUBLICAR
 1. Guarde o endereço/identificador do deploy oficial atual para eventual retorno.
@@ -63,6 +69,10 @@ PARA PUBLICAR
 5. Aguarde Published e atualize o site com Ctrl + Shift + R.
 6. Confira com sua conta e outra conta de professor: alunos, documentos antigos,
    atendimentos, frequência, arquivamento/reativação, Meu dia e exportação.
+7. Em uma ficha de aluno fictício, abra Questionário da família, gere e copie um
+   link. Abra-o em janela anônima/celular, responda e envie. Retorne ao professor e
+   clique em Atualizar respostas para conferir o relato e os itens correspondentes.
+   Confira também a desativação do link. Não use dados reais nesse teste.
 
 DOCUMENTOS DOS PROFESSORES
 Exportar Documentos oferece DOCX/ODT individuais por padrão. ZIP é opcional.

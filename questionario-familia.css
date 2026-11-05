@@ -1,0 +1,37 @@
+:root{--familia-verde:#175136;--familia-suave:#edf4e9;--familia-borda:#cbd9cc;--familia-texto:#24332b}
+body.familia-publica{margin:0;background:#f4f5f2;color:var(--familia-texto);font:16px/1.6 Arial,sans-serif}
+.familia-publica header{background:var(--familia-verde);color:white;padding:22px max(20px,calc((100vw - 760px)/2));font-size:19px;font-weight:bold}
+.familia-publica main{max-width:760px;margin:24px auto;padding:0 18px 40px}
+.familia-publica h1{font-size:27px;line-height:1.3}.familia-publica h2{font-size:22px;line-height:1.4}
+.familia-cartao{background:white;border:1px solid var(--familia-borda);border-radius:14px;padding:22px;margin-bottom:18px}
+.familia-nota{background:var(--familia-suave);border-radius:9px;padding:14px;font-size:14px;line-height:1.6}
+.familia-publica label,.familia-dialog label{display:block;font-weight:600;margin:12px 0 5px}
+.familia-publica input[type=text],.familia-publica textarea,.familia-publica select,.familia-dialog input,.familia-dialog select{box-sizing:border-box;width:100%;padding:11px;border:1px solid #98ae9d;border-radius:8px;font:16px Arial;background:white;color:#24332b}
+.familia-publica textarea{min-height:96px;resize:vertical}.familia-publica fieldset{border:0;padding:0;margin:24px 0}
+.familia-publica legend{font-weight:600;line-height:1.5;margin-bottom:10px}.familia-publica .familia-opcao{display:flex;gap:10px;align-items:flex-start;font-weight:400;padding:10px;border:1px solid #d5e0d5;border-radius:8px;margin:7px 0;cursor:pointer}
+.familia-opcao input{margin-top:4px;flex-shrink:0;accent-color:var(--familia-verde);width:18px;height:18px}
+.familia-publica button,.familia-dialog button{border:1px solid var(--familia-verde);border-radius:8px;min-height:42px;padding:10px 14px;background:#fff;color:var(--familia-verde);font:600 14px Arial;cursor:pointer}
+.familia-publica button.primario,.familia-dialog button.primario{background:var(--familia-verde);color:white}
+.familia-publica button:disabled,.familia-dialog button:disabled{opacity:.55;cursor:wait}
+.familia-acoes{display:flex;gap:10px;flex-wrap:wrap;justify-content:space-between;margin-top:18px}
+.familia-publica :focus-visible,.familia-dialog :focus-visible{outline:3px solid #936300;outline-offset:3px}
+.familia-publica progress{width:100%;height:12px;accent-color:var(--familia-verde)}
+.familia-erro{color:#8c2734;font-weight:600}.familia-publica #familiaStatus{white-space:pre-wrap}
+.familia-dialog{max-width:920px;width:calc(100vw - 36px);max-height:90vh;box-sizing:border-box;border:1px solid var(--familia-borda);border-radius:14px;padding:22px;color:var(--familia-texto);font:15px/1.6 Arial}
+.familia-dialog::backdrop{background:#17332488}.familia-dialog h2{margin-top:0}.familia-dialog details{margin:14px 0;border:1px solid var(--familia-borda);padding:12px;border-radius:8px}
+.familia-dialog summary{cursor:pointer;font-weight:600}.familia-dialog pre,.familia-relato{white-space:pre-wrap;overflow-wrap:anywhere;font:inherit}
+.familia-resposta-item{padding:12px 0;border-bottom:1px solid #dce5dc}.familia-resposta-item p{margin:6px 0}.familia-tecnico{font-size:12px;color:#56665a}
+.familia-dialog .familia-link{font-size:14px;word-break:break-all}.familia-dialog .familia-fechar{float:right}.familia-somente-consulta{font-size:13px;color:#56665a}
+@media(max-width:480px){.familia-cartao{padding:17px}.familia-publica main{padding:0 12px 28px;margin-top:16px}.familia-dialog{padding:16px}.familia-acoes button{flex:1}}
+@media print{.familia-dialog{position:static;max-height:none;width:auto}.familia-dialog button,.familia-dialog input,.familia-dialog select{display:none}}
+.familia-publica details{margin:12px 0}.familia-publica summary{cursor:pointer;color:#175136;font-size:14px;padding:7px 0}
+.familia-publica .familia-nota{border-left:3px solid #8ca984}
+.familia-publica fieldset+fieldset{border-top:1px solid #e0e8df;padding-top:20px}
+.familia-marca{max-width:760px;margin:auto;display:flex;gap:16px;align-items:center;line-height:1.35}
+.familia-marca svg{width:42px;height:42px;fill:none;stroke:currentColor;stroke-width:2;flex-shrink:0}
+.familia-marca small{display:block;font-size:16px;font-weight:400;margin-top:4px}
+.familia-publica h1:focus,.familia-publica h2:focus{outline:none}
+.familia-publica button{min-height:44px}
+@media(max-width:480px){.familia-publica .familia-cartao>button.primario{width:100%}.familia-marca{font-size:20px}.familia-marca small{font-size:15px}}
+.familia-publica h1,.familia-publica h2{color:#174b30}
+.familia-sucesso{display:flex;align-items:center;justify-content:center;width:76px;height:76px;margin:24px auto;background:#397b36;border-radius:50%;color:#fff;font:bold 48px Arial}

@@ -256,7 +256,7 @@ match /leituras/{leitorUid} {
 function familiaTokenValido(token) { return token.matches('[A-Za-z0-9_-]{43}'); }
 function familiaLinkAtivo(token) {
   let convite = get(/databases/$(database)/documents/convitesFamilia/$(token)).data;
-  return familiaTokenValido(token) && convite.ativa == true && convite.expiraEm > request.time && convite.versao == 1;
+  return familiaTokenValido(token) && convite.ativa == true && convite.expiraEm > request.time && convite.versao in [1,2];
 }
 function familiaDonoAluno(data) {
   return request.auth != null && data.professorUid == request.auth.uid
@@ -269,7 +269,8 @@ match /questionariosFamilia/{alunoId} {
       && familiaDonoAluno(data) && data.alunoId == alunoId && familiaTokenValido(data.token)
       && data.ativa is bool && data.criadoEm is timestamp && data.expiraEm is timestamp;
   }
-  allow read: if request.auth != null && (resource == null || resource.data.professorUid == request.auth.uid);
+  allow get: if request.auth != null && (!exists(/databases/$(database)/documents/questionariosFamilia/$(alunoId)) || resource.data.professorUid == request.auth.uid);
+  allow list: if request.auth != null && resource.data.professorUid == request.auth.uid;
   allow create: if valid(request.resource.data) && request.resource.data.criadoEm == request.time
     && getAfter(/databases/$(database)/documents/convitesFamilia/$(request.resource.data.token)).data.alunoId == alunoId;
   allow update: if request.auth != null && resource.data.professorUid == request.auth.uid && valid(request.resource.data)
@@ -280,13 +281,14 @@ match /questionariosFamilia/{alunoId} {
 }
 match /convitesFamilia/{token} {
   allow get: if (request.auth != null && resource.data.professorUid == request.auth.uid)
-    || (familiaTokenValido(token) && resource.data.ativa == true && resource.data.expiraEm > request.time && resource.data.versao == 1);
+    || (familiaTokenValido(token) && resource.data.ativa == true && resource.data.expiraEm > request.time && resource.data.versao in [1,2]);
   allow list: if request.auth != null && resource.data.professorUid == request.auth.uid;
   allow create: if familiaTokenValido(token) && familiaDonoAluno(request.resource.data)
     && request.resource.data.keys().hasAll(['professorUid','alunoId','apelido','versao','ativa','criadoEm','expiraEm'])
-    && request.resource.data.keys().hasOnly(['professorUid','alunoId','apelido','versao','ativa','criadoEm','expiraEm'])
+    && request.resource.data.keys().hasOnly(['professorUid','alunoId','apelido','versao','ativa','criadoEm','expiraEm','periodo'])
     && request.resource.data.apelido is string && request.resource.data.apelido.size() > 0 && request.resource.data.apelido.size() <= 80
-    && request.resource.data.versao == 1 && request.resource.data.ativa == true
+    && request.resource.data.versao in [1,2] && request.resource.data.ativa == true
+    && (request.resource.data.versao == 1 || (request.resource.data.periodo is string && request.resource.data.periodo.size() > 0 && request.resource.data.periodo.size() <= 80))
     && request.resource.data.criadoEm == request.time && request.resource.data.expiraEm > request.time
     && request.resource.data.expiraEm <= request.time + duration.value(90,'d');
   allow update: if request.auth != null && resource.data.professorUid == request.auth.uid
@@ -297,11 +299,20 @@ match /enviosFamilia/{token} {
   allow get: if familiaLinkAtivo(token) || (request.auth != null && get(/databases/$(database)/documents/convitesFamilia/$(token)).data.professorUid == request.auth.uid);
   allow list: if false;
   allow create: if familiaLinkAtivo(token)
-    && request.resource.data.keys().hasAll(['enviadoEm']) && request.resource.data.keys().hasOnly(['enviadoEm'])
+    && request.resource.data.keys().hasAll(['enviadoEm'])
     && request.resource.data.enviadoEm == request.time
-    && getAfter(/databases/$(database)/documents/respostasFamilia/$(token)).data.enviadoEm == request.time;
+    && ((get(/databases/$(database)/documents/convitesFamilia/$(token)).data.versao == 1
+        && request.resource.data.keys().hasOnly(['enviadoEm'])
+        && getAfter(/databases/$(database)/documents/respostasFamilia/$(token)).data.enviadoEm == request.time)
+      || (get(/databases/$(database)/documents/convitesFamilia/$(token)).data.versao == 2
+        && request.resource.data.keys().hasAll(['envioId'])
+        && request.resource.data.keys().hasOnly(['enviadoEm','envioId'])
+        && request.resource.data.envioId is string && request.resource.data.envioId.matches('[a-f0-9]{32}')
+        && getAfter(/databases/$(database)/documents/respostasFamiliaCompletas/$(token)).data.enviadoEm == request.time
+        && getAfter(/databases/$(database)/documents/respostasFamiliaCompletas/$(token)).data.envioId == request.resource.data.envioId));
   allow update, delete: if false;
 }
+
 function familiaNotaValida(texto) { return texto is string && texto.size() <= 1000; }
 function familiaNotasValidas(notas) {
   return notas is map && notas.keys().hasOnly(['comunica_escolha','comunica_chamado','comunica_fatos','leitura_nome','leitura_imagens','leitura_historia','escrita_registro','escrita_nome','escrita_palavras','percepcao_comando','percepcao_textura','percepcao_objeto','avd_alimentacao','avd_higiene','avd_vestir','social_interacao','social_emocoes','social_combinados','numeros_uso','numeros_quantidade','numeros_compara','formas_iguais','formas_reconhece','formas_cores','medidas_rotina','medidas_sequencia','medidas_espaco'])
@@ -369,6 +380,7 @@ function familiaRespostasValidas(respostas) {
 match /respostasFamilia/{token} {
   allow read: if request.auth != null && resource.data.professorUid == request.auth.uid;
   allow create: if familiaLinkAtivo(token)
+    && get(/databases/$(database)/documents/convitesFamilia/$(token)).data.versao == 1
     && request.resource.data.keys().hasAll(['professorUid','alunoId','versao','responsavel','vinculo','respostas','observacoes','ciencia','enviadoEm'])
     && request.resource.data.keys().hasOnly(['professorUid','alunoId','versao','responsavel','vinculo','respostas','observacoes','ciencia','enviadoEm','observacoesPerguntas'])
     && request.resource.data.professorUid == get(/databases/$(database)/documents/convitesFamilia/$(token)).data.professorUid
@@ -382,6 +394,176 @@ match /respostasFamilia/{token} {
     && familiaNotasValidas(request.resource.data.get('observacoesPerguntas', {}))
     && familiaRespostasValidas(request.resource.data.respostas);
   allow update, delete: if false;
+}
+
+
+// Questionário v2: 27 grupos, seleção do modelo e contexto familiar.
+// O envio das nove áreas é atômico; respostas anteriores v1 permanecem legíveis.
+function familiaItemCompleto(resposta,nota,opcoes) {
+  return resposta in opcoes && nota is string && nota.size() <= 1000
+    && (resposta != 'relato' || nota.size() > 0);
+}
+function familiaAreasCompletas(token) {
+  return getAfter(/databases/$(database)/documents/respostasFamiliaCompletas/$(token)/areas/oralidade).data.enviadoEm == request.time
+    && getAfter(/databases/$(database)/documents/respostasFamiliaCompletas/$(token)/areas/leitura).data.enviadoEm == request.time
+    && getAfter(/databases/$(database)/documents/respostasFamiliaCompletas/$(token)/areas/escrita).data.enviadoEm == request.time
+    && getAfter(/databases/$(database)/documents/respostasFamiliaCompletas/$(token)/areas/percepcao).data.enviadoEm == request.time
+    && getAfter(/databases/$(database)/documents/respostasFamiliaCompletas/$(token)/areas/avd).data.enviadoEm == request.time
+    && getAfter(/databases/$(database)/documents/respostasFamiliaCompletas/$(token)/areas/social).data.enviadoEm == request.time
+    && getAfter(/databases/$(database)/documents/respostasFamiliaCompletas/$(token)/areas/numeros).data.enviadoEm == request.time
+    && getAfter(/databases/$(database)/documents/respostasFamiliaCompletas/$(token)/areas/medidas).data.enviadoEm == request.time
+    && getAfter(/databases/$(database)/documents/respostasFamiliaCompletas/$(token)/areas/rotina).data.enviadoEm == request.time;
+}
+function familiaArea_oralidade(d) {
+  return d.respostas is map && d.observacoesPerguntas is map
+    && d.respostas.keys().hasAll(["oralidade_1", "oralidade_15", "oralidade_12", "oralidade_3", "oralidade_17", "oralidade_4", "oralidade_19", "oralidade_5", "oralidade_6", "oralidade_10", "oralidade_20", "oralidade_14"])
+    && d.respostas.keys().hasOnly(["oralidade_1", "oralidade_15", "oralidade_12", "oralidade_3", "oralidade_17", "oralidade_4", "oralidade_19", "oralidade_5", "oralidade_6", "oralidade_10", "oralidade_20", "oralidade_14"])
+    && d.observacoesPerguntas.keys().hasOnly(["oralidade_1", "oralidade_15", "oralidade_12", "oralidade_3", "oralidade_17", "oralidade_4", "oralidade_19", "oralidade_5", "oralidade_6", "oralidade_10", "oralidade_20", "oralidade_14"])
+    && familiaItemCompleto(d.respostas.oralidade_1, d.observacoesPerguntas.get('oralidade_1',''),["relato", "nao_sabe", "nao_informar"])
+    && familiaItemCompleto(d.respostas.oralidade_15, d.observacoesPerguntas.get('oralidade_15',''),["observa", "apoio", "ainda_nao", "nao_sabe", "nao_informar"])
+    && familiaItemCompleto(d.respostas.oralidade_12, d.observacoesPerguntas.get('oralidade_12',''),["observa", "apoio", "ainda_nao", "nao_sabe", "nao_informar"])
+    && familiaItemCompleto(d.respostas.oralidade_3, d.observacoesPerguntas.get('oralidade_3',''),["observa", "apoio", "ainda_nao", "nao_sabe", "nao_informar"])
+    && familiaItemCompleto(d.respostas.oralidade_17, d.observacoesPerguntas.get('oralidade_17',''),["observa", "apoio", "ainda_nao", "nao_sabe", "nao_informar"])
+    && familiaItemCompleto(d.respostas.oralidade_4, d.observacoesPerguntas.get('oralidade_4',''),["observa", "apoio", "ainda_nao", "nao_sabe", "nao_informar"])
+    && familiaItemCompleto(d.respostas.oralidade_19, d.observacoesPerguntas.get('oralidade_19',''),["observa", "apoio", "ainda_nao", "nao_sabe", "nao_informar"])
+    && familiaItemCompleto(d.respostas.oralidade_5, d.observacoesPerguntas.get('oralidade_5',''),["frequente", "as_vezes", "nao_percebe", "nao_utiliza_fala", "nao_sabe", "nao_informar"])
+    && familiaItemCompleto(d.respostas.oralidade_6, d.observacoesPerguntas.get('oralidade_6',''),["frequente", "as_vezes", "nao_percebe", "nao_utiliza_fala", "nao_sabe", "nao_informar"])
+    && familiaItemCompleto(d.respostas.oralidade_10, d.observacoesPerguntas.get('oralidade_10',''),["observa", "apoio", "ainda_nao", "nao_sabe", "nao_informar"])
+    && familiaItemCompleto(d.respostas.oralidade_20, d.observacoesPerguntas.get('oralidade_20',''),["observa", "apoio", "ainda_nao", "nao_sabe", "nao_informar"])
+    && familiaItemCompleto(d.respostas.oralidade_14, d.observacoesPerguntas.get('oralidade_14',''),["observa", "apoio", "ainda_nao", "nao_sabe", "nao_informar"]);
+}
+function familiaArea_leitura(d) {
+  return d.respostas is map && d.observacoesPerguntas is map
+    && d.respostas.keys().hasAll(["leitura_2", "leitura_3", "leitura_7", "leitura_8", "leitura_9", "leitura_10", "leitura_11"])
+    && d.respostas.keys().hasOnly(["leitura_2", "leitura_3", "leitura_7", "leitura_8", "leitura_9", "leitura_10", "leitura_11"])
+    && d.observacoesPerguntas.keys().hasOnly(["leitura_2", "leitura_3", "leitura_7", "leitura_8", "leitura_9", "leitura_10", "leitura_11"])
+    && familiaItemCompleto(d.respostas.leitura_2, d.observacoesPerguntas.get('leitura_2',''),["observa", "apoio", "ainda_nao", "nao_sabe", "nao_informar"])
+    && familiaItemCompleto(d.respostas.leitura_3, d.observacoesPerguntas.get('leitura_3',''),["relato", "nao_sabe", "nao_informar"])
+    && familiaItemCompleto(d.respostas.leitura_7, d.observacoesPerguntas.get('leitura_7',''),["observa", "apoio", "ainda_nao", "nao_sabe", "nao_informar"])
+    && familiaItemCompleto(d.respostas.leitura_8, d.observacoesPerguntas.get('leitura_8',''),["observa", "apoio", "ainda_nao", "nao_sabe", "nao_informar"])
+    && familiaItemCompleto(d.respostas.leitura_9, d.observacoesPerguntas.get('leitura_9',''),["observa", "apoio", "ainda_nao", "nao_sabe", "nao_informar"])
+    && familiaItemCompleto(d.respostas.leitura_10, d.observacoesPerguntas.get('leitura_10',''),["observa", "apoio", "ainda_nao", "nao_sabe", "nao_informar"])
+    && familiaItemCompleto(d.respostas.leitura_11, d.observacoesPerguntas.get('leitura_11',''),["observa", "apoio", "ainda_nao", "nao_sabe", "nao_informar"]);
+}
+function familiaArea_escrita(d) {
+  return d.respostas is map && d.observacoesPerguntas is map
+    && d.respostas.keys().hasAll(["escrita_1", "escrita_2", "escrita_4", "escrita_5", "escrita_6", "escrita_7"])
+    && d.respostas.keys().hasOnly(["escrita_1", "escrita_2", "escrita_4", "escrita_5", "escrita_6", "escrita_7"])
+    && d.observacoesPerguntas.keys().hasOnly(["escrita_1", "escrita_2", "escrita_4", "escrita_5", "escrita_6", "escrita_7"])
+    && familiaItemCompleto(d.respostas.escrita_1, d.observacoesPerguntas.get('escrita_1',''),["sem_modelo", "copia", "com_ajuda", "ainda_nao", "nao_sabe", "nao_informar"])
+    && familiaItemCompleto(d.respostas.escrita_2, d.observacoesPerguntas.get('escrita_2',''),["sem_modelo", "copia", "com_ajuda", "ainda_nao", "nao_sabe", "nao_informar"])
+    && familiaItemCompleto(d.respostas.escrita_4, d.observacoesPerguntas.get('escrita_4',''),["sem_modelo", "copia", "com_ajuda", "ainda_nao", "nao_sabe", "nao_informar"])
+    && familiaItemCompleto(d.respostas.escrita_5, d.observacoesPerguntas.get('escrita_5',''),["sem_modelo", "copia", "com_ajuda", "ainda_nao", "nao_sabe", "nao_informar"])
+    && familiaItemCompleto(d.respostas.escrita_6, d.observacoesPerguntas.get('escrita_6',''),["sem_modelo", "copia", "com_ajuda", "ainda_nao", "nao_sabe", "nao_informar"])
+    && familiaItemCompleto(d.respostas.escrita_7, d.observacoesPerguntas.get('escrita_7',''),["sem_modelo", "copia", "com_ajuda", "ainda_nao", "nao_sabe", "nao_informar"]);
+}
+function familiaArea_percepcao(d) {
+  return d.respostas is map && d.observacoesPerguntas is map
+    && d.respostas.keys().hasAll(["percepcao_4", "percepcao_7", "percepcao_5", "percepcao_6", "percepcao_8"])
+    && d.respostas.keys().hasOnly(["percepcao_4", "percepcao_7", "percepcao_5", "percepcao_6", "percepcao_8"])
+    && d.observacoesPerguntas.keys().hasOnly(["percepcao_4", "percepcao_7", "percepcao_5", "percepcao_6", "percepcao_8"])
+    && familiaItemCompleto(d.respostas.percepcao_4, d.observacoesPerguntas.get('percepcao_4',''),["observa", "apoio", "ainda_nao", "nao_sabe", "nao_informar"])
+    && familiaItemCompleto(d.respostas.percepcao_7, d.observacoesPerguntas.get('percepcao_7',''),["observa", "apoio", "ainda_nao", "nao_sabe", "nao_informar"])
+    && familiaItemCompleto(d.respostas.percepcao_5, d.observacoesPerguntas.get('percepcao_5',''),["relato", "nao_sabe", "nao_informar"])
+    && familiaItemCompleto(d.respostas.percepcao_6, d.observacoesPerguntas.get('percepcao_6',''),["relato", "nao_sabe", "nao_informar"])
+    && familiaItemCompleto(d.respostas.percepcao_8, d.observacoesPerguntas.get('percepcao_8',''),["observa", "apoio", "ainda_nao", "nao_sabe", "nao_informar"]);
+}
+function familiaArea_avd(d) {
+  return d.respostas is map && d.observacoesPerguntas is map
+    && d.respostas.keys().hasAll(["avd_0", "avd_1", "avd_2", "avd_3", "avd_alimentacao_contexto", "avd_4", "avd_5", "avd_6", "avd_7", "avd_8", "avd_9_ziper", "avd_9_tampas", "avd_11", "avd_12", "avd_13", "avd_14"])
+    && d.respostas.keys().hasOnly(["avd_0", "avd_1", "avd_2", "avd_3", "avd_alimentacao_contexto", "avd_4", "avd_5", "avd_6", "avd_7", "avd_8", "avd_9_ziper", "avd_9_tampas", "avd_11", "avd_12", "avd_13", "avd_14"])
+    && d.observacoesPerguntas.keys().hasOnly(["avd_0", "avd_1", "avd_2", "avd_3", "avd_alimentacao_contexto", "avd_4", "avd_5", "avd_6", "avd_7", "avd_8", "avd_9_ziper", "avd_9_tampas", "avd_11", "avd_12", "avd_13", "avd_14"])
+    && familiaItemCompleto(d.respostas.avd_0, d.observacoesPerguntas.get('avd_0',''),["observa", "apoio", "ainda_nao", "nao_sabe", "nao_informar"])
+    && familiaItemCompleto(d.respostas.avd_1, d.observacoesPerguntas.get('avd_1',''),["autonomo", "alguma_ajuda", "muita_ajuda", "nao_sabe", "nao_informar"])
+    && familiaItemCompleto(d.respostas.avd_2, d.observacoesPerguntas.get('avd_2',''),["autonomo", "alguma_ajuda", "muita_ajuda", "nao_sabe", "nao_informar"])
+    && familiaItemCompleto(d.respostas.avd_3, d.observacoesPerguntas.get('avd_3',''),["autonomo", "alguma_ajuda", "muita_ajuda", "nao_sabe", "nao_informar"])
+    && familiaItemCompleto(d.respostas.avd_alimentacao_contexto, d.observacoesPerguntas.get('avd_alimentacao_contexto',''),["relato", "nao_sabe", "nao_informar"])
+    && familiaItemCompleto(d.respostas.avd_4, d.observacoesPerguntas.get('avd_4',''),["autonomo", "alguma_ajuda", "muita_ajuda", "nao_sabe", "nao_informar"])
+    && familiaItemCompleto(d.respostas.avd_5, d.observacoesPerguntas.get('avd_5',''),["autonomo", "alguma_ajuda", "muita_ajuda", "nao_sabe", "nao_informar"])
+    && familiaItemCompleto(d.respostas.avd_6, d.observacoesPerguntas.get('avd_6',''),["autonomo", "alguma_ajuda", "muita_ajuda", "nao_sabe", "nao_informar"])
+    && familiaItemCompleto(d.respostas.avd_7, d.observacoesPerguntas.get('avd_7',''),["autonomo", "alguma_ajuda", "muita_ajuda", "nao_sabe", "nao_informar"])
+    && familiaItemCompleto(d.respostas.avd_8, d.observacoesPerguntas.get('avd_8',''),["autonomo", "alguma_ajuda", "muita_ajuda", "nao_sabe", "nao_informar"])
+    && familiaItemCompleto(d.respostas.avd_9_ziper, d.observacoesPerguntas.get('avd_9_ziper',''),["autonomo", "alguma_ajuda", "muita_ajuda", "nao_sabe", "nao_informar"])
+    && familiaItemCompleto(d.respostas.avd_9_tampas, d.observacoesPerguntas.get('avd_9_tampas',''),["autonomo", "alguma_ajuda", "muita_ajuda", "nao_sabe", "nao_informar"])
+    && familiaItemCompleto(d.respostas.avd_11, d.observacoesPerguntas.get('avd_11',''),["observa", "apoio", "ainda_nao", "nao_sabe", "nao_informar"])
+    && familiaItemCompleto(d.respostas.avd_12, d.observacoesPerguntas.get('avd_12',''),["relato", "nao_sabe", "nao_informar"])
+    && familiaItemCompleto(d.respostas.avd_13, d.observacoesPerguntas.get('avd_13',''),["observa", "apoio", "ainda_nao", "nao_sabe", "nao_informar"])
+    && familiaItemCompleto(d.respostas.avd_14, d.observacoesPerguntas.get('avd_14',''),["observa", "apoio", "ainda_nao", "nao_sabe", "nao_informar"]);
+}
+function familiaArea_social(d) {
+  return d.respostas is map && d.observacoesPerguntas is map
+    && d.respostas.keys().hasAll(["social_0", "social_1", "social_2", "social_3", "social_4", "social_5"])
+    && d.respostas.keys().hasOnly(["social_0", "social_1", "social_2", "social_3", "social_4", "social_5"])
+    && d.observacoesPerguntas.keys().hasOnly(["social_0", "social_1", "social_2", "social_3", "social_4", "social_5"])
+    && familiaItemCompleto(d.respostas.social_0, d.observacoesPerguntas.get('social_0',''),["relato", "nao_sabe", "nao_informar"])
+    && familiaItemCompleto(d.respostas.social_1, d.observacoesPerguntas.get('social_1',''),["relato", "nao_sabe", "nao_informar"])
+    && familiaItemCompleto(d.respostas.social_2, d.observacoesPerguntas.get('social_2',''),["relato", "nao_sabe", "nao_informar"])
+    && familiaItemCompleto(d.respostas.social_3, d.observacoesPerguntas.get('social_3',''),["relato", "nao_sabe", "nao_informar"])
+    && familiaItemCompleto(d.respostas.social_4, d.observacoesPerguntas.get('social_4',''),["relato", "nao_sabe", "nao_informar"])
+    && familiaItemCompleto(d.respostas.social_5, d.observacoesPerguntas.get('social_5',''),["relato", "nao_sabe", "nao_informar"]);
+}
+function familiaArea_numeros(d) {
+  return d.respostas is map && d.observacoesPerguntas is map
+    && d.respostas.keys().hasAll(["numeros_4", "numeros_5"])
+    && d.respostas.keys().hasOnly(["numeros_4", "numeros_5"])
+    && d.observacoesPerguntas.keys().hasOnly(["numeros_4", "numeros_5"])
+    && familiaItemCompleto(d.respostas.numeros_4, d.observacoesPerguntas.get('numeros_4',''),["relato", "nao_sabe", "nao_informar"])
+    && familiaItemCompleto(d.respostas.numeros_5, d.observacoesPerguntas.get('numeros_5',''),["relato", "nao_sabe", "nao_informar"]);
+}
+function familiaArea_medidas(d) {
+  return d.respostas is map && d.observacoesPerguntas is map
+    && d.respostas.keys().hasAll(["medidas_8", "medidas_9"])
+    && d.respostas.keys().hasOnly(["medidas_8", "medidas_9"])
+    && d.observacoesPerguntas.keys().hasOnly(["medidas_8", "medidas_9"])
+    && familiaItemCompleto(d.respostas.medidas_8, d.observacoesPerguntas.get('medidas_8',''),["relato", "nao_sabe", "nao_informar"])
+    && familiaItemCompleto(d.respostas.medidas_9, d.observacoesPerguntas.get('medidas_9',''),["relato", "nao_sabe", "nao_informar"]);
+}
+function familiaArea_rotina(d) {
+  return d.respostas is map && d.observacoesPerguntas is map
+    && d.respostas.keys().hasAll(["rotina_sono", "rotina_dia"])
+    && d.respostas.keys().hasOnly(["rotina_sono", "rotina_dia"])
+    && d.observacoesPerguntas.keys().hasOnly(["rotina_sono", "rotina_dia"])
+    && familiaItemCompleto(d.respostas.rotina_sono, d.observacoesPerguntas.get('rotina_sono',''),["relato", "nao_sabe", "nao_informar"])
+    && familiaItemCompleto(d.respostas.rotina_dia, d.observacoesPerguntas.get('rotina_dia',''),["relato", "nao_sabe", "nao_informar"]);
+}
+match /respostasFamiliaCompletas/{token} {
+  allow read: if request.auth != null && resource.data.professorUid == request.auth.uid;
+  allow create: if familiaLinkAtivo(token)
+    && get(/databases/$(database)/documents/convitesFamilia/$(token)).data.versao == 2
+    && request.resource.data.keys().hasAll(['professorUid','alunoId','versao','responsavel','vinculo','contexto','observacoes','ciencia','enviadoEm','envioId'])
+    && request.resource.data.keys().hasOnly(['professorUid','alunoId','versao','responsavel','vinculo','contexto','observacoes','ciencia','enviadoEm','envioId'])
+    && request.resource.data.professorUid == get(/databases/$(database)/documents/convitesFamilia/$(token)).data.professorUid
+    && request.resource.data.alunoId == get(/databases/$(database)/documents/convitesFamilia/$(token)).data.alunoId
+    && request.resource.data.versao == 2 && request.resource.data.ciencia == true
+    && request.resource.data.envioId is string && request.resource.data.envioId.matches('[a-f0-9]{32}')
+    && request.resource.data.envioId == getAfter(/databases/$(database)/documents/enviosFamilia/$(token)).data.envioId
+    && request.resource.data.responsavel is string && request.resource.data.responsavel.size() > 0 && request.resource.data.responsavel.size() <= 120
+    && request.resource.data.vinculo is string && request.resource.data.vinculo.size() > 0 && request.resource.data.vinculo.size() <= 80
+    && request.resource.data.contexto is string && request.resource.data.contexto.size() <= 2000
+    && request.resource.data.observacoes is string && request.resource.data.observacoes.size() <= 2000
+    && request.resource.data.enviadoEm == request.time
+    && getAfter(/databases/$(database)/documents/enviosFamilia/$(token)).data.enviadoEm == request.time
+    && familiaAreasCompletas(token);
+  allow update, delete: if false;
+  match /areas/{area} {
+    allow read: if request.auth != null && get(/databases/$(database)/documents/respostasFamiliaCompletas/$(token)).data.professorUid == request.auth.uid;
+    allow create: if familiaLinkAtivo(token)
+      && request.resource.data.keys().hasAll(['respostas','observacoesPerguntas','enviadoEm'])
+      && request.resource.data.keys().hasOnly(['respostas','observacoesPerguntas','enviadoEm'])
+      && request.resource.data.enviadoEm == request.time
+      && getAfter(/databases/$(database)/documents/respostasFamiliaCompletas/$(token)).data.enviadoEm == request.time
+      && getAfter(/databases/$(database)/documents/enviosFamilia/$(token)).data.enviadoEm == request.time
+      && ((area == 'oralidade' && familiaArea_oralidade(request.resource.data))
+        || (area == 'leitura' && familiaArea_leitura(request.resource.data))
+        || (area == 'escrita' && familiaArea_escrita(request.resource.data))
+        || (area == 'percepcao' && familiaArea_percepcao(request.resource.data))
+        || (area == 'avd' && familiaArea_avd(request.resource.data))
+        || (area == 'social' && familiaArea_social(request.resource.data))
+        || (area == 'numeros' && familiaArea_numeros(request.resource.data))
+        || (area == 'medidas' && familiaArea_medidas(request.resource.data))
+        || (area == 'rotina' && familiaArea_rotina(request.resource.data)));
+    allow update, delete: if false;
+  }
 }
 
   }

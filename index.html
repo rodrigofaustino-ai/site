@@ -502,6 +502,9 @@ hr.sep{border:none;border-top:2px dashed rgba(0,0,0,.06);margin:.2rem 0;}
 <script src="assinaturas-documentos.js"></script>
 <script src="exportacao.js"></script>
 <link rel="stylesheet" href="central-aluno.css">
+<link rel="stylesheet" href="questionario-familia.css">
+<script src="questionario-familia-modelo.js"></script>
+<script src="questionario-familia-professor.js"></script>
 <script src="central-aluno.js"></script>
 <link rel="stylesheet" href="metas-aluno.css">
 <link rel="stylesheet" href="acompanhamento-periodo.css">
@@ -1564,12 +1567,14 @@ async function renderDiagnosticaList(){
         <div class="student-info"><strong>${esc(s.nome||'Sem nome')}</strong>
         <span>${esc(s.turma||'')}</span></div>
         <div class="student-actions">
+          <button type="button" class="central-btn" data-familia="${esc(s.id)}" aria-label="Questionário da família de ${esc(s.nome||'Aluno')}">Família</button>
           <button class="icon-btn open" data-open-diag="${esc(s.nome||'')}" data-id="${s.id}" title="Abrir Diagnóstica">📊</button>
         </div></div>`;
     }).join('');
     c.querySelectorAll('.student-item').forEach(el=>{
       el.addEventListener('click', ()=>abrirDiagnosticaDoAluno(el.dataset.nome, el.dataset.id, list));
     });
+    c.querySelectorAll('[data-familia]').forEach(btn=>btn.addEventListener('click',e=>{e.stopPropagation();const aluno=list.find(a=>a.id===btn.dataset.familia);if(aluno)abrirQuestionarioFamilia(aluno);}));
     c.querySelectorAll('[data-open-diag]').forEach(btn=>btn.addEventListener('click', e=>{
       e.stopPropagation();
       abrirDiagnosticaDoAluno(btn.dataset.openDiag, btn.dataset.id, list);
@@ -3855,6 +3860,11 @@ function configurarMetasAluno(id){
   });
 }
 
+function abrirQuestionarioFamilia(aluno){
+  const uid=professorUid,turno=turnoAtual;
+  window.QuestionarioFamilia.abrir({db,auth,uid,aluno,vigente:()=>professorUid===uid&&turnoAtual===turno&&auth.currentUser?.uid===uid});
+}
+
 function renderCentralAluno(){
   const entryStudent=currentStudentId,entryUid=professorUid;
   window.RegistroAssistido.ativar(entryUid?{alunoId:entryStudent,uid:entryUid,vigente:()=>currentStudentId===entryStudent&&professorUid===entryUid}:null);
@@ -3874,6 +3884,7 @@ function renderCentralAluno(){
       (destino === 'historico' || destino === 'metas' ? campo : campo.closest('.card')).scrollIntoView({block:'start'});
       campo.focus({preventScroll:true});
     },
+    familia:()=>abrirQuestionarioFamilia({...currentProfile,id:currentStudentId}),
     documento: abrirDocumentoCentral
   });
 }

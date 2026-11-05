@@ -210,6 +210,9 @@
 </style>
 <script src="exportacao.js"></script>
 <script src="vinculo-aluno.js"></script>
+<link rel="stylesheet" href="questionario-familia.css">
+<script src="questionario-familia-modelo.js"></script>
+<script src="questionario-familia-professor.js"></script>
 <link rel="stylesheet" href="vinculo-aluno.css">
 <script src="firebase-producao.js"></script>
 <link rel="stylesheet" href="orientacoes-preenchimento.css">
@@ -1385,6 +1388,15 @@ document.addEventListener('DOMContentLoaded', () => {
   const style = document.createElement('style'); style.textContent = '#conexao-diario{box-sizing:border-box}#conexao-diario input,#conexao-diario button{max-width:100%;box-sizing:border-box}#conexao-diario form{display:flex;gap:10px;flex-wrap:wrap}#conexao-diario label{display:grid}@media print{#conexao-diario{display:none!important}}'; document.head.appendChild(style);
   section.innerHTML = '<summary>Preencher identificação com dados do Diário</summary><p>O Diário e os documentos têm contas separadas. Entre no Diário com o mesmo e-mail para consultar o cadastro deste aluno. Apenas os campos vazios serão preenchidos; salve o formulário para gravar.</p><form><label>E-mail do Diário <input name="email" type="email" autocomplete="username" required></label> <label>Senha do Diário <input name="senha" type="password" autocomplete="current-password" required></label> <button type="submit">Conectar e preencher campos vazios</button></form><p role="status"></p>';
   document.body.appendChild(section);
+  const familiaBtn=document.createElement('button');familiaBtn.type='button';familiaBtn.textContent='Questionário e respostas da família';
+  section.append(familiaBtn);
+  familiaBtn.addEventListener('click',()=>{
+    if(!auth.currentUser||!state.alunoId||!authDiario?.currentUser||authDiario.currentUser.email?.toLowerCase()!==auth.currentUser.email?.toLowerCase()){
+      section.querySelector('[role=status]').textContent='Conecte ao Diário acima, com o mesmo e-mail, ou abra Questionário da família na ficha do aluno no Diário.';return;
+    }
+    const original=state,uid=authDiario.currentUser.uid,uidDocumentos=auth.currentUser.uid;
+    QuestionarioFamilia.abrir({db:dbDiario,auth:authDiario,uid,aluno:{id:state.alunoId,nome:state.identificacao.nome},vigente:()=>state===original&&authDiario.currentUser?.uid===uid&&auth.currentUser?.uid===uidDocumentos&&authDiario.currentUser?.email?.toLowerCase()===auth.currentUser?.email?.toLowerCase()});
+  });
   const form = section.querySelector('form'), status = section.querySelector('[role=status]');
   form.addEventListener('submit', async event => {
     event.preventDefault();

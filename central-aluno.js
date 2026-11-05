@@ -18,7 +18,7 @@
     const [year, month, day] = value.split('-');
     return `${day}/${month}/${year}`;
   }
-  function render({alunoId, perfil = {}, registros = [], status = 'carregando', navegar, documento}) {
+  function render({alunoId, perfil = {}, registros = [], status = 'carregando', navegar, documento, familia}) {
     const root = document.getElementById('centralAluno');
     if (!root) return;
     root.replaceChildren();
@@ -57,6 +57,7 @@
       docs.append(card);
     }
     root.append(docs);
+    if(familia)root.append(button('Questionário da família',familia,!alunoId));
     const columns = node('div', 'central-columns');
     const recent = node('section', 'central-box'); recent.append(node('h3', '', 'Últimos atendimentos'));
     if (status !== 'pronto' || !registros.length) {
