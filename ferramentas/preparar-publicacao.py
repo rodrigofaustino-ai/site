@@ -37,7 +37,7 @@ def validar(pasta):
     if faltantes:raise ValueError('Referências locais ausentes: '+repr(faltantes))
 
 def main():
-    p=argparse.ArgumentParser();p.add_argument('destino',type=Path);p.add_argument('zip',type=Path);p.add_argument('--etapa',type=int,default=36);args=p.parse_args()
+    p=argparse.ArgumentParser();p.add_argument('destino',type=Path);p.add_argument('zip',type=Path);p.add_argument('--etapa',type=int,default=37);args=p.parse_args()
     destino=args.destino.resolve();arquivo_zip=args.zip.resolve()
     if destino==ROOT or destino.is_relative_to(ROOT):raise ValueError('Use uma pasta nova fora do repositório de fonte.')
     if destino.exists() and any(destino.iterdir()):raise ValueError('A pasta de destino precisa estar vazia ou não existir.')
@@ -57,7 +57,7 @@ Não é uma cópia isolada de teste.
 ATENÇÃO — QUESTIONÁRIO DA FAMÍLIA
 Antes de publicar esta versão, guarde as regras atuais e atualize somente as regras
 DO CLOUD FIRESTORE do projeto salamulti com o arquivo completo revisado:
-https://github.com/rodrigofaustino-ai/site/blob/melhorias/etapa-36-questionario-familia/producao/salamulti.rules
+https://github.com/rodrigofaustino-ai/site/blob/melhorias/etapa-37-questionario-opcional/producao/salamulti.rules
 Não altere o projeto paee-3fea6, Storage ou Realtime Database nesta etapa.
 As regras são preparadas no código; a publicação delas no Firebase é manual.
 
@@ -73,6 +73,12 @@ PARA PUBLICAR
    link. Abra-o em janela anônima/celular, responda e envie. Retorne ao professor e
    clique em Atualizar respostas para conferir o relato e os itens correspondentes.
    Confira também a desativação do link. Não use dados reais nesse teste.
+8. Confira o aviso no primeiro Continuar com perguntas em branco e a confirmação
+   no segundo clique. Ao enviar, os campos pulados ficam como Sem resposta.
+9. No botão Exportar Documentos, selecione Questionário da família e confira um
+   DOCX/ODT com as respostas salvas. Se houver várias, escolha a versão desejada.
+10. Em Meu dia, mude a data do encontro e confira o quadro Planner do dia, no turno
+    escolhido. A edição do conteúdo continua na aba Planner.
 
 DOCUMENTOS DOS PROFESSORES
 Exportar Documentos oferece DOCX/ODT individuais por padrão. ZIP é opcional.

@@ -35,3 +35,5 @@ body.familia-publica{margin:0;background:#f4f5f2;color:var(--familia-texto);font
 @media(max-width:480px){.familia-publica .familia-cartao>button.primario{width:100%}.familia-marca{font-size:20px}.familia-marca small{font-size:15px}}
 .familia-publica h1,.familia-publica h2{color:#174b30}
 .familia-sucesso{display:flex;align-items:center;justify-content:center;width:76px;height:76px;margin:24px auto;background:#397b36;border-radius:50%;color:#fff;font:bold 48px Arial}
+#familiaPendencias{white-space:pre-wrap;line-height:1.6}
+.familia-publica fieldset.familia-sem-resposta{border-left:3px solid #a57123;padding-left:12px}

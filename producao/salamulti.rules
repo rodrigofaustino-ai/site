@@ -400,7 +400,7 @@ match /respostasFamilia/{token} {
 // Questionário v2: 27 grupos, seleção do modelo e contexto familiar.
 // O envio das nove áreas é atômico; respostas anteriores v1 permanecem legíveis.
 function familiaItemCompleto(resposta,nota,opcoes) {
-  return resposta in opcoes && nota is string && nota.size() <= 1000
+  return (resposta == null || resposta in opcoes) && nota is string && nota.size() <= 1000
     && (resposta != 'relato' || nota.size() > 0);
 }
 function familiaAreasCompletas(token) {

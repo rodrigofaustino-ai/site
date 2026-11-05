@@ -34,6 +34,8 @@ const ctx={window:{}};vm.runInNewContext(fs.readFileSync(path.join(__dirname,'..
   await yes(criar(2));await env.withSecurityRulesDisabled(c=>updateDoc(doc(c.firestore(),'convitesFamilia/'+token(2)),{expiraEm:Timestamp.fromMillis(Date.now()-10000)}));await no(envio(2));
   await yes(criar(3));await no(setDoc(doc(anon,'enviosFamilia/'+token(3)),{enviadoEm:serverTimestamp()}));
   await no(setDoc(doc(anon,'respostasFamiliaCompletas/'+token(3)+'/areas/ilegal'),{respostas:{},observacoesPerguntas:{},enviadoEm:serverTimestamp()}));
+  await yes(criar(4));await yes(envio(4,p=>{for(const ar of Object.values(p.areas))for(const k of Object.keys(ar.respostas))ar.respostas[k]=null;}));
+  const parcial=await getDoc(doc(a,'respostasFamiliaCompletas/'+token(4)+'/areas/rotina'));assert.equal(parcial.data().respostas.rotina_sono,null);checks++;
   console.log(checks+' verificações de regras do questionário completo aprovadas.');
  }finally{await env.cleanup();}
 })().catch(e=>{console.error(e);process.exitCode=1;});

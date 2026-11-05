@@ -5,7 +5,7 @@
  const root=()=>document.getElementById('meuDiaRevisoes'),n=(tag,text)=>{const e=document.createElement(tag);if(text!=null)e.textContent=text;return e;};
  const hoje=()=>{const d=new Date();return [d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-');};
  const formatar=d=>d.split('-').reverse().join('/');
- function limpar(){geracao++;config=null;alunos=[];metas=null;consultando=false;consulta='';dataReferencia='';root()?.replaceChildren();const box=document.getElementById('meuDia');if(box)box.hidden=true;}
+ function limpar(){window.PlannerDia?.limpar();geracao++;config=null;alunos=[];metas=null;consultando=false;consulta='';dataReferencia='';root()?.replaceChildren();const box=document.getElementById('meuDia');if(box)box.hidden=true;}
  function preparar(ctx){limpar();config=ctx;estado='carregando';document.getElementById('meuDia').hidden=false;render();return geracao;}
  function concluir(token,lista,erro=false){if(token!==geracao||!config?.vigente())return;alunos=erro?[]:lista.filter(a=>a.arquivado!==true).map(a=>({id:a.id,nome:a.nome||'Sem nome',professorUid:a.professorUid}));estado=erro?'erro':'pronto';render();}
  function invalidar(){if(!config)return;geracao++;metas=null;consulta='';dataReferencia='';consultando=false;render();}

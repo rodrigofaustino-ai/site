@@ -30,7 +30,7 @@
     const aviso=n('p');aviso.id='agendaFrequenciaStatus';aviso.setAttribute('role','status');root.append(aviso);
     const content=n('div');content.id='agendaLista';root.append(content);
     function atualizar(){
-      content.replaceChildren();aviso.textContent='';
+      content.replaceChildren();aviso.textContent='';opcoes?.dataAlterada?.(data);
       if(estado==='carregando'){status.textContent='Carregando agenda…';return;}
       if(estado==='erro'){status.textContent='Não foi possível carregar a agenda. Reabra a lista de alunos para tentar novamente.';return;}
       if(!dataValida(data)){status.textContent='Selecione uma data válida para consultar a agenda.';return;}

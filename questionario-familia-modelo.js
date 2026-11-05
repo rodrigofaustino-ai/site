@@ -1066,21 +1066,22 @@ const tipos={
  autonomia:{autonomo:'Realiza sem ajuda de outra pessoa, com seus recursos habituais',alguma_ajuda:'Precisa de lembretes ou alguma ajuda',muita_ajuda:'Precisa de ajuda na maior parte da atividade',...comuns},
  escrita:{sem_modelo:'Escreve sem modelo',copia:'Copia um modelo',com_ajuda:'Faz com ajuda',ainda_nao:'Ainda não observei fazer',...comuns},
  percepcao:{frequente:'Percebo frequentemente',as_vezes:'Percebo em algumas situações',nao_percebe:'Não percebo',nao_utiliza_fala:'Não utiliza fala',...comuns},
- descricao:{relato:'Quero contar como acontece',nao_sabe:'Não sei / ainda não observei',nao_informar:'Prefiro não informar'}
+ descricao:{relato:'Vou descrever abaixo como observei este item na criança',nao_sabe:'Não sei / ainda não observei',nao_informar:'Prefiro não informar'}
 };
 const opcoes={...Object.assign({},...Object.values(tipos)),observa:'Faz habitualmente',apoio:'Em algumas situações ou com apoio'};
 const itens=areas.flatMap(a=>a.itens);
 const opcoesDaPergunta=q=>tipos[q.tipo]||tipos.habilidade;
-const rotulo=(q,v)=>opcoesDaPergunta(q)[v]||'Não informado';
+const rotulo=(q,v)=>v==null||v===''?'Sem resposta':opcoesDaPergunta(q)[v]||'Não informado';
+function pendentes(lista,d){return lista.filter(q=>{const v=d.respostas?.[q.id];return v==null||v===''||(v==='relato'&&!d.observacoesPerguntas?.[q.id]?.trim());});}
+function prepararRespostas(d){const vazios=new Set(pendentes(itens,d).map(q=>q.id));return Object.fromEntries(itens.map(q=>[q.id,vazios.has(q.id)?null:d.respostas[q.id]]));}
 function validar(d){
  if(!d||!d.responsavel?.trim()||d.responsavel.length>120||!d.vinculo?.trim()||d.vinculo.length>80||d.ciencia!==true)return 'Informe quem responde, seu vínculo e leia as informações sobre o uso das respostas.';
  if((d.contexto||'').length>2000||(d.observacoes||'').length>2000)return 'Os campos de contexto e informações finais devem ter até 2.000 caracteres.';
  for(const q of itens){const v=d.respostas?.[q.id],nota=d.observacoesPerguntas?.[q.id]||'';
-  if(!Object.hasOwn(opcoesDaPergunta(q),v))return 'Responda ou marque não sei: '+q.pergunta;
+  if(v!=null&&v!==''&&!Object.hasOwn(opcoesDaPergunta(q),v))return 'Responda ou marque não sei: '+q.pergunta;
   if(nota.length>1000)return 'Use até 1.000 caracteres na observação: '+q.pergunta;
-  if(v==='relato'&&!nota.trim())return 'Escreva seu relato ou marque não sei: '+q.pergunta;
  }
  return '';
 }
-window.QuestionarioFamiliaModelo=Object.freeze({grupos,areas,itens,opcoes,tipos,opcoesDaPergunta,rotulo,validar});
+window.QuestionarioFamiliaModelo=Object.freeze({grupos,areas,itens,opcoes,tipos,opcoesDaPergunta,rotulo,pendentes,prepararRespostas,validar});
 })();

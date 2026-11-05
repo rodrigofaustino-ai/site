@@ -15,6 +15,12 @@ Queremos conhecer o que a criança faz no cotidiano e quais apoios ajudam. Respo
 - Exemplos, tipo de ajuda e circunstâncias complementam a resposta. Não exigir uma justificativa longa a cada item.
 - Evitar registrar “não sabe” quando a família informou “não observei” ou “não teve oportunidade”.
 
+## Questões sem resposta
+
+A opção descritiva é apresentada como “Vou descrever abaixo como observei este item na criança”, mantendo “não sei” e “prefiro não informar”.
+
+No primeiro clique em Continuar com questões pendentes, o formulário indica quais faltam. No segundo, pergunta se deseja avançar mesmo assim e explica que essas informações ajudam a conhecer a criança e planejar as estratégias. É possível continuar após confirmar, sem marcar uma opção automaticamente. A revisão final avisa sobre pendências e pede confirmação antes do envio. Os campos pulados aparecem como “Sem resposta” para o professor e no documento exportado, distinguindo-os de “não sei” e “prefiro não informar”.
+
 ## Perguntas propostas
 
 ### 1. Como a criança mostra o que quer ou precisa?

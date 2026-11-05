@@ -540,6 +540,8 @@ hr.sep{border:none;border-top:2px dashed rgba(0,0,0,.06);margin:.2rem 0;}
 <script src="agenda-dia.js"></script>
 <link rel="stylesheet" href="meu-dia.css">
 <script src="meu-dia-modelo.js"></script>
+<link rel="stylesheet" href="planner-dia.css">
+<script src="planner-dia.js"></script>
 <script src="meu-dia.js"></script>
 <script src="arquivamento-alunos.js"></script>
 <link rel="stylesheet" href="estatisticas.css">
@@ -639,7 +641,7 @@ hr.sep{border:none;border-top:2px dashed rgba(0,0,0,.06);margin:.2rem 0;}
 
     <!-- ABA ALUNOS -->
     <div class="tab-panel active" id="tabAlunos">
-      <section id="meuDia" class="card" aria-label="Meu dia" hidden><h2>Meu dia</h2><p class="meu-dia-intro">Organize os encontros e as revisões do seu planejamento. A agenda usa a data do encontro selecionada; as revisões de metas usam a data de hoje.</p><section id="agendaDia" aria-label="Agenda do dia" hidden></section><section id="meuDiaRevisoes" aria-label="Revisões de metas"></section></section>
+      <section id="meuDia" class="card" aria-label="Meu dia" hidden><h2>Meu dia</h2><p class="meu-dia-intro">Organize os encontros e as revisões do seu planejamento. A agenda e o planner usam a data do encontro selecionada; as revisões de metas usam a data de hoje.</p><section id="agendaDia" aria-label="Agenda do dia" hidden></section><section id="plannerDia" aria-label="Planner do dia" hidden></section><section id="meuDiaRevisoes" aria-label="Revisões de metas"></section></section>
       <div class="card">
         <div class="color-strip"></div>
         <div class="section-head"><div class="section-badge" style="background:var(--teal-l)">🧒</div><span id="alunosListaTitulo">Alunos em atendimento</span></div>
@@ -1786,7 +1788,7 @@ async function plannerSalvarAgora(dia, valor){
       [campo]: texto ? valor : firebase.firestore.FieldValue.delete(),
       updatedAt: new Date().toISOString()
     });
-    plannerDirty.delete(dia); // só agora está de fato confirmado no servidor
+    plannerDirty.delete(dia);window.PlannerDia.salvo(docId); // só agora está de fato confirmado no servidor
     if(statusEl){statusEl.textContent='✓ Salvo';statusEl.style.color='var(--green)';}
   }catch(e){
     if(statusEl){statusEl.textContent='⚠️ Erro ao salvar (veja o console)';statusEl.style.color='var(--coral)';}
@@ -2665,7 +2667,8 @@ async function renderStudentList(){
   if(!uid||!turno){window.AgendaDia.limpar();window.MeuDia.limpar();c.replaceChildren();return;}
   const vigente=()=>professorUid===uid&&turnoAtual===turno;
   const diaToken=window.MeuDia.preparar({uid,turno,db,vigente,abrir:async id=>{await openStudent(id);if(professorUid===uid&&turnoAtual===turno&&currentStudentId===id&&$('screen-profile').classList.contains('active')){$('metasAluno').scrollIntoView({behavior:'auto',block:'start'});$('metasAluno').tabIndex=-1;$('metasAluno').focus({preventScroll:true});}}});
-  const agendaToken=window.AgendaDia.carregar({uid,turno,vigente,obter:getAtendimentos,frequencia:{db,uid,turno,vigente:()=>vigente()&&auth.currentUser?.uid===uid,obter:getAtendimentos,alterou:()=>{if(freqDados&&freqSessaoValida(uid,turno))renderFrequencia();window.Estatisticas?.limpar?.();}},abrir:id=>openStudent(id)});
+  window.PlannerDia.ativar({uid,turno,db,vigente:()=>vigente()&&auth.currentUser?.uid===uid});
+  const agendaToken=window.AgendaDia.carregar({uid,turno,vigente,dataAlterada:valor=>window.PlannerDia.selecionar(valor),obter:getAtendimentos,frequencia:{db,uid,turno,vigente:()=>vigente()&&auth.currentUser?.uid===uid,obter:getAtendimentos,alterou:()=>{if(freqDados&&freqSessaoValida(uid,turno))renderFrequencia();window.Estatisticas?.limpar?.();}},abrir:id=>openStudent(id)});
   c.innerHTML='<div class="empty-list">Carregando alunos…</div>';
   try{
     const snap=await alunosRef().get();

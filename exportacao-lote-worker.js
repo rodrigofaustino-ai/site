@@ -17,6 +17,9 @@
     if(d.peiFormulario){const response=await fetch('modelos/pei-cabecalho.png');if(!response.ok)throw Error('Cabeçalho não encontrado.');const blob=await response.blob();const logo=await new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=reject;r.readAsDataURL(blob);});html=PEIFormulario.conteudo(PEIFormulario.criarEstado({},d.peiFormulario),logo);}
     else{html=d.peiComprimido?LZString.decompressFromUTF16(d.peiHtml||''):d.peiHtml;if(!html?.trim())throw Error('PEI sem conteúdo legível.');html=SRMExport.prepararPei(html);}
     await SRMExport.fromHtml(html,m.formato,'PEI');
+   }else if(m.tipo==='familia'){
+    if(!location.pathname.endsWith('/questionario-familia-exportar.html'))throw Error('Gerador incompatível.');
+    await SRMExport.fromHtml(QuestionarioFamiliaDocumento.html(m.dados),m.formato,'Questionario_da_familia');
    }else{
     const paginas={paee:'paee_formulario_02.html',diagnostica:'diagnostica_formulario.html',relatorio:'relatorio_formulario.html'};
     if(!paginas[m.tipo]||!location.pathname.endsWith('/'+paginas[m.tipo]))throw Error('Gerador incompatível.');

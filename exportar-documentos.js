@@ -41,7 +41,7 @@
   busca.addEventListener('input',mostrar);turno.addEventListener('change',mostrar);arquivo.addEventListener('change',mostrar);mostrar();
   acoes(botao('Selecionar os exibidos',()=>{c.visiveis.forEach(a=>c.selecionados.add(a.id));mostrar();}),botao('Limpar seleção',()=>{c.selecionados.clear();mostrar();}));
   corpo.append(n('p','Até 100 arquivos por exportação. Documentos não encontrados serão informados, sem gerar formulários vazios.'));
-  acoes(botao('Voltar',()=>tela2(c)),botao('Conferir documentos',()=>{if(!c.selecionados.size){mensagem('Selecione ao menos um aluno.');return;}if(c.selecionados.size*c.tipos.size>100){mensagem('Selecione até 100 combinações de alunos e documentos por pacote.');return;}if([...c.tipos].some(t=>t!=='pei')&&!c.auth?.currentUser)loginFormularios(c);else conferir(c);}));
+  acoes(botao('Voltar',()=>tela2(c)),botao('Conferir documentos',()=>{if(!c.selecionados.size){mensagem('Selecione ao menos um aluno.');return;}if(c.selecionados.size*c.tipos.size>100){mensagem('Selecione até 100 combinações de alunos e documentos por pacote.');return;}if([...c.tipos].some(t=>!!M().tipos[t].colecao)&&!c.auth?.currentUser)loginFormularios(c);else conferir(c);}));
  }
  function loginFormularios(c){
   if(!vigente(c))return;corpo.replaceChildren();mensagem('');corpo.append(n('h3','Acesso aos formulários'),n('p','PAEE, Diagnóstica e Relatório usam o projeto paee-3fea6. Entre com a conta dos formulários que tem o mesmo e-mail da sua conta do Diário. Esta sessão é separada e fica só na memória.'));
@@ -53,28 +53,43 @@
  async function conferir(c){
   if(c.busy||!vigente(c))return;c.busy=true;corpo.replaceChildren();corpo.append(n('p','Conferindo os documentos salvos…'),botao('Cancelar',fechar));mensagem('Conferindo os documentos salvos…');
   try{
-   const fontes={};for(const t of c.tipos){if(t==='pei')continue;const snap=await c.dbDocumentos.collection(M().tipos[t].colecao).where('professorUid','==',c.uidDocumentos).get({source:'server'});if(!vigente(c))return;if(snap.metadata?.fromCache)throw Error('cache');fontes[t]=snap.docs.map(d=>({id:d.id,dados:d.data()}));if(fontes[t].some(d=>d.dados.professorUid!==c.uidDocumentos))throw Error('responsável');}
+   const fontes={};for(const t of c.tipos){if(!M().tipos[t].colecao)continue;const snap=await c.dbDocumentos.collection(M().tipos[t].colecao).where('professorUid','==',c.uidDocumentos).get({source:'server'});if(!vigente(c))return;if(snap.metadata?.fromCache)throw Error('cache');fontes[t]=snap.docs.map(d=>({id:d.id,dados:d.data()}));if(fontes[t].some(d=>d.dados.professorUid!==c.uidDocumentos))throw Error('responsável');}
+   if(c.tipos.has('familia')){fontes.familia=[];for(const [prefixo,colecao]of [['v1','respostasFamilia'],['v2','respostasFamiliaCompletas']]){const snap=await c.config.db.collection(colecao).where('professorUid','==',c.config.uid).get({source:'server'});if(!vigente(c))return;if(snap.metadata?.fromCache)throw Error('cache');for(const d of snap.docs){const r=d.data();if(r.professorUid!==c.config.uid)throw Error('responsável');fontes.familia.push({id:prefixo+':'+d.id,dados:r});}}}
    const itens=[];for(const aluno of c.alunos.filter(a=>c.selecionados.has(a.id))){for(const tipo of c.tipos){
     if(!vigente(c))return;
     if(tipo==='pei'){const doc=await c.config.db.collection('alunos').doc(aluno.id).collection('pei').doc('atual').get({source:'server'});if(!vigente(c))return;itens.push({aluno,tipo,escolha:doc.exists?'atual':'',candidatos:doc.exists?[{id:'atual',dados:doc.data()}]:[],legado:false});}
+    else if(tipo==='familia'){const respostas=fontes.familia.filter(d=>d.dados.alunoId===aluno.id);itens.push({aluno,tipo,candidatos:respostas,legado:false,escolha:respostas.length===1?respostas[0].id:''});}
     else{const found=M().candidatos(fontes[tipo],aluno);itens.push({aluno,tipo,candidatos:found.itens,legado:found.legado,escolha:!found.legado&&found.itens.length===1?found.itens[0].id:''});}
    }}
    if(!vigente(c))return;c.itens=itens;c.busy=false;telaConferencia(c);
   }catch(_){if(vigente(c)){mensagem('Não foi possível conferir todos os documentos. Nenhum arquivo foi gerado. Volte e tente novamente.');acoes(botao('Voltar aos alunos',()=>tela3(c)));}}finally{c.busy=false;}
  }
- function dataDocumento(d){try{const v=d.updatedAt||d.createdAt||d.peiData;const date=typeof v?.toDate==='function'?v.toDate():typeof v==='string'?new Date(v):null;return date&&!Number.isNaN(date.getTime())?' · '+date.toLocaleString('pt-BR'):'';}catch(_){return '';}}
+ function dataDocumento(d){try{const v=d.updatedAt||d.createdAt||d.peiData||d.enviadoEm;const date=typeof v?.toDate==='function'?v.toDate():typeof v==='string'?new Date(v):null;return date&&!Number.isNaN(date.getTime())?' · '+date.toLocaleString('pt-BR'):'';}catch(_){return '';}}
  function telaConferencia(c){
   if(!vigente(c))return;corpo.replaceChildren();mensagem('');corpo.append(n('h3','4. Confira antes de exportar'),n('p','Formato: '+c.formato.toUpperCase()+' · Recebimento: '+(c.empacotar?'arquivo ZIP':'documentos individuais, sem ZIP')+'. Documentos antigos sem vínculo exigem confirmação nesta lista. Ela vale apenas para esta exportação e não altera o cadastro. Confira nomes e escola, especialmente em casos de homônimos.'));
   for(const item of c.itens){const box=n('div');box.className='exportar-revisao';box.append(n('strong',item.aluno.nome+(item.aluno.arquivado?' (arquivado)':'')+' — '+M().tipos[item.tipo].nome));
    box.append(n('small','Cadastro do Diário: '+(item.aluno.escola||'escola não informada')+' · aluno '+item.aluno.id));
-   if(!item.candidatos.length){box.append(n('small','Não encontrado para este aluno. Este item não será exportado.'));corpo.append(box);continue;}
+   if(!item.candidatos.length){box.append(n('small',item.tipo==='familia'?'Ainda não há respostas da família salvas para este aluno. Não será gerado um formulário vazio.':'Não encontrado para este aluno. Este item não será exportado.'));corpo.append(box);continue;}
    if(item.legado)box.append(n('small','Documento antigo sem alunoId: escolha e confirme somente se pertence a este aluno.'));
-   else if(item.candidatos.length>1)box.append(n('small','Há mais de um documento vinculado. Escolha a versão desejada.'));
+   else if(item.candidatos.length>1)box.append(n('small',item.tipo==='familia'?'Há mais de um questionário respondido. Escolha a resposta que deseja exportar.':'Há mais de um documento vinculado. Escolha a versão desejada.'));
    const s=n('select');s.setAttribute('aria-label','Documento de '+item.aluno.nome+' — '+M().tipos[item.tipo].nome);const vazio=n('option',item.legado?'Selecione para confirmar ou não exportar':'Não exportar este item');vazio.value='';s.append(vazio);
-   for(const d of item.candidatos){const id=d.dados.identificacao||{},o=n('option',(id.nome||id.nomeAluno||item.aluno.nome)+(id.escolaRegular?' · '+id.escolaRegular:'')+dataDocumento(d.dados)+' · documento '+d.id);o.value=d.id;s.append(o);}s.value=item.escolha;s.addEventListener('change',()=>item.escolha=s.value);box.append(s);corpo.append(box);
+   for(const d of item.candidatos){const id=d.dados.identificacao||{},o=n('option',(item.tipo==='familia'?d.dados.responsavel||'Responsável não informado':id.nome||id.nomeAluno||item.aluno.nome)+(id.escolaRegular?' · '+id.escolaRegular:'')+dataDocumento(d.dados)+' · documento '+d.id);o.value=d.id;s.append(o);}s.value=item.escolha;s.addEventListener('change',()=>item.escolha=s.value);box.append(s);corpo.append(box);
   }
   corpo.append(n('p','A geração lê novamente os conteúdos salvos e não inclui rascunhos. Arquivos de alunos contêm informações pessoais; guarde o download em local protegido.'));
   acoes(botao('Voltar aos alunos',()=>tela3(c)),botao('Gerar e baixar',()=>gerar(c)));
+ }
+ async function carregarFamilia(c,item,aluno){
+  const match=/^(v[12]):([A-Za-z0-9_-]{43})$/.exec(item.escolha);if(!match)throw Error('questionário inválido');
+  const versao=match[1]==='v2'?2:1,token=match[2],ref=c.config.db.collection(versao===2?'respostasFamiliaCompletas':'respostasFamilia').doc(token);
+  const doc=await ref.get({source:'server'});if(!vigente(c)||!doc.exists||doc.metadata?.fromCache)throw Error('não encontrado');const r=doc.data();
+  if(r.professorUid!==c.config.uid||r.alunoId!==item.aluno.id||r.versao!==versao)throw Error('vínculo mudou');
+  if(versao===2){const areas=await ref.collection('areas').get({source:'server'});if(!vigente(c)||areas.metadata?.fromCache)throw Error('acesso');
+   const esperadas=window.QuestionarioFamiliaModelo.areas,nomes=new Set(areas.docs.map(d=>d.id));if(nomes.size!==esperadas.length||esperadas.some(a=>!nomes.has(a.key)))throw Error('questionário incompleto');
+   r.respostas={};r.observacoesPerguntas={};for(const a of areas.docs){const ar=a.data(),modelo=esperadas.find(x=>x.key===a.id);if(modelo.itens.some(q=>!Object.hasOwn(ar.respostas||{},q.id)))throw Error('questionário incompleto');Object.assign(r.respostas,ar.respostas||{});Object.assign(r.observacoesPerguntas,ar.observacoesPerguntas||{});}if(window.QuestionarioFamiliaModelo.validar(r))throw Error('questionário inválido');
+  }
+  const convite=await c.config.db.collection('convitesFamilia').doc(token).get({source:'server'});if(!vigente(c)||!convite.exists||convite.metadata?.fromCache||convite.data().professorUid!==c.config.uid||convite.data().alunoId!==item.aluno.id)throw Error('acesso');
+  const {enviadoEm,...resposta}=r;
+  return {aluno:{id:item.aluno.id,nome:aluno.nome||item.aluno.nome,escola:aluno.escola||'',turma:aluno.turma||''},resposta,periodo:convite.data().periodo||'Modelo anterior',dataEnvio:typeof enviadoEm?.toDate==='function'?enviadoEm.toDate().toLocaleString('pt-BR'):'Data não informada'};
  }
  async function renderizar(c,tipo,dados){
   return new Promise((resolve,reject)=>{
@@ -106,9 +121,13 @@
    for(const item of jobs){if(!vigente(c))return;mensagem('Gerando '+(arquivos.length+relatorio.length+1)+' de '+jobs.length+': '+item.aluno.nome+' — '+M().tipos[item.tipo].nome);
     try{
      const aluno=await c.config.db.collection('alunos').doc(item.aluno.id).get({source:'server'});if(!vigente(c))return;if(!aluno.exists||aluno.metadata?.fromCache||aluno.data().professorUid!==c.config.uid)throw Error('acesso');
-     const ref=item.tipo==='pei'?c.config.db.collection('alunos').doc(item.aluno.id).collection('pei').doc('atual'):c.dbDocumentos.collection(M().tipos[item.tipo].colecao).doc(item.escolha);
-     const doc=await ref.get({source:'server'});if(!vigente(c))return;if(!doc.exists||doc.metadata?.fromCache)throw Error('não encontrado');const dados=doc.data();
-     if(item.tipo!=='pei'&&(c.auth.currentUser?.uid!==c.uidDocumentos||dados.professorUid!==c.uidDocumentos||!M().compativel(dados,{...item.aluno,nome:aluno.data().nome||''},item.legado)))throw Error('vínculo mudou');
+     let dados;
+     if(item.tipo==='familia')dados=await carregarFamilia(c,item,aluno.data());
+     else{
+      const ref=item.tipo==='pei'?c.config.db.collection('alunos').doc(item.aluno.id).collection('pei').doc('atual'):c.dbDocumentos.collection(M().tipos[item.tipo].colecao).doc(item.escolha);
+      const doc=await ref.get({source:'server'});if(!vigente(c))return;if(!doc.exists||doc.metadata?.fromCache)throw Error('não encontrado');dados=doc.data();
+      if(item.tipo!=='pei'&&(c.auth.currentUser?.uid!==c.uidDocumentos||dados.professorUid!==c.uidDocumentos||!M().compativel(dados,{...item.aluno,nome:aluno.data().nome||''},item.legado)))throw Error('vínculo mudou');
+     }
      const blob=await renderizar(c,item.tipo,dados);if(!vigente(c))return;if(bytes+blob.size>150*1024*1024)throw Error('limite do pacote');bytes+=blob.size;arquivos.push({nome:String(c.alunos.findIndex(a=>a.id===item.aluno.id)+1).padStart(3,'0')+'_'+M().seguro(item.aluno.nome)+'_'+M().seguro(item.aluno.id)+'/'+M().seguro(M().tipos[item.tipo].nome)+'.'+c.formato,nomeIndividual:M().seguro(M().tipos[item.tipo].nome)+'_'+M().seguro(item.aluno.nome)+'_'+String(c.alunos.findIndex(a=>a.id===item.aluno.id)+1).padStart(3,'0')+'.'+c.formato,rotulo:M().tipos[item.tipo].nome+' — '+item.aluno.nome,blob});
     }catch(_){if(!vigente(c))return;relatorio.push(item.aluno.nome+' — '+M().tipos[item.tipo].nome+': não gerado; confira acesso, vínculo e conteúdo no formulário.');}
    }
