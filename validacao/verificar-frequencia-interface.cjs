@@ -18,7 +18,7 @@ function ref(parts,filter){return {path:parts.join('/'),collection:name=>ref([..
 };}
 const apply=(record,patch)=>{for(const [key,value]of Object.entries(patch)){if(key.startsWith('status.')){record.status??={};record.status[key.slice(7)]=value;}else record[key]=value;}};
 window.mockDb={collection:name=>ref([name]),async runTransaction(fn){const pending=[];await fn({get:r=>r.get(),update:(r,d)=>pending.push({path:r.path,data:clone(d)})});if(pause)await pause;if(deny)throw Object.assign(new Error('Negado'),{code:'permission-denied'});for(const p of pending){apply(store[p.path],p.data);writes.push(p);}}};
-window.mockAuth={currentUser:null,onAuthStateChanged(fn){fn(null);return ()=>{};}};
+window.mockAuth={currentUser:null,onAuthStateChanged(fn){queueMicrotask(()=>fn(null));return ()=>{};}};
 window.firebase={initializeApp(){},auth:()=>mockAuth,firestore:()=>mockDb,storage:()=>({}),app:()=>({options:{}})};firebase.firestore.FieldValue={serverTimestamp:()=>null,delete:()=>null};
 `;
 async function main(){

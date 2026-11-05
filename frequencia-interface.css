@@ -27,3 +27,9 @@
 .freq-coluna-check input{flex:0 0 auto;width:18px;height:18px;margin:2px 0 0}
 .freq-coluna-check span{overflow-wrap:anywhere}
 @media(max-width:600px){.freq-colunas{width:100%;min-width:0}}
+/* Cabeçalhos compactos; nomes e datas exportados permanecem intactos. */
+#freqWrap .freq-week-head{min-width:78px;width:78px;gap:5px}
+#freqWrap .freq-week-label{box-sizing:border-box;width:76px;height:62px;min-height:62px;resize:none;overflow:auto;white-space:pre-wrap;font-size:12px;line-height:18px;padding:3px 2px}
+#freqWrap .freq-week-date,#freqWrap .freq-week-del{font-size:10px;max-width:78px}
+#freqWrap .freq-badge{font-size:11px;padding:3px 4px;white-space:normal}
+#freqWrap .freq-mark{min-width:78px}

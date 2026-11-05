@@ -533,6 +533,7 @@ hr.sep{border:none;border-top:2px dashed rgba(0,0,0,.06);margin:.2rem 0;}
 <link rel="stylesheet" href="revisao-interface.css">
 <link rel="stylesheet" href="chat-compacto.css">
 <link rel="stylesheet" href="agenda-dia.css">
+<script src="agenda-frequencia.js"></script>
 <script src="agenda-dia.js"></script>
 <link rel="stylesheet" href="meu-dia.css">
 <script src="meu-dia-modelo.js"></script>
@@ -2040,7 +2041,7 @@ function renderTabelaFrequencia(){
     semanas.forEach(s=>{
       html+=`<th>
         <div class="freq-week-head">
-          <input class="freq-week-label" value="${esc(s.label||'')}" onchange="renameSemanaFrequencia('${s.id}',this.value)">
+          <textarea rows="3" class="freq-week-label" aria-label="Nome da semana" onchange="renameSemanaFrequencia('${s.id}',this.value.replace(/\s+/g,' ').trim())">${esc((s.label||'').replace(/^(\d{2}\/\d{2})\s+a\s+(\d{2}\/\d{2})$/,'$1\na\n$2'))}</textarea>
           <button class="freq-week-date${s.dataInicio?'':' sem-data'}" onclick="abrirModalDataSemana('${s.id}')" title="Definir/editar data de início">📅 ${s.dataInicio?fmtShort(s.dataInicio).slice(0,5):'sem data'}</button>
           <button class="freq-week-del" onclick="deleteSemanaFrequencia('${s.id}')">✕ remover</button>
         </div>
@@ -2659,7 +2660,7 @@ async function renderStudentList(){
   if(!uid||!turno){window.AgendaDia.limpar();window.MeuDia.limpar();c.replaceChildren();return;}
   const vigente=()=>professorUid===uid&&turnoAtual===turno;
   const diaToken=window.MeuDia.preparar({uid,turno,db,vigente,abrir:async id=>{await openStudent(id);if(professorUid===uid&&turnoAtual===turno&&currentStudentId===id&&$('screen-profile').classList.contains('active')){$('metasAluno').scrollIntoView({behavior:'auto',block:'start'});$('metasAluno').tabIndex=-1;$('metasAluno').focus({preventScroll:true});}}});
-  const agendaToken=window.AgendaDia.carregar({uid,turno,vigente,obter:getAtendimentos,abrir:id=>openStudent(id)});
+  const agendaToken=window.AgendaDia.carregar({uid,turno,vigente,obter:getAtendimentos,frequencia:{db,uid,turno,vigente:()=>vigente()&&auth.currentUser?.uid===uid,obter:getAtendimentos,alterou:()=>{if(freqDados&&freqSessaoValida(uid,turno))renderFrequencia();window.Estatisticas?.limpar?.();}},abrir:id=>openStudent(id)});
   c.innerHTML='<div class="empty-list">Carregando alunos…</div>';
   try{
     const snap=await alunosRef().get();
