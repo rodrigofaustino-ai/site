@@ -45,14 +45,14 @@ const check = (value, expected) => {assert.deepEqual(value, expected); checks++;
         window.alertas = []; window.confirmacoes = []; window.aceitar = true; window.gravacoes = [];
         window.alert = message => alertas.push(message);
         window.confirm = message => {confirmacoes.push(message); return aceitar;};
-        professorUid = 'professor-ficticio';
+        professorUid = 'professor-ficticio';auth={currentUser:{uid:professorUid,email:'a@example.test'}};if(typeof authDiario!=='undefined')authDiario={currentUser:{uid:'diario-ficticio',email:'a@example.test'}};
         planosRef = () => ({get: async () => {
           if (window.falhar) throw new Error('Falha de consulta simulada');
           return {docs: window.documentos.map(d => ({id: d.id, data: () => d.dados}))};
         }});
-        db = {collection: () => ({
+        db = {async runTransaction(fn){const ops=[];await fn({get:async ref=>{const d=documentos.find(d=>d.id===ref.id);return {exists:!!d,data:()=>d.dados};},update:(ref,data)=>ops.push({id:ref.id,data})});for(const op of ops){const d=documentos.find(d=>d.id===op.id);d.dados={...d.dados,...op.data};gravacoes.push(op);}},collection: () => ({
           add: async data => {gravacoes.push({id: 'novo-documento', data}); return {id: 'novo-documento'};},
-          doc: id => ({set: async data => gravacoes.push({id, data})})
+          doc: id => ({id,set: async data => gravacoes.push({id, data})})
         })};
         // A importação da diagnóstica é testada separadamente abaixo.
         if (typeof preencherDoPerfilDiario === 'function') window.preenchimentoOriginal = preencherDoPerfilDiario;
@@ -67,7 +67,7 @@ const check = (value, expected) => {assert.deepEqual(value, expected); checks++;
           await window[entry]();
         }, {docs, query, aceitar, falhar, entry});
       }
-      const doc = (id, nome, alunoId) => ({id, dados: {identificacao: {nome}, ...(alunoId ? {alunoId} : {})}});
+      const doc = (id, nome, alunoId) => ({id, dados: {professorUid:'professor-ficticio',identificacao: {nome}, ...(alunoId ? {alunoId} : {})}});
       // Mesmo nome, pessoas diferentes: a identidade prevalece sobre nome e ordem.
       await open([doc('outro', 'Ana', 'aluno-b'), doc('certo', 'Nome anterior', 'aluno-a')]);
       check(await page.evaluate(() => [state.id, state.alunoId]), ['certo', 'aluno-a']);
@@ -87,13 +87,12 @@ const check = (value, expected) => {assert.deepEqual(value, expected); checks++;
       check(await page.evaluate(() => [state.id, state.alunoId]), [null, 'aluno-a']);
       await page.evaluate(() => saveStudent());
       check(await page.evaluate(() => [gravacoes[0].id, gravacoes[0].data.alunoId]), ['novo-documento', 'aluno-a']);
-      // Legado: cancelamento não abre, não vincula e não grava.
+      // Legado único: sem confirmação bloqueante e sem salvar o conteúdo.
       await open([doc('antigo', 'Ana')], undefined, false);
-      check(await page.evaluate(() => [state.id, state.alunoId || null, gravacoes.length, confirmacoes.length]), [null, null, 0, 1]);
-      await open([doc('antigo', 'Ana')]);
-      check(await page.evaluate(() => [state.id, state.alunoId, gravacoes.length]), ['antigo', 'aluno-a', 0]);
+      check(await page.evaluate(() => [state.id,state.alunoId,gravacoes.length,confirmacoes.length]), ['antigo','aluno-a',1,0]);
+      check(await page.evaluate(() => gravacoes[0]),{id:'antigo',data:{alunoId:'aluno-a'}});
       await page.evaluate(() => saveStudent());
-      check(await page.evaluate(() => [gravacoes[0].id, gravacoes[0].data.alunoId]), ['antigo', 'aluno-a']);
+      check(await page.evaluate(() => [gravacoes[1].id,gravacoes[1].data.alunoId]),['antigo','aluno-a']);
       // Duplicidade de candidatos exige revisão manual.
       for (const docs of [[doc('um', 'Ana'), doc('dois', 'Ana')], [doc('um', 'Ana', 'aluno-a'), doc('dois', 'Ana', 'aluno-a')]]) {
         await open(docs);

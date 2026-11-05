@@ -1,0 +1,29 @@
+'use strict';
+const {chromium}=require('playwright-core'),fs=require('node:fs'),path=require('node:path'),http=require('node:http'),assert=require('node:assert/strict');const root=path.resolve(__dirname,'..');let total=0;const check=(a,b)=>{assert.deepEqual(a,b);total++;};
+(async()=>{let server,browser;try{
+ server=http.createServer((req,res)=>{const f=path.resolve(root,'.'+new URL(req.url,'http://localhost').pathname);if(!f.startsWith(root+'/')||!fs.existsSync(f)){res.writeHead(404);return res.end();}res.setHeader('Content-Type',f.endsWith('.js')?'application/javascript':f.endsWith('.css')?'text/css':'text/html');res.end(fs.readFileSync(f));});await new Promise(r=>server.listen(0,'127.0.0.1',r));const origin='http://127.0.0.1:'+server.address().port;
+ browser=await chromium.launch({executablePath:'/usr/bin/chromium',headless:true,args:['--no-sandbox']});const context=await browser.newContext({locale:'pt-BR'});await context.route('**/*',r=>r.request().url().startsWith(origin+'/')?r.continue():r.abort());
+ for(const [pagina,entrada]of [['paee_formulario_02.html','abrirViaParametroDeAluno'],['diagnostica_formulario.html','abrirViaParametro'],['relatorio_formulario.html','abrirViaParametro']]){
+  const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));await page.goto(origin+'/'+pagina,{waitUntil:'networkidle'});
+  await page.evaluate(()=>{
+   window.__store={};window.__updates=[];window.__avisos=[];window.__confirms=0;window.__deny=false;window.alert=t=>__avisos.push(t);window.confirm=()=>{__confirms++;return false;};professorUid='doc-owner';auth={currentUser:{uid:'doc-owner',email:'a@example.test'}};firebaseReady=true;
+   planosRef=()=>({async get(){const docs=Object.entries(__store).filter(([id,d])=>d.professorUid===professorUid).map(([id,d])=>({id,data:()=>JSON.parse(JSON.stringify(d))}));return {docs};}});
+   db={collection:()=>({doc:id=>({id,async set(data){__store[id]={...__store[id],...data};}})}),async runTransaction(fn){const ops=[];await fn({get:async ref=>{if(window.__pauseRead)await window.__pauseRead;const data=__store[ref.id];return {exists:!!data,data:()=>JSON.parse(JSON.stringify(data))};},update:(ref,data)=>ops.push({id:ref.id,data})});if(__deny)throw Error('Falha simulada');for(const op of ops){__updates.push(op);__store[op.id]={...__store[op.id],...op.data};}}};
+   if(typeof preencherDoPerfilDiario==='function')preencherDoPerfilDiario=async()=>{};showScreen('app');
+  });
+  async function abrir(docs,query='?alunoId=aluno-a&nome=Ana%20Fict%C3%ADcia',negar=false){await page.evaluate(async({docs,query,negar,entrada})=>{VinculoAluno.limpar();__store=docs;__updates=[];__avisos=[];__deny=negar;professorUid='doc-owner';auth.currentUser={uid:'doc-owner',email:'a@example.test'};state=novoEstado();history.replaceState(null,'',location.pathname+query);await window[entrada]();},{docs,query,negar,entrada});}
+  const original={professorUid:'doc-owner',identificacao:{nome:'Ana Fictícia',escolaRegular:'Escola Fictícia'},textoOriginal:'NÃO ALTERAR',updatedAt:'2020-01-01',outroCampo:{a:1}};
+  await abrir({antigo:original});check(await page.evaluate(()=>[state.id,state.alunoId,__confirms]),['antigo','aluno-a',0]);check(await page.evaluate(()=>__updates),[{id:'antigo',data:{alunoId:'aluno-a'}}]);check(await page.evaluate(()=>__store.antigo),{...original,alunoId:'aluno-a'});check(await page.locator('#vinculoAlunoAviso').count(),0);
+  await page.evaluate(async entrada=>{__updates=[];state=novoEstado();await window[entrada]();},entrada);check(await page.evaluate(()=>[state.id,state.alunoId,__updates.length]),['antigo','aluno-a',0]);
+  await abrir({antigo:original,duplicado:{...original}});check(await page.evaluate(()=>__updates.length),0);check(await page.evaluate(()=>__avisos.length),1);check(await page.evaluate(()=>state.id),null);
+  await abrir({antigo:original,outro:{...original,alunoId:'outra-identidade'}});check(await page.evaluate(()=>__updates.length),0);check(await page.evaluate(()=>__avisos.length),1);
+  await abrir({antigo:original},'?alunoId=aluno-a&nome=Outra%20Pessoa');check(await page.evaluate(()=>__updates.length),0);check(await page.evaluate(()=>state.id),null);
+  await abrir({outro:{...original,professorUid:'outro-professor'}});check(await page.evaluate(()=>__updates.length),0);
+  await abrir({antigo:original},undefined,true);check(await page.evaluate(()=>[state.id,state.alunoId||null,__updates.length]),['antigo',null,0]);check(await page.locator('#vinculoAlunoAviso').count(),1);check(await page.evaluate(()=>__confirms),0);
+  await page.evaluate(()=>__deny=false);await page.getByRole('button',{name:'Tentar associar novamente',exact:true}).click();await page.waitForFunction(()=>!document.getElementById('vinculoAlunoAviso'));check(await page.evaluate(()=>__store.antigo.alunoId),'aluno-a');check(await page.evaluate(()=>state.alunoId),'aluno-a');
+  await page.evaluate(()=>{__store={antigo:{professorUid:'doc-owner',identificacao:{nome:'Ana Fictícia'}}};__updates=[];state=novoEstado();window.__pauseRead=new Promise(r=>window.__release=r);window.__pending=null});
+  await page.evaluate(entrada=>{window.__pending=window[entrada]();},entrada);await page.waitForTimeout(50);await page.evaluate(()=>{professorUid=null;auth.currentUser=null;VinculoAluno.limpar();__pauseRead=null;__release();});await page.evaluate(()=>__pending);check(await page.evaluate(()=>__updates.length),0);check(await page.locator('#vinculoAlunoAviso').count(),0);check(errors,[]);
+  await page.close();
+ }
+ console.log(total+' verificações de associação automática passaram nos três formulários: sem pop-up, só alunoId, abertura seguinte sem alteração, duplicidades, conta, falha/repetição e troca de sessão.');
+ }finally{if(browser)await browser.close();if(server)server.close();}})().catch(e=>{console.error(e);process.exitCode=1;});

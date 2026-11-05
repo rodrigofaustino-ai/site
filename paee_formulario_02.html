@@ -311,6 +311,7 @@
 </style>
 <script src="exportacao.js"></script>
 <script src="vinculo-aluno.js"></script>
+<link rel="stylesheet" href="vinculo-aluno.css">
 <script src="firebase-producao.js"></script>
 <link rel="stylesheet" href="orientacoes-preenchimento.css">
 <script src="orientacoes-preenchimento.js" defer></script>
@@ -471,6 +472,7 @@ function showScreen(name){
 
 if(firebaseReady){
   auth.onAuthStateChanged(user=>{
+    VinculoAluno.limpar();
     if(user){
       professorUid = user.uid;
       document.getElementById('topbar-user').textContent = user.email;
@@ -840,6 +842,7 @@ async function saveStudent(){
   }
   const payload = JSON.parse(JSON.stringify(state));
   delete payload.id;
+  if(!payload.alunoId)delete payload.alunoId;
   payload.professorUid = professorUid;
   payload.updatedAt = firebase.firestore.FieldValue.serverTimestamp();
   if(!state.id){ payload.createdAt = firebase.firestore.FieldValue.serverTimestamp(); }
@@ -881,6 +884,7 @@ async function deleteStudent(id){
 /* ========================= VIEW SWITCH ========================= */
 
 function showView(name){
+  if(name!=='form')VinculoAluno.limpar();
   document.getElementById('view-list').classList.toggle('active', name==='list');
   document.getElementById('view-form').classList.toggle('active', name==='form');
   if(name==='list') renderStudentGrid();
@@ -1093,6 +1097,7 @@ function checkboxGroupHTML(name, options, currentArr){
 }
 
 function renderForm(){
+  VinculoAluno.atualizar();
   const s = state;
   const html = `
     <section class="card" id="sec-id">
@@ -1828,7 +1833,11 @@ function exportDOCX(s, formato='docx'){
 // O Diário identifica o aluno por alunoId. Documentos antigos só recebem
 // esse vínculo após confirmação explícita e salvamento pelo professor.
 function abrirViaParametroDeAluno(){
+  const uid=professorUid;
   return VinculoAluno.abrir({
+    uid,banco:()=>db,referencia:id=>db.collection(COLLECTION).doc(id),estado:()=>state,
+    vigente:()=>professorUid===uid&&auth?.currentUser?.uid===uid,
+    confirmado:alunoId=>{state.alunoId=alunoId;},voltar:()=>showView('list'),
     carregar: () => {
       if (!firebaseReady) throw new Error('Firebase indisponível');
       return planosRef().get();
@@ -1850,7 +1859,7 @@ function abrirViaParametroDeAluno(){
       state.alunoId = alunoId;
       document.getElementById('form-title').textContent = 'Editar PAEE';
       const subtitulo = document.getElementById('form-subtitle');
-      if (subtitulo) subtitulo.textContent = 'Documento identificado pelo cadastro do aluno. Alterações e vínculo são gravados ao salvar.';
+      if (subtitulo) subtitulo.textContent = 'Documento associado ao cadastro do aluno. Clique em Salvar para gravar alterações no conteúdo.';
       renderForm(); showView('form'); initCenso();
     }
   });
