@@ -1,0 +1,92 @@
+"""Gera uma pasta nova e um ZIP de publicação, sem tocar em serviços remotos."""
+from pathlib import Path
+import argparse, datetime, hashlib, json, re, shutil, subprocess, zipfile
+from html.parser import HTMLParser
+from urllib.parse import unquote, urlsplit
+
+ROOT = Path(__file__).resolve().parents[1]
+
+class Referencias(HTMLParser):
+    def __init__(self):
+        super().__init__(); self.refs=[]
+    def handle_starttag(self, tag, attrs):
+        for chave, valor in attrs:
+            if chave in ('src','href') and valor:
+                self.refs.append(valor)
+
+def validar(pasta):
+    faltantes=[]
+    for arq in pasta.rglob('*'):
+        if arq.suffix not in ('.html','.js','.css'): continue
+        texto=arq.read_text()
+        if arq.parent == pasta and 'ambienteteste-e368e' in texto:
+            raise ValueError('Configuração de teste no pacote: '+arq.name)
+        refs=[]
+        if arq.suffix=='.html':
+            parser=Referencias();parser.feed(texto);refs=parser.refs
+        refs+=re.findall(r'''["']((?:vendor|modelos)/[^"']+)["']''',texto)
+        for ref in refs:
+            if not ref or ref.startswith(('#','data:','blob:','javascript:','mailto:','//')):continue
+            if urlsplit(ref).scheme:continue
+            if any(x in ref for x in ('+','{','<','\\')):continue  # fonte de HTML dinâmico, não uma URL literal
+            caminho=unquote(urlsplit(ref).path)
+            if not caminho:continue
+            target=(pasta/caminho.lstrip('/')) if caminho.startswith('/') else arq.parent/caminho
+            if not target.exists():faltantes.append((str(arq.relative_to(pasta)),ref))
+    if faltantes:raise ValueError('Referências locais ausentes: '+repr(faltantes))
+
+def main():
+    p=argparse.ArgumentParser();p.add_argument('destino',type=Path);p.add_argument('zip',type=Path);args=p.parse_args()
+    destino=args.destino.resolve();arquivo_zip=args.zip.resolve()
+    if destino==ROOT or destino.is_relative_to(ROOT):raise ValueError('Use uma pasta nova fora do repositório de fonte.')
+    if destino.exists() and any(destino.iterdir()):raise ValueError('A pasta de destino precisa estar vazia ou não existir.')
+    if arquivo_zip.exists():raise ValueError('O arquivo ZIP já existe. Escolha outro nome.')
+    destino.mkdir(parents=True,exist_ok=True)
+    for arq in ROOT.iterdir():
+        if arq.is_file() and arq.suffix in ('.html','.js','.css'):
+            if arq.name.startswith('backup-documentos') or arq.name=='firebase-ambiente-teste.js':continue
+            shutil.copyfile(arq,destino/arq.name)
+    for nome in ('vendor','modelos'):shutil.copytree(ROOT/nome,destino/nome)
+    commit=subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip()
+    (destino/'LEIA-ME-PUBLICACAO.txt').write_text('''PACOTE DO SITE OFICIAL — saladerecursos.netlify.app
+
+Inclui as melhorias acumuladas até a etapa 33.
+Conexões: salamulti (Diário/PEI) e paee-3fea6 (PAEE/Diagnóstica/Relatório).
+Não é uma cópia isolada de teste. Não é necessário alterar regras do Firebase.
+
+PARA PUBLICAR
+1. Guarde o endereço/identificador do deploy oficial atual para eventual retorno.
+2. Extraia o ZIP inteiro. Abra a pasta que contém index.html, vendor e modelos.
+3. No Netlify, abra o site saladerecursos, endereço saladerecursos.netlify.app.
+4. Em Deploys, arraste essa pasta inteira. Não arraste somente index.html.
+5. Aguarde Published e atualize o site com Ctrl + Shift + R.
+6. Confira com sua conta e outra conta de professor: alunos, documentos antigos,
+   atendimentos, frequência, arquivamento/reativação, Meu dia e exportação.
+
+DOCUMENTOS DOS PROFESSORES
+Exportar Documentos oferece DOCX/ODT individuais por padrão. ZIP é opcional.
+A associação de documentos antigos únicos pelo nome ocorre na primeira abertura:
+ela grava apenas alunoId, sem exigir Salvar e sem alterar o texto do documento.
+
+OBSERVAÇÕES
+Os backups de dados e arquivos devem ser guardados separadamente. Este ZIP contém
+somente o código do site e seus recursos estáticos; não contém registros do banco.
+A transferência administrativa permanece temporariamente bloqueada.
+Uma reversão de deploy retorna o código, mas não desfaz gravações feitas no banco.
+Os testes foram locais, com dados fictícios; não validam credenciais reais, índices,
+serviços externos de IA ou a configuração remota atual de todos os serviços.
+''')
+    validar(destino)
+    files={str(f.relative_to(destino)):hashlib.sha256(f.read_bytes()).hexdigest() for f in sorted(destino.rglob('*')) if f.is_file()}
+    manifest={'versao':'etapa-33','site':'https://saladerecursos.netlify.app/','commit_fonte':commit,'preparado_em':'2026-11-05','arquivos_sha256':files}
+    (destino/'PUBLICACAO.json').write_text(json.dumps(manifest,ensure_ascii=False,indent=2)+'\n')
+    with zipfile.ZipFile(arquivo_zip,'w',zipfile.ZIP_DEFLATED) as z:
+        for arq in sorted(destino.rglob('*')):
+            if arq.is_file():z.write(arq,Path('publicar-netlify')/arq.relative_to(destino))
+    with zipfile.ZipFile(arquivo_zip) as z:
+        if z.testzip():raise ValueError('Falha de integridade do ZIP.')
+        for ref,digest in files.items():
+            if hashlib.sha256(z.read('publicar-netlify/'+ref)).hexdigest()!=digest:raise ValueError('Arquivo divergente no ZIP: '+ref)
+    print(json.dumps({'pasta':str(destino),'zip':str(arquivo_zip),'arquivos':len(files)+1,'bytes':arquivo_zip.stat().st_size,'sha256_zip':hashlib.sha256(arquivo_zip.read_bytes()).hexdigest()},indent=2))
+
+if __name__=='__main__':main()
