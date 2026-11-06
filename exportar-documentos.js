@@ -57,7 +57,8 @@
    if(c.tipos.has('familia')){fontes.familia=[];for(const [prefixo,colecao]of [['v1','respostasFamilia'],['v2','respostasFamiliaCompletas']]){const snap=await c.config.db.collection(colecao).where('professorUid','==',c.config.uid).get({source:'server'});if(!vigente(c))return;if(snap.metadata?.fromCache)throw Error('cache');for(const d of snap.docs){const r=d.data();if(r.professorUid!==c.config.uid)throw Error('responsável');fontes.familia.push({id:prefixo+':'+d.id,dados:r});}}}
    const itens=[];for(const aluno of c.alunos.filter(a=>c.selecionados.has(a.id))){for(const tipo of c.tipos){
     if(!vigente(c))return;
-    if(tipo==='pei'){const doc=await c.config.db.collection('alunos').doc(aluno.id).collection('pei').doc('atual').get({source:'server'});if(!vigente(c))return;itens.push({aluno,tipo,escolha:doc.exists?'atual':'',candidatos:doc.exists?[{id:'atual',dados:doc.data()}]:[],legado:false});}
+    if(tipo==='historico'){const registros=await carregarRegistros(c,aluno.id);if(!vigente(c))return;itens.push({aluno,tipo,escolha:registros.length?'historico':'',candidatos:registros.length?[{id:'historico',dados:{quantidade:registros.length}}]:[],legado:false});}
+    else if(tipo==='pei'){const doc=await c.config.db.collection('alunos').doc(aluno.id).collection('pei').doc('atual').get({source:'server'});if(!vigente(c))return;itens.push({aluno,tipo,escolha:doc.exists?'atual':'',candidatos:doc.exists?[{id:'atual',dados:doc.data()}]:[],legado:false});}
     else if(tipo==='familia'){const respostas=fontes.familia.filter(d=>d.dados.alunoId===aluno.id);itens.push({aluno,tipo,candidatos:respostas,legado:false,escolha:respostas.length===1?respostas[0].id:''});}
     else{const found=M().candidatos(fontes[tipo],aluno);itens.push({aluno,tipo,candidatos:found.itens,legado:found.legado,escolha:!found.legado&&found.itens.length===1?found.itens[0].id:''});}
    }}
@@ -69,14 +70,20 @@
   if(!vigente(c))return;corpo.replaceChildren();mensagem('');corpo.append(n('h3','4. Confira antes de exportar'),n('p','Formato: '+c.formato.toUpperCase()+' · Recebimento: '+(c.empacotar?'arquivo ZIP':'documentos individuais, sem ZIP')+'. Documentos antigos sem vínculo exigem confirmação nesta lista. Ela vale apenas para esta exportação e não altera o cadastro. Confira nomes e escola, especialmente em casos de homônimos.'));
   for(const item of c.itens){const box=n('div');box.className='exportar-revisao';box.append(n('strong',item.aluno.nome+(item.aluno.arquivado?' (arquivado)':'')+' — '+M().tipos[item.tipo].nome));
    box.append(n('small','Cadastro do Diário: '+(item.aluno.escola||'escola não informada')+' · aluno '+item.aluno.id));
-   if(!item.candidatos.length){box.append(n('small',item.tipo==='familia'?'Ainda não há respostas da família salvas para este aluno. Não será gerado um formulário vazio.':'Não encontrado para este aluno. Este item não será exportado.'));corpo.append(box);continue;}
+   if(!item.candidatos.length){box.append(n('small',item.tipo==='historico'?'Ainda não há atendimentos salvos para este aluno. Não será gerado um histórico vazio.':item.tipo==='familia'?'Ainda não há respostas da família salvas para este aluno. Não será gerado um formulário vazio.':'Não encontrado para este aluno. Este item não será exportado.'));corpo.append(box);continue;}
    if(item.legado)box.append(n('small','Documento antigo sem alunoId: escolha e confirme somente se pertence a este aluno.'));
    else if(item.candidatos.length>1)box.append(n('small',item.tipo==='familia'?'Há mais de um questionário respondido. Escolha a resposta que deseja exportar.':'Há mais de um documento vinculado. Escolha a versão desejada.'));
    const s=n('select');s.setAttribute('aria-label','Documento de '+item.aluno.nome+' — '+M().tipos[item.tipo].nome);const vazio=n('option',item.legado?'Selecione para confirmar ou não exportar':'Não exportar este item');vazio.value='';s.append(vazio);
+   if(item.tipo==='historico')box.append(n('small','Histórico completo: '+item.candidatos[0].dados.quantidade+' atendimento(s) salvo(s). Os filtros da ficha não limitam esta exportação.'));
    for(const d of item.candidatos){const id=d.dados.identificacao||{},o=n('option',(item.tipo==='familia'?d.dados.responsavel||'Responsável não informado':id.nome||id.nomeAluno||item.aluno.nome)+(id.escolaRegular?' · '+id.escolaRegular:'')+dataDocumento(d.dados)+' · documento '+d.id);o.value=d.id;s.append(o);}s.value=item.escolha;s.addEventListener('change',()=>item.escolha=s.value);box.append(s);corpo.append(box);
   }
   corpo.append(n('p','A geração lê novamente os conteúdos salvos e não inclui rascunhos. Arquivos de alunos contêm informações pessoais; guarde o download em local protegido.'));
   acoes(botao('Voltar aos alunos',()=>tela3(c)),botao('Gerar e baixar',()=>gerar(c)));
+ }
+ async function carregarRegistros(c,id){
+  const snap=await c.config.db.collection('alunos').doc(id).collection('registros').get({source:'server'});
+  if(!vigente(c)||snap.metadata?.fromCache)throw Error('acesso');
+  return snap.docs.map(d=>({...d.data(),id:d.id}));
  }
  async function carregarFamilia(c,item,aluno){
   const match=/^(v[12]):([A-Za-z0-9_-]{43})$/.exec(item.escolha);if(!match)throw Error('questionário inválido');
@@ -122,7 +129,8 @@
     try{
      const aluno=await c.config.db.collection('alunos').doc(item.aluno.id).get({source:'server'});if(!vigente(c))return;if(!aluno.exists||aluno.metadata?.fromCache||aluno.data().professorUid!==c.config.uid)throw Error('acesso');
      let dados;
-     if(item.tipo==='familia')dados=await carregarFamilia(c,item,aluno.data());
+     if(item.tipo==='historico'){const registros=await carregarRegistros(c,item.aluno.id);if(!registros.length)throw Error('sem registros');dados={aluno:{...aluno.data(),id:item.aluno.id},registros,dataExportacao:new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'})};}
+     else if(item.tipo==='familia')dados=await carregarFamilia(c,item,aluno.data());
      else{
       const ref=item.tipo==='pei'?c.config.db.collection('alunos').doc(item.aluno.id).collection('pei').doc('atual'):c.dbDocumentos.collection(M().tipos[item.tipo].colecao).doc(item.escolha);
       const doc=await ref.get({source:'server'});if(!vigente(c))return;if(!doc.exists||doc.metadata?.fromCache)throw Error('não encontrado');dados=doc.data();
