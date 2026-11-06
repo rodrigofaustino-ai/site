@@ -9,3 +9,5 @@
 #comunicadosLista p,#comunicadosConteudo{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.65}
 #comunicadosLista button{margin-left:15px}#comunicadosCategoria{color:#116e63;font-weight:700}#comunicadosPopupStatus,#comunicadosAdminStatus{font-size:14px}
 .tabs-bar [hidden]{display:none!important}
+
+#comunicadosImagemPrevia img,#comunicadosImagem img{display:block;max-width:100%;height:auto;object-fit:contain;margin:14px auto;border-radius:12px}#comunicadosImagemPrevia img{max-height:240px}#comunicadosImagem img{max-height:55vh}#comunicadosAdmin [hidden],#comunicadosPopup [hidden]{display:none!important}

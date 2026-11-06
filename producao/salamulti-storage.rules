@@ -46,6 +46,36 @@ service firebase.storage {
       allow delete: if dono();
     }
 
+    match /comunicadosImagens/{autorUid}/{comunicadoId}/imagem {
+      function administrador() {
+        return request.auth != null
+          && request.auth.uid == 'xF20nknLCsZxk0giHFso8NqV8KH3'
+          && request.auth.uid == autorUid
+          && request.auth.token.email == 'rodrigofaustino@gmail.com';
+      }
+      function publicado() {
+        let m = firestore.get(/databases/(default)/documents/comunicadosEquipe/$(comunicadoId)).data;
+        let a = m.get('imagem', {});
+        return m.ativo == true && m.autorUid == autorUid
+          && a.get('caminho','') == 'comunicadosImagens/' + autorUid + '/' + comunicadoId + '/imagem'
+          && a.get('tipo','') == resource.contentType
+          && a.get('tamanho',0) == resource.size
+          && a.get('nome','') == resource.metadata.get('nomeOriginal','');
+      }
+      allow get: if request.auth != null &&
+        ((administrador() && !firestore.exists(/databases/(default)/documents/comunicadosEquipe/$(comunicadoId))) || publicado());
+      allow list: if false;
+      allow create: if administrador()
+        && !firestore.exists(/databases/(default)/documents/comunicadosEquipe/$(comunicadoId))
+        && request.resource.size > 0 && request.resource.size <= 10485760
+        && request.resource.contentType in ['image/jpeg','image/png','image/gif','image/webp']
+        && request.resource.metadata.get('nomeOriginal','') is string
+        && request.resource.metadata.get('nomeOriginal','').size() > 0
+        && request.resource.metadata.get('nomeOriginal','').size() <= 180;
+      allow update: if false;
+      allow delete: if administrador();
+    }
+
     // Os demais caminhos continuam bloqueados.
     match /{allPaths=**} {
       allow read, write: if false;
