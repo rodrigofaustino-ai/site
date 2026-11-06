@@ -1,0 +1,11 @@
+#comunicadosAdmin,#comunicadosPopup{box-sizing:border-box;width:min(600px,calc(100% - 28px));max-height:85vh;overflow:auto;border:0;border-radius:20px;padding:28px;color:var(--text,#243c39);background:var(--surface,#fff);box-shadow:0 20px 70px #102c3855;font-family:var(--font,sans-serif)}
+#comunicadosAdmin::backdrop,#comunicadosPopup::backdrop{background:#173e426b}
+#comunicadosAdmin h2,#comunicadosPopup h2{margin:0 0 16px;overflow-wrap:anywhere}
+#comunicadosAdmin label{display:block;margin:14px 0;font-weight:600}
+#comunicadosAdmin input,#comunicadosAdmin textarea{display:block;box-sizing:border-box;width:100%;margin-top:7px;padding:11px;border:1px solid #acbfbc;border-radius:9px;font:inherit}
+#comunicadosAdmin button,#comunicadosPopup button{padding:11px 18px;min-height:44px;border:0;border-radius:10px;background:#116e63;color:white;font:inherit;cursor:pointer}
+#comunicadosAdmin button:disabled,#comunicadosPopup button:disabled{opacity:.6;cursor:wait}
+#comunicadosLista article{border-top:1px solid #d9e6e3;padding:16px 0;overflow-wrap:anywhere}
+#comunicadosLista p,#comunicadosConteudo{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.65}
+#comunicadosLista button{margin-left:15px}#comunicadosCategoria{color:#116e63;font-weight:700}#comunicadosPopupStatus,#comunicadosAdminStatus{font-size:14px}
+.tabs-bar [hidden]{display:none!important}

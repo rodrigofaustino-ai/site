@@ -4,6 +4,37 @@ service cloud.firestore {
     function isAdmin() {
       return request.auth != null && request.auth.uid == 'vYUoFHRjbmVaj6Do58NjKQsFuql2';
     }
+    // Permissão específica dos comunicados; não altera a administração geral existente.
+    function administraComunicados() {
+      return request.auth != null
+        && request.auth.uid == 'xF20nknLCsZxk0giHFso8NqV8KH3'
+        && request.auth.token.email == 'rodrigofaustino@gmail.com';
+    }
+    match /comunicadosEquipe/{id} {
+      allow read: if request.auth != null;
+      allow create: if administraComunicados()
+        && request.resource.data.keys().hasAll(['tipo','titulo','texto','ativo','autorUid','criadoEm'])
+        && request.resource.data.keys().hasOnly(['tipo','titulo','texto','ativo','autorUid','criadoEm'])
+        && request.resource.data.tipo in ['aviso','mensagem']
+        && request.resource.data.titulo is string && request.resource.data.titulo.size() > 0 && request.resource.data.titulo.size() <= 120
+        && request.resource.data.texto is string && request.resource.data.texto.size() > 0 && request.resource.data.texto.size() <= 4000
+        && request.resource.data.ativo == true && request.resource.data.autorUid == request.auth.uid
+        && request.resource.data.criadoEm == request.time;
+      allow update: if administraComunicados() && resource.data.ativo == true
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['ativo','desativadoEm'])
+        && request.resource.data.ativo == false && request.resource.data.desativadoEm == request.time;
+      allow delete: if false;
+    }
+    match /comunicadosRecebidos/{uid}/itens/{id} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow create: if request.auth != null && request.auth.uid == uid
+        && request.resource.data.keys().hasAll(['tipo','registradoEm'])
+        && request.resource.data.keys().hasOnly(['tipo','registradoEm'])
+        && request.resource.data.registradoEm == request.time
+        && get(/databases/$(database)/documents/comunicadosEquipe/$(id)).data.ativo == true
+        && request.resource.data.tipo == get(/databases/$(database)/documents/comunicadosEquipe/$(id)).data.tipo;
+      allow update, delete: if false;
+    }
     function donoAluno(alunoId) {
       return request.auth != null && get(/databases/$(database)/documents/alunos/$(alunoId)).data.professorUid == request.auth.uid;
     }

@@ -536,6 +536,7 @@ hr.sep{border:none;border-top:2px dashed rgba(0,0,0,.06);margin:.2rem 0;}
 <link rel="stylesheet" href="revisao-interface.css">
 <link rel="stylesheet" href="chat-compacto.css">
 <link rel="stylesheet" href="chat-anexos.css">
+<link rel="stylesheet" href="comunicados-equipe.css">
 <link rel="stylesheet" href="agenda-dia.css">
 <script src="agenda-frequencia.js"></script>
 <script src="agenda-dia.js"></script>
@@ -1276,6 +1277,7 @@ function selecionarTurno(turno){
   badge.style.display = 'inline-flex';
   showScreen('home');
   renderStudentList();
+  window.ComunicadosEquipe?.selecionarTurno();
   if ($('tabEstatisticas').classList.contains('active')) abrirEstatisticas();
 }
 
@@ -4367,5 +4369,6 @@ function exportPDF(){
 <script src="chat-anexos.js"></script>
 <script src="chat-equipe.js"></script>
 <script src="chat-presenca.js"></script>
+<script src="comunicados-equipe.js"></script>
 </body>
 </html>
