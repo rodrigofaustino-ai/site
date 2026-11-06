@@ -33,3 +33,5 @@
 #freqWrap .freq-week-date,#freqWrap .freq-week-del{font-size:10px;max-width:78px}
 #freqWrap .freq-badge{font-size:11px;padding:3px 4px;white-space:normal}
 #freqWrap .freq-mark{min-width:78px}
+
+#freqConferencia[hidden]{display:none}

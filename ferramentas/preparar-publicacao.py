@@ -37,7 +37,7 @@ def validar(pasta):
     if faltantes:raise ValueError('Referências locais ausentes: '+repr(faltantes))
 
 def main():
-    p=argparse.ArgumentParser();p.add_argument('destino',type=Path);p.add_argument('zip',type=Path);p.add_argument('--etapa',type=int,default=37);args=p.parse_args()
+    p=argparse.ArgumentParser();p.add_argument('destino',type=Path);p.add_argument('zip',type=Path);p.add_argument('--etapa',type=int,default=38);args=p.parse_args()
     destino=args.destino.resolve();arquivo_zip=args.zip.resolve()
     if destino==ROOT or destino.is_relative_to(ROOT):raise ValueError('Use uma pasta nova fora do repositório de fonte.')
     if destino.exists() and any(destino.iterdir()):raise ValueError('A pasta de destino precisa estar vazia ou não existir.')
@@ -98,6 +98,13 @@ Uma reversão de deploy retorna o código, mas não desfaz gravações feitas no
 Os testes foram locais, com dados fictícios; não validam credenciais reais, índices,
 serviços externos de IA ou a configuração remota atual de todos os serviços.
 '''.replace('etapa 33','etapa '+str(args.etapa)))
+    if args.etapa == 38:
+        guia=destino/'LEIA-ME-PUBLICACAO.txt'
+        texto=guia.read_text()
+        inicio=texto.index('ATENÇÃO — QUESTIONÁRIO DA FAMÍLIA')
+        fim=texto.index('PARA PUBLICAR',inicio)
+        texto=texto[:inicio]+"ETAPA 38 — AJUSTE VISUAL\nEsta etapa mantém as regras da etapa 37. Se ela já está publicada e funcionando,\nnão é necessário alterar Firebase. Publique somente este pacote no Netlify.\nO Planner do dia fica no topo; a conferência de frequência fica oculta.\n\n"+texto[fim:]
+        guia.write_text(texto)
     validar(destino)
     files={str(f.relative_to(destino)):hashlib.sha256(f.read_bytes()).hexdigest() for f in sorted(destino.rglob('*')) if f.is_file()}
     manifest={'versao':'etapa-'+str(args.etapa),'site':'https://saladerecursos.netlify.app/','commit_fonte':commit,'preparado_em':datetime.datetime.now(ZoneInfo('America/Sao_Paulo')).date().isoformat(),'arquivos_sha256':files}
