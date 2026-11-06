@@ -77,7 +77,7 @@ PARA PUBLICAR
    no segundo clique. Ao enviar, os campos pulados ficam como Sem resposta.
 9. No botão Exportar Documentos, selecione Questionário da família e confira um
    DOCX/ODT com as respostas salvas. Se houver várias, escolha a versão desejada.
-10. Em Meu dia, mude a data do encontro e confira o quadro Planner do dia, no turno
+10. Em Meu dia, mude a data do encontro e confira o quadro Agenda do Dia, no turno
     escolhido. A edição do conteúdo continua na aba Planner.
 
 DOCUMENTOS DOS PROFESSORES
@@ -103,7 +103,7 @@ serviços externos de IA ou a configuração remota atual de todos os serviços.
         texto=guia.read_text()
         inicio=texto.index('ATENÇÃO — QUESTIONÁRIO DA FAMÍLIA')
         fim=texto.index('PARA PUBLICAR',inicio)
-        texto=texto[:inicio]+"ETAPA 38 — AJUSTE VISUAL\nEsta etapa mantém as regras da etapa 37. Se ela já está publicada e funcionando,\nnão é necessário alterar Firebase. Publique somente este pacote no Netlify.\nO Planner do dia fica no topo; a conferência de frequência fica oculta.\n\n"+texto[fim:]
+        texto=texto[:inicio]+"ETAPA 38 — AJUSTE VISUAL\nEsta etapa mantém as regras da etapa 37. Se ela já está publicada e funcionando,\nnão é necessário alterar Firebase. Publique somente este pacote no Netlify.\nA Agenda do Dia fica no topo; a conferência de frequência fica oculta.\n\n"+texto[fim:]
         guia.write_text(texto.replace('ETAPA 38 — AJUSTE VISUAL','ETAPA '+str(args.etapa)+' — AJUSTE VISUAL'))
     validar(destino)
     files={str(f.relative_to(destino)):hashlib.sha256(f.read_bytes()).hexdigest() for f in sorted(destino.rglob('*')) if f.is_file()}
