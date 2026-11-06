@@ -7,7 +7,7 @@
  const chave=(c,v)=>c.uid+'_'+v.slice(0,7)+'_'+c.turno;
  function limpar(){versao++;ctx=null;data='';const r=root();if(r){r.replaceChildren();r.hidden=true;}}
  function ativar(config){limpar();ctx={...config,cache:new Map()};}
- function estrutura(c,v){const r=root();if(!r)return null;r.hidden=false;r.replaceChildren();r.append(n('h3','Planner do dia'));
+ function estrutura(c,v){const r=root();if(!r)return null;r.hidden=false;r.replaceChildren();r.append(n('h3','Agenda do Dia'));
   const status=n('p');status.id='plannerDiaStatus';status.setAttribute('role','status');status.setAttribute('aria-live','polite');r.append(status);
   if(valida(v))r.append(n('p',v.split('-').reverse().join('/')+' · '+c.turno));
   return {r,status};
@@ -29,9 +29,9 @@
    const valor=dias[String(Number(v.slice(8,10)))],texto=typeof valor==='string'?valor:'';
    ui.status.textContent=texto.trim()?'Planejamento salvo para esta data.':'Nenhuma anotação salva no planner para esta data e turno.';
    if(texto.trim()){const p=n('p',texto);p.className='planner-dia-texto';ui.r.append(p);}
-  }catch(_){if(!vigente())return;ui.status.textContent='Não foi possível consultar o planner. Clique em Atualizar planner do dia para tentar novamente.';}
+  }catch(_){if(!vigente())return;ui.status.textContent='Não foi possível consultar o planner. Clique em Atualizar Agenda do Dia para tentar novamente.';}
   if(!vigente())return;
-  const b=n('button','Atualizar planner do dia');b.type='button';b.className='central-btn';b.addEventListener('click',()=>{if(ctx===c&&c.vigente()){c.cache.delete(id);selecionar(data);}});ui.r.append(b,n('p','O quadro mostra somente o texto salvo. Para editar, use a aba Planner.'));
+  const b=n('button','Atualizar Agenda do Dia');b.type='button';b.className='central-btn';b.addEventListener('click',()=>{if(ctx===c&&c.vigente()){c.cache.delete(id);selecionar(data);}});ui.r.append(b,n('p','O quadro mostra somente o texto salvo. Para editar, use a aba Planner.'));
  }
  function salvo(id){if(!ctx)return;ctx.cache.delete(id);if(valida(data)&&chave(ctx,data)===id&&ctx.vigente())selecionar(data);}
  window.PlannerDia=Object.freeze({ativar,selecionar,limpar,salvo});

@@ -6,7 +6,7 @@ Não é uma cópia isolada de teste.
 ETAPA 39 — AJUSTE VISUAL
 Esta etapa mantém as regras da etapa 37. Se ela já está publicada e funcionando,
 não é necessário alterar Firebase. Publique somente este pacote no Netlify.
-O Planner do dia fica no topo; a conferência de frequência fica oculta.
+A Agenda do Dia fica no topo; a conferência de frequência fica oculta.
 
 PARA PUBLICAR
 1. Guarde o endereço/identificador do deploy oficial atual para eventual retorno.
@@ -24,7 +24,7 @@ PARA PUBLICAR
    no segundo clique. Ao enviar, os campos pulados ficam como Sem resposta.
 9. No botão Exportar Documentos, selecione Questionário da família e confira um
    DOCX/ODT com as respostas salvas. Se houver várias, escolha a versão desejada.
-10. Em Meu dia, mude a data do encontro e confira o quadro Planner do dia, no turno
+10. Em Meu dia, mude a data do encontro e confira o quadro Agenda do Dia, no turno
     escolhido. A edição do conteúdo continua na aba Planner.
 
 DOCUMENTOS DOS PROFESSORES
