@@ -37,7 +37,7 @@ def validar(pasta):
     if faltantes:raise ValueError('Referências locais ausentes: '+repr(faltantes))
 
 def main():
-    p=argparse.ArgumentParser();p.add_argument('destino',type=Path);p.add_argument('zip',type=Path);p.add_argument('--etapa',type=int,default=39);args=p.parse_args()
+    p=argparse.ArgumentParser();p.add_argument('destino',type=Path);p.add_argument('zip',type=Path);p.add_argument('--etapa',type=int,default=40);args=p.parse_args()
     destino=args.destino.resolve();arquivo_zip=args.zip.resolve()
     if destino==ROOT or destino.is_relative_to(ROOT):raise ValueError('Use uma pasta nova fora do repositório de fonte.')
     if destino.exists() and any(destino.iterdir()):raise ValueError('A pasta de destino precisa estar vazia ou não existir.')
@@ -77,8 +77,10 @@ PARA PUBLICAR
    no segundo clique. Ao enviar, os campos pulados ficam como Sem resposta.
 9. No botão Exportar Documentos, selecione Questionário da família e confira um
    DOCX/ODT com as respostas salvas. Se houver várias, escolha a versão desejada.
-10. Em Meu dia, mude a data do encontro e confira o quadro Agenda do Dia, no turno
+10. Na aba Alunos, mude a data do encontro e confira o quadro Agenda do Dia, no turno
     escolhido. A edição do conteúdo continua na aba Planner.
+11. No chat, use 📎 com um arquivo fictício de até 10 MB e clique em Enviar.
+    Confira prévia/download com outra conta e Apagar pelo autor.
 
 DOCUMENTOS DOS PROFESSORES
 Exportar Documentos oferece DOCX/ODT individuais por padrão. ZIP é opcional.
@@ -105,6 +107,13 @@ serviços externos de IA ou a configuração remota atual de todos os serviços.
         fim=texto.index('PARA PUBLICAR',inicio)
         texto=texto[:inicio]+"ETAPA 38 — AJUSTE VISUAL\nEsta etapa mantém as regras da etapa 37. Se ela já está publicada e funcionando,\nnão é necessário alterar Firebase. Publique somente este pacote no Netlify.\nA Agenda do Dia fica no topo; a conferência de frequência fica oculta.\n\n"+texto[fim:]
         guia.write_text(texto.replace('ETAPA 38 — AJUSTE VISUAL','ETAPA '+str(args.etapa)+' — AJUSTE VISUAL'))
+    if args.etapa == 40:
+        guia=destino/'LEIA-ME-PUBLICACAO.txt'
+        texto=guia.read_text()
+        inicio=texto.index('ATENÇÃO — QUESTIONÁRIO DA FAMÍLIA')
+        fim=texto.index('PARA PUBLICAR',inicio)
+        texto=texto[:inicio]+"ETAPA 40 — ANEXOS NO CHAT\nAntes do Netlify, atualize as duas regras do projeto salamulti:\nFirestore: https://github.com/rodrigofaustino-ai/site/blob/melhorias/etapa-40-chat-anexos/producao/salamulti.rules\nStorage: https://github.com/rodrigofaustino-ai/site/blob/melhorias/etapa-40-chat-anexos/producao/salamulti-storage.rules\nO Storage mantém as permissões de planos de aula fornecidas pelo usuário.\nSe o Console pedir habilitar a consulta ao Firestore pelas regras do Storage,\nsiga a autorização apresentada. Não altere Realtime Database ou paee-3fea6.\n\n"+texto[fim:]
+        guia.write_text(texto)
     validar(destino)
     files={str(f.relative_to(destino)):hashlib.sha256(f.read_bytes()).hexdigest() for f in sorted(destino.rglob('*')) if f.is_file()}
     manifest={'versao':'etapa-'+str(args.etapa),'site':'https://saladerecursos.netlify.app/','commit_fonte':commit,'preparado_em':datetime.datetime.now(ZoneInfo('America/Sao_Paulo')).date().isoformat(),'arquivos_sha256':files}

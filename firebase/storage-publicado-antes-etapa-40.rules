@@ -1,0 +1,26 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /planosAula/{autorUid}/{planoId}/{arquivo} {
+      // Usuários logados podem consultar e baixar os planos.
+      allow read: if request.auth != null;
+      // Somente o autor pode enviar arquivos neste caminho.
+      allow create: if request.auth != null
+        && request.auth.uid == autorUid
+        && arquivo.matches('[a-zA-Z0-9-]+[.]docx')
+        && request.resource.size > 0
+        && request.resource.size <= 10 * 1024 * 1024
+        && request.resource.contentType
+          == 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+      // A substituição cria um novo arquivo pelo site.
+      allow update: if false;
+      // Somente o autor pode excluir o arquivo.
+      allow delete: if request.auth != null && request.auth.uid == autorUid;
+    }
+
+    // Os demais caminhos continuam bloqueados.
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

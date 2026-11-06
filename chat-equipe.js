@@ -32,11 +32,12 @@
   let novasPendentes=new Set(),recebeuSnapshot=false;
   let respostaSelecionada=null,referenciaVersao=0,referenciaPendente=false;
   let apagando=new Set(),antigasGrupos=[],antigasObservadas=new Set(),mensagemDestacada=null;
-  const textoMensagem=message=>message?.apagada===true?'Mensagem apagada pelo autor.':message?._indisponivel?'Mensagem temporariamente indisponível.':String(message?.texto||'');
+  const anexos=ChatAnexos.criar({auth,storage:firebase.storage(),status,render});
+  const textoMensagem=message=>message?.apagada===true?'Mensagem apagada pelo autor.':message?._indisponivel?'Mensagem temporariamente indisponível.':String(message?.texto||(message?.anexo?'📎 '+message.anexo.nome:''));
   function aceitarMensagem(message){
     const anterior=messages.get(message.id);
     if(anterior?.apagada===true&&message.apagada!==true)return;
-    messages.set(message.id,message.apagada===true?{...message,texto:''}:message);
+    messages.set(message.id,message.apagada===true?{...message,texto:'',anexo:null}:message);
     if(message.apagada===true)novasPendentes.delete(message.id);
   }
   function pararAntigas(){antigasGrupos.forEach(g=>{g.versao++;g.stop?.();});antigasGrupos=[];antigasObservadas=new Set();}
@@ -77,19 +78,19 @@
   function atualizarEmojis(){emojiPicker.querySelectorAll('button').forEach(button=>button.disabled=sending);emojiPicker.querySelector('summary').setAttribute('aria-disabled',String(sending));if(sending)emojiPicker.open=false;}
   async function apagarMensagem(id){
     const local=messages.get(id);if(!user||sending||apagando.has(id)||!local||local.apagada||local._indisponivel||local.autorUid!==user.uid||!millis(local))return;
-    stopReadTracking();const confirmar=confirm('Apagar esta mensagem para todos? O texto será removido e as respostas indicarão que o original foi apagado.');markRead();if(!confirmar)return;
+    stopReadTracking();const confirmar=confirm(local.anexo?'Apagar esta mensagem e seu anexo para todos? As respostas indicarão que o original foi apagado.':'Apagar esta mensagem para todos? O texto será removido e as respostas indicarão que o original foi apagado.');markRead();if(!confirmar)return;
     const owner=user,current=epoch;apagando.add(id);render();status('Apagando mensagem…');
     try{
       const ref=collection.doc(id);
       await db.runTransaction(async transaction=>{
-        if(auth.currentUser?.uid!==owner.uid)throw Error('Sessão encerrada.');
+        if(current!==epoch||auth.currentUser?.uid!==owner.uid)throw Error('Sessão encerrada.');
         const snap=await transaction.get(ref);if(!snap.exists)throw Error('Mensagem não encontrada.');
         const message=snap.data();if(message.autorUid!==owner.uid)throw Error('Sem permissão.');if(message.apagada===true)return;
-        transaction.update(ref,{texto:'',apagada:true,apagadaEm:firebase.firestore.FieldValue.serverTimestamp()});
+        const patch={texto:'',apagada:true,apagadaEm:firebase.firestore.FieldValue.serverTimestamp()};if(message.anexo)patch.anexo=firebase.firestore.FieldValue.delete();transaction.update(ref,patch);
       });
-      if(current===epoch&&auth.currentUser?.uid===owner.uid){aceitarMensagem({...messages.get(id),id,texto:'',apagada:true});render();status('Mensagem apagada.');}
+      if(current===epoch&&auth.currentUser?.uid===owner.uid){aceitarMensagem({...messages.get(id),id,texto:'',apagada:true,anexo:null});render();status('Mensagem apagada.');}
     }catch(_){if(current===epoch)status(messages.get(id)?.apagada?'Mensagem apagada.':'Não foi possível confirmar a exclusão. Confira a conversa e tente novamente.');}
-    finally{if(current===epoch){apagando.delete(id);render();}}
+    finally{if(current===epoch){if(messages.get(id)?.apagada)anexos.apagar(local.anexo,owner.uid);apagando.delete(id);render();}}
   }
   const idRespostaValido=id=>typeof id==='string'&&/^[A-Za-z0-9_-]{1,128}$/.test(id);
   const trecho=texto=>String(texto||'').length>180?String(texto).slice(0,180)+'…':String(texto||'');
@@ -151,7 +152,7 @@
   function atualizarBusca(){
     const termos=normalizarBusca(el('chatBuscaTermo').value).trim().split(/\s+/).filter(Boolean);
     buscaIds=termos.length?[...messages.values()].filter(message=>{
-      if(message.apagada||message._indisponivel)return false;const texto=normalizarBusca([message.texto,message.autorNome,message.autorEmail].join(' '));return termos.every(t=>texto.includes(t));
+      if(message.apagada||message._indisponivel)return false;const texto=normalizarBusca([message.texto,message.anexo?.nome,message.autorNome,message.autorEmail].join(' '));return termos.every(t=>texto.includes(t));
     }).sort((a,b)=>(millis(a)||Infinity)-(millis(b)||Infinity)||a.id.localeCompare(b.id)).map(message=>message.id):[];
     if(!buscaIds.includes(buscaAtual))buscaAtual=null;
     const ids=new Set(buscaIds);
@@ -218,7 +219,7 @@
     try {
       const ref = collection.doc(message.id).collection('leituras').doc(owner.uid);
       await db.runTransaction(async transaction => {
-        if (!auth.currentUser || auth.currentUser.uid !== owner.uid) return;
+        if (current!==epoch || !auth.currentUser || auth.currentUser.uid !== owner.uid) return;
         const existing = await transaction.get(ref); if (existing.exists) return;
         transaction.set(ref,{uid:owner.uid,email:owner.email,lidoEm:firebase.firestore.FieldValue.serverTimestamp()});
       });
@@ -264,7 +265,7 @@
   function render() {
     const list=el('chatMensagens'),pos=guardarPosicao();atualizarResposta();
     const focusId=document.activeElement?.closest('[data-message-id]')?.dataset.messageId,focusNoArtigo=document.activeElement?.matches('[data-message-id]');
-    stopReadTracking();list.replaceChildren();
+    stopReadTracking();anexos.sincronizar(messages.values());list.replaceChildren();
     const ordered=[...messages.values()].sort((a,b)=>(millis(a)||Infinity)-(millis(b)||Infinity)||a.id.localeCompare(b.id));
     if(!ordered.length){const p=document.createElement('p');p.textContent='Ainda não há mensagens. Inicie a conversa com a equipe!';list.appendChild(p);}
     let diaAnterior=null;
@@ -274,7 +275,7 @@
       if(dia!==diaAnterior){const separator=document.createElement('h3');separator.className='chat-dia';separator.textContent=date?date.toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long',year:'numeric'}):'Confirmando data das mensagens';list.appendChild(separator);diaAnterior=dia;}
       const article=document.createElement('article');article.className='chat-mensagem'+(message.autorUid===user.uid?' propria':'');
       const name=document.createElement('strong');name.textContent=message.autorNome+(message.autorEmail&&message.autorEmail!==message.autorNome?' ('+message.autorEmail+')':'');
-      const text=document.createElement('p');text.textContent=textoMensagem(message);
+      const text=document.createElement('p');text.textContent=textoMensagem(message);text.hidden=!message.texto&&!message.apagada&&!message._indisponivel&&!!message.anexo;
       const time=document.createElement('small');time.textContent=stamp?date.toLocaleString('pt-BR'):'Enviando…';
       const readers=document.createElement('button');readers.type='button';readers.className='chat-ver-leituras';readers.textContent='Quem já leu';readers.addEventListener('click',event=>{event.stopPropagation();showReceipts(message);});
       article.classList.toggle('chat-apagada',message.apagada===true);article.classList.toggle('chat-indisponivel',!!message._indisponivel);article.dataset.messageId=message.id;article.tabIndex=-1;if(message.id===mensagemDestacada)article.classList.add('chat-original-destaque');article.addEventListener('click',()=>showReceipts(message));
@@ -287,7 +288,7 @@
       const reply=document.createElement('button');reply.type='button';reply.className='chat-responder';reply.textContent='Responder';reply.disabled=sending||message.apagada||message._indisponivel||!millis(message);reply.addEventListener('click',event=>{event.stopPropagation();selecionarResposta(message);});
       const actions=document.createElement('div');actions.className='chat-mensagem-acoes';if(!message.apagada&&!message._indisponivel)actions.append(readers,reply);
       if(message.autorUid===user.uid&&!message.apagada&&!message._indisponivel){const del=document.createElement('button');del.type='button';del.className='chat-apagar';del.textContent=apagando.has(message.id)?'Apagando…':'Apagar';del.disabled=sending||apagando.has(message.id)||!millis(message);del.addEventListener('click',event=>{event.stopPropagation();apagarMensagem(message.id);});actions.append(del);}
-      article.append(text,time,actions);list.appendChild(article);
+      article.append(text);const anexo=anexos.montar(message);if(anexo)article.append(anexo);article.append(time,actions);list.appendChild(article);
     });
     atualizarBusca();restaurarPosicao(pos,!loading);
     if(focusId){const article=[...list.querySelectorAll('[data-message-id]')].find(node=>node.dataset.messageId===focusId);(focusNoArtigo?article:article?.querySelector('button'))?.focus({preventScroll:true});}
@@ -337,26 +338,29 @@
   });
   el('chatForm').addEventListener('submit', async event => {
     event.preventDefault(); if (!user || sending || !auth.currentUser || auth.currentUser.uid !== user.uid) return;
-    const texto = el('chatTexto').value.trim(); if (!texto || texto.length > 2000) { status('Escreva uma mensagem de até 2.000 caracteres.'); return; }
+    if(anexos.validando){status('Aguarde a conferência do arquivo antes de enviar.');return;}
+    const texto = el('chatTexto').value.trim(),arquivo=anexos.arquivo; if ((!texto&&!arquivo) || texto.length > 2000) { status('Escreva uma mensagem de até 2.000 caracteres ou selecione um arquivo.'); return; }
     const owner = user, current = epoch,respostaId=respostaSelecionada;
     if(respostaId&&(messages.get(respostaId)?.apagada||messages.get(respostaId)?._indisponivel)){status('A mensagem original foi apagada ou está indisponível. Cancele esta referência para enviar seu texto.');return;}
     // Reutiliza o ID em tentativas do mesmo envio para evitar mensagens duplicadas após falha de rede.
-    if (!pendingSend || pendingSend.texto !== texto || pendingSend.respostaId!==respostaId) pendingSend = {texto,respostaId,ref:collection.doc()};
-    const attempt = pendingSend; sending = true;atualizarResposta();atualizarEmojis();widget.querySelectorAll('.chat-responder').forEach(button=>button.disabled=true); el('chatEnviar').disabled = true; el('chatTexto').disabled = true; status('Enviando mensagem…');
+    if (!pendingSend || pendingSend.texto !== texto || pendingSend.respostaId!==respostaId||pendingSend.arquivo!==arquivo) pendingSend = {texto,respostaId,arquivo,infoAnexo:anexos.meta,ref:collection.doc()};
+    const attempt = pendingSend; sending = true;anexos.bloqueado(true);atualizarResposta();atualizarEmojis();widget.querySelectorAll('.chat-responder,.chat-apagar').forEach(button=>button.disabled=true); el('chatEnviar').disabled = true; el('chatTexto').disabled = true; status('Enviando mensagem…');
     try {
+      const anexo=await anexos.enviar(attempt,owner,()=>current===epoch&&auth.currentUser?.uid===owner.uid);
+      if(anexo&&current===epoch)status('Arquivo enviado. Publicando mensagem…');
       await db.runTransaction(async transaction => {
-        if (!auth.currentUser || auth.currentUser.uid !== owner.uid) throw new Error('Sessão encerrada.');
+        if (current!==epoch || !auth.currentUser || auth.currentUser.uid !== owner.uid) throw new Error('Sessão encerrada.');
         const existing = await transaction.get(attempt.ref); if (existing.exists) return;
         const payload={texto,autorUid:owner.uid,autorNome:(owner.displayName || owner.email || 'Professor').slice(0,200),autorEmail:owner.email,createdAt:firebase.firestore.FieldValue.serverTimestamp()};
-        if(attempt.respostaId)payload.respostaId=attempt.respostaId;
+        if(attempt.respostaId)payload.respostaId=attempt.respostaId;if(anexo)payload.anexo=anexo;
         transaction.set(attempt.ref,payload);
       });
-      if (current === epoch) { el('chatTexto').value = ''; pendingSend = null;respostaSelecionada=null;atualizarResposta(); status('Mensagem enviada.');if(attempt.respostaId)irParaFim(); el('chatTexto').disabled = false; el('chatTexto').focus(); }
-    } catch (error) { if (current === epoch) status(errorText(error) + (attempt.respostaId?' Seu texto e a referência foram mantidos para tentar novamente.':' Seu texto foi mantido para tentar novamente.')); }
-    finally { if (current === epoch) { sending = false;atualizarResposta();atualizarEmojis();el('chatEnviar').disabled = false;el('chatTexto').disabled = false;render(); } }
+      if (current === epoch) { el('chatTexto').value = ''; anexos.limparSelecao();pendingSend = null;respostaSelecionada=null;atualizarResposta(); status('Mensagem enviada.');if(attempt.respostaId)irParaFim(); el('chatTexto').disabled = false; el('chatTexto').focus(); }
+    } catch (error) { if (current === epoch) status(errorText(error) + (attempt.arquivo?' Seu texto e o arquivo selecionado foram mantidos para tentar novamente.':attempt.respostaId?' Seu texto e a referência foram mantidos para tentar novamente.':' Seu texto foi mantido para tentar novamente.')); }
+    finally { if (current === epoch) { sending = false;anexos.bloqueado(false);atualizarResposta();atualizarEmojis();el('chatEnviar').disabled = false;el('chatTexto').disabled = false;render(); } }
   });
   auth.onAuthStateChanged(next => {
-    epoch++;pararAntigas();apagando=new Set();mensagemDestacada=null;emojiPicker.open=false;respostaSelecionada=null;referenciaVersao++;referenciaPendente=false;novasPendentes.clear();recebeuSnapshot=false;widget.classList.remove('chat-ampliado');el('chatAmpliar').textContent='Ampliar';el('chatAmpliar').setAttribute('aria-label','Ampliar painel do chat');el('chatAmpliar').setAttribute('aria-pressed','false');el('chatNovas').hidden=true;stopReadTracking(); closeReceipts(); acknowledged=new Set(); el('chatOnlineLista').replaceChildren(); el('chatOnlineTotal').textContent='';el('chatOnlineTotal').hidden=true;el('chatOnlineRotulo').textContent='Presença indisponível';el('chatPresencaStatus').textContent='Não é possível confirmar quem está online agora.'; if (unsubscribe) unsubscribe(); unsubscribe = null;
+    epoch++;anexos.limpar();pararAntigas();apagando=new Set();mensagemDestacada=null;emojiPicker.open=false;respostaSelecionada=null;referenciaVersao++;referenciaPendente=false;novasPendentes.clear();recebeuSnapshot=false;widget.classList.remove('chat-ampliado');el('chatAmpliar').textContent='Ampliar';el('chatAmpliar').setAttribute('aria-label','Ampliar painel do chat');el('chatAmpliar').setAttribute('aria-pressed','false');el('chatNovas').hidden=true;stopReadTracking(); closeReceipts(); acknowledged=new Set(); el('chatOnlineLista').replaceChildren(); el('chatOnlineTotal').textContent='';el('chatOnlineTotal').hidden=true;el('chatOnlineRotulo').textContent='Presença indisponível';el('chatPresencaStatus').textContent='Não é possível confirmar quem está online agora.'; if (unsubscribe) unsubscribe(); unsubscribe = null;
     user = next; messages = new Map(); latest = []; cursor = null; more = false; historyLoaded = false; opened = false; sending = false; loading = false; pendingSend = null;
     el('chatMensagens').replaceChildren();atualizarResposta();atualizarEmojis();limparBusca(true); el('chatTexto').value = ''; el('chatTexto').disabled = false; el('chatEnviar').disabled = false; el('chatHistorico').disabled = false; el('chatNaoLidas').hidden = true; el('chatPainel').hidden = true; el('chatAbrir').setAttribute('aria-expanded','false'); status(''); widget.hidden = !next;
     if (user) { try { lastRead = Number(localStorage.getItem(key())) || 0; } catch (_) { lastRead = 0; } unread(); listen(); }
