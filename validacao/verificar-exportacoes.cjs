@@ -10,6 +10,7 @@ function context(file){
  w.HTMLAnchorElement.prototype.click=function(){saved.at(-1).name=this.download};
  w.showToast=message=>{if(message.startsWith('Erro'))throw new Error(message)};w.hideLoad=()=>{};w.showLoad=()=>{};w.hideModal=()=>{};
  w.eval(fs.readFileSync(path.join(base,'exportacao.js'),'utf8'));
+ w.eval(fs.readFileSync(path.join(base,'assinaturas-documentos.js'),'utf8'));
  if(file==='index.html')w.eval(fs.readFileSync(path.join(base,'frequencia-interface.js'),'utf8'));
  const scripts=Array.from(w.document.querySelectorAll('script:not([src])')).map(s=>s.textContent).join('\n');
  const ast=acorn.parse(scripts,{ecmaVersion:'latest'});

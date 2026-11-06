@@ -19,7 +19,9 @@
     await SRMExport.fromHtml(html,m.formato,'PEI');
    }else if(m.tipo==='historico'){
     if(!location.pathname.endsWith('/historico-atendimentos-exportar.html'))throw Error('Gerador incompatível.');
-    await SRMExport.fromHtml(HistoricoAtendimentosDocumento.html(m.dados),m.formato,'Historico_de_atendimentos');
+    const blob=await HistoricoAtendimentosDocumento.gerar({...m.dados,complementos:true});
+    if(m.formato==='docx')window.SRMExportacaoCapturar(blob,'Historico_de_atendimentos.docx');
+    else window.SRMExportacaoCapturar(await HistoricoAtendimentosOdt.converter(blob),'Historico_de_atendimentos.odt');
    }else if(m.tipo==='familia'){
     if(!location.pathname.endsWith('/questionario-familia-exportar.html'))throw Error('Gerador incompatível.');
     await SRMExport.fromHtml(QuestionarioFamiliaDocumento.html(m.dados),m.formato,'Questionario_da_familia');

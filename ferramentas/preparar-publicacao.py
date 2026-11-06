@@ -37,7 +37,7 @@ def validar(pasta):
     if faltantes:raise ValueError('Referências locais ausentes: '+repr(faltantes))
 
 def main():
-    p=argparse.ArgumentParser();p.add_argument('destino',type=Path);p.add_argument('zip',type=Path);p.add_argument('--etapa',type=int,default=43);args=p.parse_args()
+    p=argparse.ArgumentParser();p.add_argument('destino',type=Path);p.add_argument('zip',type=Path);p.add_argument('--etapa',type=int,default=44);args=p.parse_args()
     destino=args.destino.resolve();arquivo_zip=args.zip.resolve()
     if destino==ROOT or destino.is_relative_to(ROOT):raise ValueError('Use uma pasta nova fora do repositório de fonte.')
     if destino.exists() and any(destino.iterdir()):raise ValueError('A pasta de destino precisa estar vazia ou não existir.')
@@ -134,6 +134,13 @@ serviços externos de IA ou a configuração remota atual de todos os serviços.
         inicio=texto.index('ATENÇÃO — QUESTIONÁRIO DA FAMÍLIA')
         fim=texto.index('PARA PUBLICAR',inicio)
         texto=texto[:inicio]+"ETAPA 43 — EXPORTAR HISTÓRICO DE ATENDIMENTOS\nEsta etapa acrescenta Histórico de atendimentos em Exportar Documentos.\nEscolha DOCX ou ODT e um ou mais alunos; ZIP continua opcional.\nInclui todos os atendimentos salvos, sem aplicar os filtros da ficha.\nNão requer alteração nas regras do Firebase. Mantenha as regras da etapa 42.\nPublique somente este pacote completo no Netlify.\n\n"+texto[fim:]
+        guia.write_text(texto)
+    if args.etapa == 44:
+        guia=destino/'LEIA-ME-PUBLICACAO.txt'
+        texto=guia.read_text()
+        inicio=texto.index('ATENÇÃO — QUESTIONÁRIO DA FAMÍLIA')
+        fim=texto.index('PARA PUBLICAR',inicio)
+        texto=texto[:inicio]+"ETAPA 44 — FORMATAÇÃO DO HISTÓRICO\nExportar Documentos usa o mesmo gerador DOCX do perfil do aluno.\nMantém cabeçalho, tabelas verdes, fonte, margens, borda da página e assinaturas.\nODT preserva o layout a partir desse DOCX, sem conversão por HTML simplificado.\nNão requer alteração nas regras do Firebase. Mantenha as regras já publicadas.\nPublique somente este pacote completo no Netlify.\n\n"+texto[fim:]
         guia.write_text(texto)
     validar(destino)
     files={str(f.relative_to(destino)):hashlib.sha256(f.read_bytes()).hexdigest() for f in sorted(destino.rglob('*')) if f.is_file()}

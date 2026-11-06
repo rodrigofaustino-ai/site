@@ -83,7 +83,8 @@
  async function carregarRegistros(c,id){
   const snap=await c.config.db.collection('alunos').doc(id).collection('registros').get({source:'server'});
   if(!vigente(c)||snap.metadata?.fromCache)throw Error('acesso');
-  return snap.docs.map(d=>({...d.data(),id:d.id}));
+  const data=v=>{if(!/^\d{4}-\d{2}-\d{2}$/.test(v||''))return '';const d=new Date(v+'T12:00:00Z');return Number.isFinite(d.getTime())&&d.toISOString().slice(0,10)===v?v:'';};
+  return snap.docs.map(d=>({...d.data(),id:d.id})).sort((a,b)=>data(b.date).localeCompare(data(a.date))||a.id.localeCompare(b.id));
  }
  async function carregarFamilia(c,item,aluno){
   const match=/^(v[12]):([A-Za-z0-9_-]{43})$/.exec(item.escolha);if(!match)throw Error('questionário inválido');
