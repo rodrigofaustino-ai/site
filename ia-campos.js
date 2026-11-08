@@ -35,16 +35,9 @@ async function generate(){const a=active;if(!a||!valid(a))return;const text=a.it
  if(!text.trim()){$('iaCamposStatus').textContent='Escreva algum texto no campo antes de pedir a revisão.';return;}
  if(!window.puter?.ai?.chat){$('iaCamposStatus').textContent='O serviço de IA está indisponível. Confira a conexão e tente novamente; seu texto foi mantido.';return;}
  const request=++ticket;$('iaCamposGerar').disabled=true;$('iaCamposStatus').textContent='Preparando sugestão…';
- const conversa=M.mensagens({texto:text,campo:a.item.label,maxCaracteres:a.item.c.maxLength,maxPalavras:a.item.c.id==='planoDescricao'?40:0});
- try{let result='';for(let attempt=0;attempt<2;attempt++){
- if(attempt)$('iaCamposStatus').textContent='O serviço repetiu o texto. Solicitando outra redação…';
- const r=await puter.ai.chat(attempt?M.novaTentativa(conversa,result):conversa);
- if(request!==ticket)return;if(!valid(a)){if(active===a)invalidate();return;}if(a.item.c.value!==text||a.item.version!==a.version){$('iaCamposStatus').textContent='O campo mudou durante a revisão. Seu texto foi mantido. Solicite uma nova sugestão.';return;}
- result=M.limpar(M.texto(r));if(!result)throw Error('Resposta vazia');if(!M.igual(text,result))break;
- }
- if(M.igual(text,result)){$('iaCamposStatus').textContent='O serviço repetiu o texto nas duas tentativas, sem uma nova redação. Nenhuma sugestão foi gerada; seu original foi mantido.';return;}
+ try{const result=await M.revisar({texto:text,campo:a.item.label,maxCaracteres:a.item.c.maxLength,maxPalavras:a.item.c.id==='planoDescricao'?40:0,vigente:()=>request===ticket&&valid(a)&&a.item.c.value===text&&a.item.version===a.version,aoRepetir:()=>{$('iaCamposStatus').textContent='O serviço repetiu o texto. Solicitando outra redação…';}});
  a.suggestion=result;$('iaCamposSugestao').value=result;const error=M.limite(a.item.c,result);$('iaCamposStatus').textContent=error||'Revise a sugestão. O texto do campo ainda não foi alterado.';$('iaCamposAplicar').disabled=!!error;$('iaCamposSugestao').focus();
- }catch(e){if(request===ticket&&valid(a))$('iaCamposStatus').textContent='Não foi possível gerar uma sugestão. Seu texto foi mantido. Tente novamente.';}
+ }catch(e){if(request===ticket&&valid(a))$('iaCamposStatus').textContent=a.item.c.value!==text||a.item.version!==a.version?'O campo mudou durante a revisão. Seu texto foi mantido. Solicite uma nova sugestão.':e?.code==='sem-reformulacao'?e.message+' Nenhuma sugestão foi gerada; seu original foi mantido.':'Não foi possível gerar uma sugestão. Seu texto foi mantido. Tente novamente.';}
  finally{if(request===ticket&&active===a){if(!valid(a))invalidate();else $('iaCamposGerar').disabled=false;}}
 }
 $('iaCamposGerar').onclick=generate;$('iaCamposManter').onclick=invalidate;dialog.addEventListener('cancel',e=>{e.preventDefault();invalidate();});
@@ -53,5 +46,5 @@ $('iaCamposAplicar').onclick=()=>{const a=active;if(!a||!valid(a)||!a.suggestion
 document.addEventListener('click',e=>{const b=e.target.closest('#btnIaObsClinicas,.ai-textarea-wrap .ai-btn,.obs-geral-ia-btn');if(!b)return;const c=b.id==='btnIaObsClinicas'?document.getElementById('obsClinicas'):b.closest('.ai-textarea-wrap,.obs-geral-wrap')?.querySelector('textarea');if(!c)return;e.preventDefault();e.stopImmediatePropagation();if(M.classificar(c)==='redacao'){scan();const i=map.get(c);if(i)open(i);}},true);
 auth()?.onAuthStateChanged(()=>{session++;invalidate();});
 let queued=false;new MutationObserver(()=>{if(queued)return;queued=true;queueMicrotask(()=>{queued=false;scan();});}).observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['disabled','readonly']});
-scan();window.IACampos=Object.freeze({atualizar:scan,fechar:invalidate});
+scan();window.IACampos=Object.freeze({atualizar:scan,fechar:invalidate,abrirCampo:c=>{scan();const item=map.get(c);if(item&&M.classificar(c)==='redacao')open(item);}});
 })();

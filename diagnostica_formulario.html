@@ -220,7 +220,7 @@
 <link rel="stylesheet" href="formularios-visual.css">
 <link rel="stylesheet" href="ia-campos.css">
 </head>
-<body class="srm-form-visual">
+<body data-ia-pagina="diagnostica_formulario.html" class="srm-form-visual">
 
 <!-- LOGIN -->
 <div id="screen-login" class="active">
@@ -524,33 +524,10 @@ function extractAIText(resp){
   return String(resp);
 }
 
-async function melhorarObsGeralIA(catKey,btnEl){
+function melhorarObsGeralIA(catKey,btnEl){
   const ta=document.querySelector('[data-obs-geral="'+catKey+'"]');
-  if(!ta) return;
-  const texto=ta.value.trim();
-  if(!texto){showToast('Escreva alguma observação antes de usar a IA.');return;}
-  if(typeof puter==='undefined'||!puter.ai||!puter.ai.chat){showToast('Serviço de IA indisponível.');return;}
-  const orig=btnEl.textContent;
-  btnEl.disabled=true;btnEl.textContent='⏳';
-  const cat=CATEGORIAS.find(c=>c.key===catKey);
-  const catLabel=cat?cat.label:catKey;
-  try{
-    const prompt='Voce e um assistente de Educacao Especial e AEE. '+
-      'Expanda a observacao abaixo sobre a area '+catLabel+' com linguagem tecnica e pedagogica. '+
-      'Nao invente dados do aluno. Responda so com o texto em portugues do Brasil.\n\n'+texto;
-    const resp=await puter.ai.chat(prompt);
-    const resultado=extractAIText(resp).trim();
-    if(!resultado){showToast('A IA não retornou texto. Tente novamente.');return;}
-    ta.value=resultado;
-    if(!state.obsGerais) state.obsGerais={};
-    state.obsGerais[catKey]=resultado;
-    ta.style.height='auto';ta.style.height=ta.scrollHeight+'px';
-    showToast('✓ Observação aprimorada com IA.');
-  }catch(e){
-    showToast('Não foi possível usar a IA agora.');
-  }finally{
-    btnEl.disabled=false;btnEl.textContent=orig;
-  }
+  if(window.IACampos)return IACampos.abrirCampo(ta);
+  showToast('A revisão de texto ainda não está disponível. Atualize a página e tente novamente.');
 }
 
 function showToast(msg){

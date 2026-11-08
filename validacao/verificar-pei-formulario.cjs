@@ -208,7 +208,7 @@ let total=0;function check(a,b){assert.deepEqual(a,b);total++;}
   await ai.locator('[data-path="contextoEscolar.academicos"]').fill('OUTRO_CAMPO_NAO_ENVIAR');
   await ask.click();await area.locator('.pei-ai-preview').waitFor({state:'visible'});
   check(await socio.inputValue(),'Participa das atividades com apoio visual.');
-  check(await ai.evaluate(()=>[aiPrompts.length,aiPrompts[0].includes('OUTRO_CAMPO_NAO_ENVIAR'),aiPrompts[0].includes('Ana Teste'),mockWrites.length]),[1,false,false,0]);
+  check(await ai.evaluate(()=>[aiPrompts.length,JSON.stringify(aiPrompts[0]).includes('OUTRO_CAMPO_NAO_ENVIAR'),JSON.stringify(aiPrompts[0]).includes('Ana Teste'),mockWrites.length]),[1,false,false,0]);
   await area.getByRole('button',{name:'Manter meu texto original',exact:true}).click();
   check(await socio.inputValue(),'Participa das atividades com apoio visual.');
   await ask.click();await area.getByRole('button',{name:'Aplicar sugestão',exact:true}).click();
@@ -228,7 +228,7 @@ let total=0;function check(a,b){assert.deepEqual(a,b);total++;}
   check(await ai.evaluate(()=>tentativasIA),2);
   check(await area.locator('.pei-ai-preview textarea').inputValue(),'Com apoio visual, participa das atividades propostas.');
   check(await socio.inputValue(),'Participa das atividades propostas com apoio visual.');
-  check(await ai.evaluate(()=>aiPrompts.at(-1).includes('Na tentativa anterior você repetiu')),true);
+  check(await ai.evaluate(()=>aiPrompts.at(-1)[3].content.includes('A resposta anterior repetiu')),true);
   await area.getByRole('button',{name:'Manter meu texto original',exact:true}).click();
   await ai.evaluate(()=>{
     tentativasIA=0;puter.ai.chat=async()=>{tentativasIA++;return 'Participa das atividades propostas com apoio visual.';};

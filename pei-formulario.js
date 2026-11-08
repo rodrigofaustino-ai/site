@@ -125,19 +125,8 @@
       input.focus();input.setSelectionRange(input.value.length,input.value.length);input.scrollTop=input.scrollHeight;
     });
   }
-  function textoIA(response) {
-    if(typeof response==='string')return response;
-    if(Array.isArray(response))return response.map(textoIA).join('\n');
-    if(response?.message?.content!==undefined)return textoIA(response.message.content);
-    if(typeof response?.text==='string')return response.text;
-    return '';
-  }
-  function mesmaRedacao(a,b) {
-    const normalizar=text=>text.normalize('NFKC').toLocaleLowerCase('pt-BR').replace(/[^\p{L}\p{N}]/gu,'');
-    return normalizar(a)===normalizar(b);
-  }
   function adicionarIA(wrap,input,path,label) {
-    const formState=estado,formToken=generation;
+    const formState=estado,formToken=generation,ownerUid=user?.uid;
     const area=el('div');area.className='pei-ai';
     const request=el('button','✨ Melhorar texto com IA');request.type='button';request.className='btn secondary';
     request.setAttribute('aria-label','Melhorar '+label+' com IA');
@@ -150,50 +139,27 @@
     const apply=el('button','Aplicar sugestão');apply.type='button';apply.className='btn';
     const discard=el('button','Manter meu texto original');discard.type='button';discard.className='btn secondary';
     actions.append(apply,discard);preview.append(previewLabel,suggestion,actions);area.append(request,hint,status,preview);wrap.append(area);
-    const valido=()=>generation===formToken&&estado===formState&&input.isConnected&&!!user;
+    const valido=()=>generation===formToken&&estado===formState&&input.isConnected&&user?.uid===ownerUid&&auth.currentUser?.uid===ownerUid;
     let originalRevisado='';
     request.addEventListener('click',async()=>{
-      if(busy||!valido())return;
+      if(busy||!valido()||input.disabled||input.readOnly)return;
       const original=input.value;
       preview.hidden=true;suggestion.value='';
       if(!original.trim()){status.textContent='Escreva seu texto neste campo antes de solicitar a revisão.';input.focus();return;}
       if(!window.puter?.ai?.chat){status.textContent='O serviço de IA está indisponível. Tente novamente em instantes; seu texto foi mantido.';return;}
       request.dataset.loading='true';request.disabled=true;status.textContent='Preparando sugestão…';
-      const prompt='Você é um revisor de textos pedagógicos de Plano Educacional Individualizado (PEI). '+
-        'Sua tarefa é REESCREVER o texto do professor para o campo "'+label+'", e não apenas repeti-lo. '+
-        'Transforme anotações e frases simples em uma redação pedagógica clara, coesa, natural e bem organizada. '+
-        'Reformule a construção das frases, conecte as ideias, corrija a gramática e desenvolva melhor as ideias que já estão expressas. '+
-        'Use linguagem profissional e respeitosa, evitando jargões desnecessários. Preserve o significado, o grau de certeza e todas as informações relatadas. '+
-        'Você pode mudar a forma de escrever, mas não criar informações: não acrescente fatos, diagnósticos, medicamentos, '+
-        'comportamentos, resultados, metas, condutas ou níveis de apoio que não estejam no texto. '+
-        'Responda somente com a versão reescrita em português do Brasil, sem comentários, títulos ou marcações.\n\n'+
-        'Texto do professor:\n"""\n'+original+'\n"""';
       try{
-        let text='';
-        for(let tentativa=0;tentativa<2;tentativa++){
-          const pedido=tentativa===0?prompt:prompt+'\n\nNa tentativa anterior você repetiu o texto original. '+
-            'Agora reformule de fato a estrutura e a redação, desenvolvendo as ideias já fornecidas sem acrescentar fatos. '+
-            'Não se limite a mudar pontuação, espaços ou letras maiúsculas.';
-          const response=await window.puter.ai.chat(pedido);
-          if(!valido())return;
-          if(input.value!==original){status.textContent='Você alterou o campo durante a revisão. Seu texto foi mantido; solicite uma nova sugestão.';return;}
-          text=textoIA(response).trim();
-          if(!text)throw new Error('Resposta vazia');
-          if(!mesmaRedacao(original,text))break;
-          if(tentativa===0)status.textContent='A IA repetiu o texto. Solicitando uma reformulação…';
-        }
-        if(mesmaRedacao(original,text)){
-          status.textContent='A IA não apresentou uma reformulação após duas tentativas. Seu texto foi mantido; nenhuma sugestão foi aplicada.';
-          return;
-        }
+        const text=await IACamposModelo.revisar({texto:original,campo:'PEI — '+label,maxCaracteres:input.maxLength,vigente:()=>valido()&&!busy&&!input.disabled&&!input.readOnly&&input.value===original,aoRepetir:()=>{status.textContent='A IA repetiu o texto. Solicitando uma reformulação…';}});
+        if(!valido()||busy||input.value!==original)return;
         originalRevisado=original;suggestion.value=text;preview.hidden=false;
         status.textContent='Sugestão pronta. Ela ainda não substituiu seu texto nem foi salva.';
-      }catch(error){if(valido())status.textContent='Não foi possível obter uma sugestão da IA. Seu texto foi mantido; tente novamente.';}
+      }catch(error){if(valido())status.textContent=input.value!==original?'Você alterou o campo durante a revisão. Seu texto foi mantido; solicite uma nova sugestão.':error?.code==='sem-reformulacao'?'A IA não apresentou uma reformulação após duas tentativas. Seu texto foi mantido; nenhuma sugestão foi aplicada.':'Não foi possível obter uma sugestão da IA. Seu texto foi mantido; tente novamente.';}
       finally{delete request.dataset.loading;request.disabled=busy;}
     });
     apply.addEventListener('click',()=>{
-      if(busy||!valido())return;
+      if(busy||!valido()||input.disabled||input.readOnly)return;
       if(input.value!==originalRevisado){status.textContent='O campo foi alterado depois da revisão. Seu texto foi mantido; solicite uma nova sugestão.';return;}
+      const limite=IACamposModelo.limite(input,suggestion.value);if(limite){status.textContent=limite;return;}
       input.value=suggestion.value;input.dispatchEvent(new Event('input',{bubbles:true}));preview.hidden=true;
       status.textContent='Sugestão aplicada ao campo. Clique em Salvar para gravar o PEI.';
     });

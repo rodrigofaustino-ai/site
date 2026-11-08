@@ -269,7 +269,7 @@
 <link rel="stylesheet" href="formularios-visual.css">
 <link rel="stylesheet" href="ia-campos.css">
 </head>
-<body class="srm-form-visual">
+<body data-ia-pagina="relatorio_formulario.html" class="srm-form-visual">
 
 <!-- LOGIN -->
 <div id="screen-login" class="active">
@@ -994,35 +994,9 @@ function attachAIButtons(container){
   });
 }
 
-async function reviseWithAI(textarea, btn){
-  if(!textarea||textarea.disabled) return;
-  const original = textarea.value.trim();
-  if(!original){showToast('Escreva algum texto antes de usar a IA.');return;}
-  if(typeof puter==='undefined'||!puter.ai||!puter.ai.chat){
-    showToast('Serviço de IA indisponível (verifique sua conexão).');return;
-  }
-  const prevHTML=btn.innerHTML;
-  btn.classList.add('loading');btn.innerHTML='⏳';
-  try{
-    const prompt=
-      'Você é um assistente pedagógico especializado em Educação Especial e Sala de Recursos Multifuncional (SRM). '+
-      'O texto abaixo é o conteúdo de um campo de um Relatório de Atendimento Especializado (SRM). '+
-      'Revise, amplie e aprofunde o texto: melhore a redação, a clareza, a coesão e o vocabulário técnico-pedagógico, '+
-      'mantendo fielmente as informações originais. NÃO invente dados específicos sobre o aluno que não estejam no texto. '+
-      'Responda SOMENTE com o texto final revisado, em português do Brasil, sem introduções, comentários ou aspas.\n\n'+
-      'Texto original:\n"""\n'+original+'\n"""';
-    const resp = await puter.ai.chat(prompt);
-    const revisado = extractAIText(resp).trim();
-    if(!revisado) throw new Error('Resposta vazia');
-    textarea.value=revisado;
-    textarea.dispatchEvent(new Event('input',{bubbles:true}));
-    showToast('Texto revisado com IA.');
-  }catch(err){
-    console.error('Erro IA:',err);
-    showToast('Não foi possível revisar com IA agora. Tente novamente.');
-  }finally{
-    btn.classList.remove('loading');btn.innerHTML=prevHTML;
-  }
+function reviseWithAI(textarea, btn){
+  if(window.IACampos)return IACampos.abrirCampo(textarea);
+  showToast('A revisão de texto ainda não está disponível. Atualize a página e tente novamente.');
 }
 
 /* ========================= NAV SCROLL SPY ========================= */

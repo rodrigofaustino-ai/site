@@ -551,7 +551,7 @@ hr.sep{border:none;border-top:2px dashed rgba(0,0,0,.06);margin:.2rem 0;}
 <script src="estatisticas.js"></script>
 <link rel="stylesheet" href="ia-campos.css">
 </head>
-<body>
+<body data-ia-pagina="index.html">
 <nav class="colaboracao-entrada" aria-label="Compartilhamento"><a class="central-btn" href="colaboracao.html">Conteúdos compartilhados comigo</a></nav>
 <div class="shape s1"></div><div class="shape s2"></div>
 <div class="shape s3"></div><div class="shape s4"></div>
@@ -1166,26 +1166,17 @@ async function melhorarComIA(){
   entryIAPending=true;entryIASource=null;btn.disabled=true; btn.innerHTML='⏳ Aprimorando...';
   $('aiSuggestionBox').classList.remove('show');
 
-  const prompt=`Você é um assistente pedagógico que ajuda professores de Sala de Recursos Multifuncionais (SRM) a redigir relatos de atendimento.
-Reescreva o texto abaixo em português do Brasil, ampliando e melhorando a redação: corrija a gramática, deixe o texto mais claro, coeso e com vocabulário técnico-pedagógico adequado, mantendo tom profissional e objetivo.
-IMPORTANTE: não invente fatos, comportamentos ou informações que não estejam no texto original. Apenas organize, esclareça e amplie a forma como o que já foi escrito é expresso. Responda SOMENTE com o texto final do relato, em português do Brasil, sem introduções, comentários, marcações ou aspas.
-
-Texto original do professor:
-"""
-${texto}
-"""`;
-
+  const vigente=()=>version===entryAIVersion&&currentStudentId===student&&professorUid===uid&&auth.currentUser?.uid===uid&&!RegistroAssistido.salvando()&&$('entryText').value.trim()===texto;
   try{
-    const resp = await puter.ai.chat(prompt);
-    if(version!==entryAIVersion||currentStudentId!==student||professorUid!==uid||RegistroAssistido.salvando()||$('entryText').value.trim()!==texto)return;
-    const sugestao = extractAIText(resp).trim();
-    if(!sugestao){showToast('A IA não retornou nenhum texto. Tente novamente.');btn.disabled=false;btn.innerHTML=original;return;}
+    const sugestao=await IACamposModelo.revisar({texto,campo:'Relato de atendimento do Diário',maxCaracteres:$('entryText').maxLength,vigente,aoRepetir:()=>{btn.textContent='⏳ Solicitando outra redação…';}});
+    if(!vigente())return;
+    const limite=IACamposModelo.limite($('entryText'),sugestao);if(limite){showToast(limite);return;}
     entryIASource={student,uid,texto,version};$('aiSuggestionText').textContent=sugestao;
     $('aiSuggestionBox').classList.add('show');
     $('aiSuggestionBox').scrollIntoView({behavior:'smooth',block:'nearest'});
   }catch(e){
     console.error('Erro IA:', e);
-    showToast('Não foi possível revisar com IA agora. Tente novamente.');
+    if(vigente())showToast(e?.code==='sem-reformulacao'?'A IA repetiu o texto nas duas tentativas. Seu original foi mantido.':'Não foi possível revisar com IA agora. Tente novamente.');
   }finally{
     if(version===entryAIVersion){entryIAPending=false;btn.disabled=RegistroAssistido.salvando();btn.innerHTML=original;}
   }
@@ -3676,36 +3667,9 @@ async function buscarCID11(){
     status.textContent='⚠️ Código CID-11 não encontrado: '+naoEncontrados.join(', ');
   }
 }
-async function melhorarObsClinicasIA(){
-  const ta=document.getElementById('obsClinicas');
-  const btn=document.getElementById('btnIaObsClinicas');
-  const texto=(ta.value||'').trim();
-  if(!texto){showToast('Escreva algum conteúdo antes de usar a IA.');return;}
-  if(typeof puter==='undefined'||!puter.ai||!puter.ai.chat){
-    showToast('Serviço de IA indisponível (verifique sua conexão).');return;
-  }
-  const orig=btn.innerHTML;
-  btn.disabled=true;btn.innerHTML='⏳';
-  try{
-    const prompt=
-      'Você é um assistente especializado em Educação Especial e AEE (Atendimento Educacional Especializado). '+
-      'O texto abaixo descreve observações clínicas de um aluno da Sala de Recursos Multifuncionais. '+
-      'Expanda e melhore o texto: acrescente características típicas do(s) transtorno(s)/condição(ões) mencionados que sejam relevantes para o contexto escolar, '+
-      'como impactos na aprendizagem, atenção, comunicação, comportamento e socialização, com base na literatura médica e pedagógica. '+
-      'Mantenha linguagem técnica e adequada para um documento escolar. '+
-      'NÃO invente dados específicos do aluno que não estejam no texto. '+
-      'Responda SOMENTE com o texto final em português do Brasil, sem introduções ou aspas.\n\nTexto:\n"""\n'+texto+'\n"""';
-    const resp=await puter.ai.chat(prompt);
-    const resultado=extractAIText(resp).trim();
-    if(!resultado){showToast('A IA não retornou texto. Tente novamente.');return;}
-    ta.value=resultado;
-    showToast('✓ Observações aprimoradas com IA.');
-  }catch(e){
-    console.error(e);
-    showToast('Não foi possível usar a IA agora. Tente novamente.');
-  }finally{
-    btn.disabled=false;btn.innerHTML=orig;
-  }
+function melhorarObsClinicasIA(){
+  if(window.IACampos)return IACampos.abrirCampo($('obsClinicas'));
+  showToast('A revisão de texto ainda não está disponível. Atualize a página e tente novamente.');
 }
 
 const FIELDS={nomeAluno:'nome',dataNasc:'dataNasc',turma:'turma',escola:'escola',municipio:'municipio',periodo:'periodo',laudo:'laudo',cid:'cid',cid11:'cid11',dataLaudo:'dataLaudo',obsClinicas:'obsClinicas'};
