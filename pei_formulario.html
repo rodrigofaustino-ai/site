@@ -34,9 +34,10 @@
     <main class="shell">
       <p id="peiError" role="alert"></p>
       <section id="pei-list">
-        <div class="list-head"><div><h1>Planos Educacionais Individualizados</h1><p>Todos os seus alunos em atendimento aparecem abaixo. Use Editar para preencher ou abrir o PEI. Nos documentos salvos, use exportar ou a lixeira para excluir somente o PEI.</p></div><a class="btn secondary" href="index.html">Voltar ao Diário</a></div>
+        <div class="list-head"><div><h1>Planos Educacionais Individualizados</h1><p>Aqui aparecem somente os PEIs salvos, como nos demais formulários. Use Editar, Exportar ou Excluir. Para começar um documento ou consultar versões anteriores, selecione Novo PEI / Consultar histórico.</p></div><a class="btn secondary" href="index.html">Voltar ao Diário</a></div>
         <div class="toolbar"><label for="search-input">Buscar aluno ou escola</label><input id="search-input" type="search"></div>
-        <div class="toolbar"><label for="peiListaFiltro">Mostrar</label><select id="peiListaFiltro"><option value="todos">Todos os alunos em atendimento</option><option value="salvos">Em atendimento com PEI salvo</option><option value="arquivados">Alunos arquivados no Diário</option></select><button id="peiListaAtualizar" class="btn secondary" type="button">Atualizar lista</button></div>
+        <div class="toolbar"><button id="peiNovo" class="btn" type="button">+ Novo PEI / Consultar histórico</button><button id="peiListaAtualizar" class="btn secondary" type="button">Atualizar lista</button></div>
+        <dialog id="peiNovoDialog" aria-labelledby="peiNovoTitulo"><h2 id="peiNovoTitulo">Selecionar aluno</h2><p>Escolha o aluno para preencher um PEI ou consultar o histórico. Somente documentos salvos aparecem na lista principal.</p><label for="peiAlunoNovo">Aluno do Diário</label><select id="peiAlunoNovo"></select><div class="toolbar"><button id="peiNovoCancelar" class="btn secondary" type="button">Cancelar</button><button id="peiNovoAbrir" class="btn" type="button">Abrir PEI</button></div></dialog>
         <p id="pei-list-status" class="pei-status" role="status"></p>
         <div class="student-grid" id="student-grid"></div>
       </section>
