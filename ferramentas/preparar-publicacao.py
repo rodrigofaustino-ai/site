@@ -37,7 +37,7 @@ def validar(pasta):
     if faltantes:raise ValueError('Referências locais ausentes: '+repr(faltantes))
 
 def main():
-    p=argparse.ArgumentParser();p.add_argument('destino',type=Path);p.add_argument('zip',type=Path);p.add_argument('--etapa',type=int,default=50);args=p.parse_args()
+    p=argparse.ArgumentParser();p.add_argument('destino',type=Path);p.add_argument('zip',type=Path);p.add_argument('--etapa',type=int,default=51);args=p.parse_args()
     destino=args.destino.resolve();arquivo_zip=args.zip.resolve()
     if destino==ROOT or destino.is_relative_to(ROOT):raise ValueError('Use uma pasta nova fora do repositório de fonte.')
     if destino.exists() and any(destino.iterdir()):raise ValueError('A pasta de destino precisa estar vazia ou não existir.')
@@ -183,6 +183,13 @@ serviços externos de IA ou a configuração remota atual de todos os serviços.
         inicio=texto.index('ATENÇÃO — QUESTIONÁRIO DA FAMÍLIA')
         fim=texto.index('PARA PUBLICAR',inicio)
         texto=texto[:inicio]+'ETAPA 50 — AÇÕES DA LISTA DE PEI\nA lista de PEIs atuais salvos oferece Editar, Exportar DOCX, Exportar ODT e Excluir PEI.\nExcluir remove somente o PEI atual escolhido, após confirmação. Cadastro, outros documentos e versões anteriores permanecem.\nUse Todos os alunos do Diário para preencher um novo PEI ou consultar versões anteriores.\nNão precisa alterar regras do Firebase. As melhorias anteriores estão incluídas.\nPublique a pasta completa no Netlify, aguarde Published e atualize com Ctrl + Shift + R.\n\n'+texto[fim:]
+        guia.write_text(texto)
+    if args.etapa == 51:
+        guia=destino/'LEIA-ME-PUBLICACAO.txt'
+        texto=guia.read_text()
+        inicio=texto.index('ATENÇÃO — QUESTIONÁRIO DA FAMÍLIA')
+        fim=texto.index('PARA PUBLICAR',inicio)
+        texto=texto[:inicio]+'ETAPA 51 — LISTA DO PEI COMO OS DEMAIS FORMULÁRIOS\nAbre com todos os alunos em atendimento e separa os arquivados do Diário.\nCartões com Editar e, quando há PEI salvo, botão de exportação DOCX/ODT e lixeira.\nA lixeira exclui somente o PEI atual, preservando o cadastro e as versões anteriores.\nA lista é atualizada ao retornar à janela ou trocar o filtro. Cadastros excluídos não são listados.\nPacote cumulativo. Não precisa alterar Firebase. Publique a pasta completa no Netlify e atualize com Ctrl + Shift + R após Published.\n\n'+texto[fim:]
         guia.write_text(texto)
     validar(destino)
     files={str(f.relative_to(destino)):hashlib.sha256(f.read_bytes()).hexdigest() for f in sorted(destino.rglob('*')) if f.is_file()}

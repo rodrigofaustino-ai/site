@@ -427,24 +427,26 @@
         tx.delete(ref);
       });
       if(!vigente())return;student.peiLista={existe:false,data:null};lista();concluido=true;
-      $('pei-list-status').textContent='PEI atual excluído. O aluno continua no Diário e as versões anteriores foram mantidas. Para iniciar outro PEI ou consultar o histórico, use Todos os alunos do Diário.';
+      $('pei-list-status').textContent='PEI atual excluído. O aluno continua no Diário e as versões anteriores foram mantidas. O cadastro permanece na lista, com Editar para iniciar outro PEI ou consultar o histórico.';
     }catch(error){if(vigente()){$('pei-list-status').textContent=error?.code==='permission-denied'?'Sem permissão para excluir este PEI.':error?.message?.includes('mudou')?error.message:'Não foi possível confirmar a exclusão. Atualize a lista para conferir antes de tentar novamente.';erro($('pei-list-status').textContent);}}
     finally{if(vigente()){setBusy(false);if(concluido)($('student-grid').querySelector('button')||$('peiListaFiltro')).focus();}}
   }
   function lista() {
     const q=$('search-input').value.toLocaleLowerCase('pt-BR'),filtro=$('peiListaFiltro').value,root=$('student-grid');root.replaceChildren();
-    for(const student of alunos.filter(p=>(p.nome+' '+(p.escola||'')).toLocaleLowerCase('pt-BR').includes(q)&&(filtro==='todos'||p.peiLista?.existe))){
+    for(const student of alunos.filter(p=>(p.nome+' '+(p.escola||'')).toLocaleLowerCase('pt-BR').includes(q)&&(filtro==='arquivados'?p.arquivado===true:p.arquivado!==true)&&(filtro!=='salvos'||p.peiLista?.existe))){
       const saved=student.peiLista?.existe,card=el('article');card.className='student-card';card.dataset.alunoId=student.id;card.append(el('h2',student.nome||'Aluno sem nome'),el('p',(student.escola||'Escola não informada')+' · '+(student.turma||'Turma não informada')));
       card.append(el('p',saved?(student.peiLista.data.peiFormulario?'PEI do formulário salvo':'PEI importado salvo'):'Sem PEI atual salvo'));
       const actions=el('div');actions.className='pei-list-actions';
-      const button=el('button',saved?'Editar':'Preencher PEI');button.type='button';button.className='btn';button.dataset.peiEditar=student.id;button.disabled=busy;button.addEventListener('click',()=>{if(!busy)abrir(student.id);});actions.append(button);
+      const button=el('button','Editar');button.title=saved?'Editar PEI':'Preencher um novo PEI';button.type='button';button.className='btn';button.dataset.peiEditar=student.id;button.disabled=busy;button.addEventListener('click',()=>{if(!busy)abrir(student.id);});actions.append(button);
       if(saved){
-        for(const format of ['docx','odt']){const exp=el('button','Exportar '+format.toUpperCase());exp.type='button';exp.className='btn secondary';exp.disabled=busy;exp.dataset.peiExportar=format;exp.addEventListener('click',()=>exportarLista(student,format));actions.append(exp);}
-        const del=el('button','Excluir PEI');del.type='button';del.className='btn pei-list-delete';del.disabled=busy;del.dataset.peiExcluir=student.id;del.addEventListener('click',()=>excluirPeiAtual(student));actions.append(del);
+        const menu=el('details'),summary=el('summary','▤');menu.className='pei-export-menu';summary.setAttribute('aria-label','Exportar PEI de '+(student.nome||'Aluno'));summary.title='Exportar PEI';menu.append(summary);const options=el('div');options.className='pei-export-options';menu.append(options);actions.append(menu);
+        for(const format of ['docx','odt']){const exp=el('button','Exportar '+format.toUpperCase());exp.type='button';exp.className='btn secondary';exp.disabled=busy;exp.dataset.peiExportar=format;exp.addEventListener('click',()=>exportarLista(student,format));options.append(exp);}
+        const del=el('button','🗑');del.title='Excluir PEI';del.setAttribute('aria-label','Excluir PEI de '+(student.nome||'Aluno'));del.type='button';del.className='btn pei-list-delete';del.disabled=busy;del.dataset.peiExcluir=student.id;del.addEventListener('click',()=>excluirPeiAtual(student));actions.append(del);
       }
+      if(student.arquivado===true)card.append(el('p','Cadastro arquivado no Diário'));
       card.append(actions);root.append(card);
     }
-    if(!root.children.length){root.append(el('p',filtro==='salvos'?'Nenhum PEI atual salvo encontrado. Use Todos os alunos do Diário para iniciar um novo PEI ou consultar versões anteriores.':'Nenhum aluno encontrado. Cadastre o aluno no Diário de Bordo.'));if(filtro==='salvos'){const all=el('button','Mostrar todos os alunos do Diário');all.type='button';all.className='btn secondary';all.addEventListener('click',()=>{$('peiListaFiltro').value='todos';lista();});root.append(all);}}
+    if(!root.children.length){root.append(el('p',filtro==='salvos'?'Nenhum PEI atual salvo encontrado. Use Todos os alunos do Diário para iniciar um novo PEI ou consultar versões anteriores.':'Nenhum aluno encontrado nesta seleção. Confira os filtros ou o cadastro no Diário.'));if(filtro==='salvos'){const all=el('button','Mostrar todos os alunos do Diário');all.type='button';all.className='btn secondary';all.addEventListener('click',()=>{$('peiListaFiltro').value='todos';lista();});root.append(all);}}
   }
   async function carregarLista() {
     if(!user)return;
@@ -464,7 +466,8 @@
     const section=$(button.dataset.section);section.scrollIntoView({block:'start'});section.querySelector('input,textarea')?.focus({preventScroll:true});
   }));
   $('search-input').addEventListener('input',lista);
-  $('peiListaFiltro').addEventListener('change',lista);
+  $('peiListaFiltro').addEventListener('change',()=>{if(!busy)carregarLista().catch(()=>erro('Não foi possível atualizar a lista.'));});
+  window.addEventListener('focus',()=>{if(user&&!busy&&!$('pei-list').hidden)carregarLista().catch(()=>erro('Não foi possível atualizar a lista.'));});
   $('peiListaAtualizar').addEventListener('click',()=>{if(!busy)carregarLista().catch(()=>erro('Não foi possível carregar os PEIs. Confira a conexão e tente novamente.'));});
   $('btn-save').addEventListener('click',salvar);
   $('btn-export-docx').addEventListener('click',()=>exportar('docx'));
@@ -487,7 +490,7 @@
     finally{$('loginBtn').disabled=false;}
   });
   auth.onAuthStateChanged(async current=>{
-    generation++;abortarExportacaoLista?.();abortarExportacaoLista=null;user=current;dirty=false;alunoId=null;estado=null;atual=null;alunos=[];base='';setBusy(false);$('pei-list-status').textContent='';$('peiListaFiltro').value='salvos';$('search-input').value='';
+    generation++;abortarExportacaoLista?.();abortarExportacaoLista=null;user=current;dirty=false;alunoId=null;estado=null;atual=null;alunos=[];base='';setBusy(false);$('pei-list-status').textContent='';$('peiListaFiltro').value='todos';$('search-input').value='';
     $('form-sections').replaceChildren();$('student-grid').replaceChildren();$('pei-history-list').replaceChildren();$('pei-history-status').textContent='';$('pei-legacy-preview').srcdoc='';$('pei-legacy-preview').hidden=true;
     $('login-screen').hidden=!!current;$('app-shell').hidden=!current;$('pei-editor').hidden=true;$('pei-list').hidden=false;erro();
     if(!current){$('loginPassword').value='';$('topbar-user').textContent='';return;}
