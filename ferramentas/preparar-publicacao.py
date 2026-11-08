@@ -37,7 +37,7 @@ def validar(pasta):
     if faltantes:raise ValueError('Referências locais ausentes: '+repr(faltantes))
 
 def main():
-    p=argparse.ArgumentParser();p.add_argument('destino',type=Path);p.add_argument('zip',type=Path);p.add_argument('--etapa',type=int,default=46);args=p.parse_args()
+    p=argparse.ArgumentParser();p.add_argument('destino',type=Path);p.add_argument('zip',type=Path);p.add_argument('--etapa',type=int,default=47);args=p.parse_args()
     destino=args.destino.resolve();arquivo_zip=args.zip.resolve()
     if destino==ROOT or destino.is_relative_to(ROOT):raise ValueError('Use uma pasta nova fora do repositório de fonte.')
     if destino.exists() and any(destino.iterdir()):raise ValueError('A pasta de destino precisa estar vazia ou não existir.')
@@ -155,6 +155,13 @@ serviços externos de IA ou a configuração remota atual de todos os serviços.
         inicio=texto.index('ATENÇÃO — QUESTIONÁRIO DA FAMÍLIA')
         fim=texto.index('PARA PUBLICAR',inicio)
         texto=texto[:inicio]+'ETAPA 46 — REFORMULAÇÃO COM IA EM NOTAS E PLANNER\nReforça o pedido de outra redação, mantendo os fatos do texto original.\nSe houver repetição, a segunda rodada inclui a resposta anterior e pede outra construção.\nCópias com apenas pontuação, maiúsculas, rótulos ou formatação não são oferecidas como nova sugestão.\nO original fica em Ver texto original para comparar. A nova redação aparece em área separada.\nOs testes locais usam IA simulada. Após publicar, confira uma nota e um dia do planner com o serviço real.\nNão precisa alterar Firebase. Publique somente este pacote completo no Netlify.\n\n'+texto[fim:]
+        guia.write_text(texto)
+    if args.etapa == 47:
+        guia=destino/'LEIA-ME-PUBLICACAO.txt'
+        texto=guia.read_text()
+        inicio=texto.index('ATENÇÃO — QUESTIONÁRIO DA FAMÍLIA')
+        fim=texto.index('PARA PUBLICAR',inicio)
+        texto=texto[:inicio]+'ETAPA 47 — FREQUÊNCIA NO HISTÓRICO E REFORMULAÇÃO DA IA\nInclui Atendimentos previstos e Faltas abaixo de Laudo/Diagnóstico e CID.\nUsa todo o histórico salvo de frequência, em todos os turnos: previstos = P + F + J, faltas = F.\nSem atendimento pedagógico e campos vazios ficam fora. As observações no documento explicam registros antigos.\nA mesma linha aparece na ficha e em Exportar Documentos, preservando a formatação.\nInclui a correção da etapa 46 para a IA de notas e planner, sem aceitar cópias como nova redação.\nOs testes da IA são locais e simulados; após publicar, confira a resposta real em uma nota e no planner.\nNão precisa alterar Firebase. Publique este pacote completo no Netlify, aguarde Published e use Ctrl + Shift + R.\n\n'+texto[fim:]
         guia.write_text(texto)
     validar(destino)
     files={str(f.relative_to(destino)):hashlib.sha256(f.read_bytes()).hexdigest() for f in sorted(destino.rglob('*')) if f.is_file()}

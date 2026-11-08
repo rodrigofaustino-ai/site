@@ -123,14 +123,15 @@
  async function carregarZip(){if(window.JSZip)return window.JSZip;await new Promise((resolve,reject)=>{const s=n('script');s.src='vendor/jszip.min.js';s.onload=resolve;s.onerror=reject;document.head.append(s);});if(!window.JSZip)throw Error('ZIP indisponível');return window.JSZip;}
  async function gerar(c){
   if(c.busy||!vigente(c))return;const jobs=c.itens.filter(i=>i.escolha),usados=new Set();if(!jobs.length){mensagem('Nenhum documento escolhido. Confira a lista.');return;}
-  for(const item of jobs){const k=item.tipo+'/'+item.escolha;if(item.tipo!=='pei'&&usados.has(k)){mensagem('O mesmo documento foi escolhido para mais de um aluno. Confira os homônimos antes de continuar.');return;}usados.add(k);}
+  for(const item of jobs){const k=item.tipo+'/'+(['pei','historico'].includes(item.tipo)?item.aluno.id:item.escolha);if(usados.has(k)){mensagem('O mesmo documento foi escolhido para mais de um aluno. Confira os homônimos antes de continuar.');return;}usados.add(k);}
   c.busy=true;corpo.replaceChildren();corpo.append(n('h3','Gerando documentos'),n('p','Aguarde o download. Fechar esta caixa cancela a geração pendente; nenhum documento será alterado.'),botao('Cancelar geração',fechar));const arquivos=[],relatorio=[];let bytes=0;
   try{
+   let semanasFrequencia=null;if(jobs.some(i=>i.tipo==='historico')){try{semanasFrequencia=await HistoricoAtendimentosFrequencia.carregarSemanas({db:c.config.db,uid:c.config.uid,vigente:()=>vigente(c)});}catch(_){if(!vigente(c))return;}}
    for(const item of jobs){if(!vigente(c))return;mensagem('Gerando '+(arquivos.length+relatorio.length+1)+' de '+jobs.length+': '+item.aluno.nome+' — '+M().tipos[item.tipo].nome);
     try{
      const aluno=await c.config.db.collection('alunos').doc(item.aluno.id).get({source:'server'});if(!vigente(c))return;if(!aluno.exists||aluno.metadata?.fromCache||aluno.data().professorUid!==c.config.uid)throw Error('acesso');
      let dados;
-     if(item.tipo==='historico'){const registros=await carregarRegistros(c,item.aluno.id);if(!registros.length)throw Error('sem registros');dados={aluno:{...aluno.data(),id:item.aluno.id},registros,dataExportacao:new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'})};}
+     if(item.tipo==='historico'){const registros=await carregarRegistros(c,item.aluno.id);if(!registros.length)throw Error('sem registros');if(!semanasFrequencia)throw Error('Frequência indisponível');const frequencia=HistoricoAtendimentosFrequencia.apurar(item.aluno.id,semanasFrequencia);dados={aluno:{...aluno.data(),id:item.aluno.id},registros,frequencia,frequenciaDescricao:HistoricoAtendimentosFrequencia.descricao(frequencia),dataExportacao:new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'})};}
      else if(item.tipo==='familia')dados=await carregarFamilia(c,item,aluno.data());
      else{
       const ref=item.tipo==='pei'?c.config.db.collection('alunos').doc(item.aluno.id).collection('pei').doc('atual'):c.dbDocumentos.collection(M().tipos[item.tipo].colecao).doc(item.escolha);
@@ -138,7 +139,7 @@
       if(item.tipo!=='pei'&&(c.auth.currentUser?.uid!==c.uidDocumentos||dados.professorUid!==c.uidDocumentos||!M().compativel(dados,{...item.aluno,nome:aluno.data().nome||''},item.legado)))throw Error('vínculo mudou');
      }
      const blob=await renderizar(c,item.tipo,dados);if(!vigente(c))return;if(bytes+blob.size>150*1024*1024)throw Error('limite do pacote');bytes+=blob.size;arquivos.push({nome:String(c.alunos.findIndex(a=>a.id===item.aluno.id)+1).padStart(3,'0')+'_'+M().seguro(item.aluno.nome)+'_'+M().seguro(item.aluno.id)+'/'+M().seguro(M().tipos[item.tipo].nome)+'.'+c.formato,nomeIndividual:M().seguro(M().tipos[item.tipo].nome)+'_'+M().seguro(item.aluno.nome)+'_'+String(c.alunos.findIndex(a=>a.id===item.aluno.id)+1).padStart(3,'0')+'.'+c.formato,rotulo:M().tipos[item.tipo].nome+' — '+item.aluno.nome,blob});
-    }catch(_){if(!vigente(c))return;relatorio.push(item.aluno.nome+' — '+M().tipos[item.tipo].nome+': não gerado; confira acesso, vínculo e conteúdo no formulário.');}
+    }catch(_){if(!vigente(c))return;relatorio.push(item.aluno.nome+' — '+M().tipos[item.tipo].nome+(item.tipo==='historico'?': não gerado; não foi possível confirmar o histórico e a frequência no servidor. Confira a conexão e tente novamente.':': não gerado; confira acesso, vínculo e conteúdo no formulário.'));}
    }
    if(!vigente(c))return;if(!arquivos.length){mensagem('Nenhum arquivo pôde ser gerado.\n'+relatorio.join('\n'));c.busy=false;acoes(botao('Voltar à conferência',()=>telaConferencia(c)));return;}
    const omitidos=c.itens.filter(i=>!i.escolha).map(i=>i.aluno.nome+' — '+M().tipos[i.tipo].nome+': '+(i.candidatos.length?'não selecionado/confirmado':'não encontrado'));

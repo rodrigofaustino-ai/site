@@ -4082,16 +4082,25 @@ function voltarPeiLista(){
 /* ════════════════════════════════════════
    HISTÓRICO DE ATENDIMENTOS — DOCX (mesma formatação do PAEE/Relatório/Diagnóstica)
 ════════════════════════════════════════ */
-function exportPDF(){
+async function exportPDF(){
   if(typeof docx === 'undefined'){showToast('Biblioteca DOCX carregando, tente novamente em instantes.');return;}
-  const nomeAluno=currentProfile.nome||'Aluno';
-  HistoricoAtendimentosDocumento.gerar({aluno:currentProfile,registros:currentEntries,professor:val('pdfProfessor'),cargo:val('pdfCargo'),local:val('pdfLocal')}).then(blob=>{
-    const safe=nomeAluno.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9]+/g,'_');
+  const button=$('btnExportPDF');if(button.disabled)return;
+  const uid=professorUid,id=currentStudentId,profile=currentProfile,entries=[...currentEntries],turno=turnoAtual,version=perfilLoadVersion;
+  if(!uid||!id||auth.currentUser?.uid!==uid){showToast('Salve o cadastro e abra a ficha do aluno antes de exportar.');return;}
+  const vigente=()=>professorUid===uid&&auth.currentUser?.uid===uid&&currentStudentId===id&&currentProfile===profile&&turnoAtual===turno&&perfilLoadVersion===version;
+  const assinatura={professor:val('pdfProfessor'),cargo:val('pdfCargo'),local:val('pdfLocal')};
+  button.disabled=true;
+  try{
+    const frequencia=await HistoricoAtendimentosFrequencia.carregar({db,uid,alunoId:id,vigente});if(!vigente())return;
+    const blob=await HistoricoAtendimentosDocumento.gerar({aluno:profile,registros:entries,...assinatura,frequencia,frequenciaDescricao:HistoricoAtendimentosFrequencia.descricao(frequencia)});if(!vigente())return;
+    const safe=(profile.nome||'Aluno').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9]+/g,'_');
     const url=URL.createObjectURL(blob),anchor=document.createElement('a');anchor.href=url;anchor.download='DiarioBordo_SRM_'+safe+'.docx';anchor.click();setTimeout(()=>URL.revokeObjectURL(url),2000);showToast('✓ DOCX gerado com sucesso!');
-  }).catch(err=>{console.error(err);showToast('Erro ao gerar DOCX. Veja o console.');});
+  }catch(err){if(vigente()){console.error(err);showToast('Não foi possível confirmar a frequência e gerar o histórico. Confira a conexão e tente novamente.');}}
+  finally{button.disabled=false;}
 }
 
 </script>
+<script src="historico-atendimentos-frequencia.js"></script>
 <script src="historico-atendimentos-documento.js"></script>
 <script src="planos-aula.js"></script>
 <script src="recursos-didaticos.js"></script>

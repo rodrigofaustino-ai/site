@@ -14,6 +14,7 @@ function relato(e,complementos){let t=e.text||'';if(!complementos)return t;
  if(Array.isArray(e.metaIds)&&e.metaIds.length)t+='\n\nMetas vinculadas no registro:\n'+e.metaIds.map(id=>(Array.isArray(e.metaVinculos)?e.metaVinculos.find(m=>m?.id===id)?.objetivo:null)||'Meta vinculada sem descrição salva no registro').join('\n');return t;
 }
 async function gerar(dados){if(!dados?.aluno||!Array.isArray(dados.registros))throw Error('Histórico inválido.');
+if(dados.frequencia&&(!Number.isSafeInteger(dados.frequencia.previstos)||!Number.isSafeInteger(dados.frequencia.faltas)||dados.frequencia.previstos<0||dados.frequencia.faltas<0||dados.frequencia.faltas>dados.frequencia.previstos))throw Error('Quantidades de frequência inválidas.');
   const {
     Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
     WidthType, AlignmentType, BorderStyle, ShadingType, TableLayoutType,
@@ -144,10 +145,13 @@ async function gerar(dados){if(!dados?.aluno||!Array.isArray(dados.registros))th
       idRow([{label:'Turma',value:p.turma},{label:'Período',value:p.periodo}]),
       idRow([{label:'Escola',value:p.escola},{label:'Município',value:p.municipio}]),
       idRow([{label:'Laudo / Diagnóstico',value:p.laudo},{label:'CID',value:p.cid}]),
+      ...(dados.frequencia?[idRow([{label:'Atendimentos previstos',value:String(dados.frequencia.previstos)},{label:'Faltas',value:String(dados.frequencia.faltas)}])]:[]),
     ],
     width:{size:TABLE_W,type:WidthType.DXA},
     layout:TableLayoutType.FIXED,
   }));
+
+  if(dados.frequenciaDescricao)children.push(new Paragraph({children:[new TextRun({text:dados.frequenciaDescricao,size:18,color:'586257',italics:true})],spacing:{before:60,after:60}}));
 
   if(p.obsClinicas){
     children.push(new Paragraph({spacing:{before:40,after:0}}));
