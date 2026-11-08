@@ -34,8 +34,10 @@
     <main class="shell">
       <p id="peiError" role="alert"></p>
       <section id="pei-list">
-        <div class="list-head"><div><h1>Planos Educacionais Individualizados</h1><p>Selecione um aluno cadastrado no Diário para preencher ou consultar o PEI.</p></div><a class="btn secondary" href="index.html">Voltar ao Diário</a></div>
+        <div class="list-head"><div><h1>Planos Educacionais Individualizados</h1><p>Edite, exporte ou exclua um PEI salvo. Para iniciar outro documento ou consultar versões anteriores sem PEI atual, escolha Todos os alunos do Diário.</p></div><a class="btn secondary" href="index.html">Voltar ao Diário</a></div>
         <div class="toolbar"><label for="search-input">Buscar aluno ou escola</label><input id="search-input" type="search"></div>
+        <div class="toolbar"><label for="peiListaFiltro">Mostrar</label><select id="peiListaFiltro"><option value="salvos">PEIs atuais salvos</option><option value="todos">Todos os alunos do Diário</option></select><button id="peiListaAtualizar" class="btn secondary" type="button">Atualizar lista</button></div>
+        <p id="pei-list-status" class="pei-status" role="status"></p>
         <div class="student-grid" id="student-grid"></div>
       </section>
       <section id="pei-editor" hidden>

@@ -129,7 +129,7 @@ let total=0;function check(a,b){assert.deepEqual(a,b);total++;}
   check(await page.evaluate(()=>mockStore['alunos/a/pei/atual'].peiComprimido),false);
   check(await page.evaluate(()=>mockWrites.length),2);
   // Reabertura do documento salvo sem novo salvamento automático.
-  await page.locator('#btn-back-list').click();await page.locator('#student-grid .student-card').filter({hasText:'Ana Teste'}).getByRole('button',{name:'Abrir PEI',exact:true}).click();
+  await page.locator('#btn-back-list').click();await page.locator('#student-grid .student-card').filter({hasText:'Ana Teste'}).locator('[data-pei-editar]').click();
   check(await field('contextoEscolar.socioafetivos').inputValue(),'Participa de atividades em pequenos grupos.');
   check(await field('assinaturas.regente').inputValue(),'Professora Fictícia');
   check(await page.evaluate(()=>mockWrites.length),2);
@@ -150,7 +150,7 @@ let total=0;function check(a,b){assert.deepEqual(a,b);total++;}
   check(await page.evaluate(()=>mockWrites.length),2);
   check(await field('estrategias.objetivosMetas').inputValue(),'Objetivo fictício ainda não salvo — participação e comunicação.');
   // Descartar para recarregar e testar falha atômica de permissão.
-  page.once('dialog',d=>d.accept());await page.locator('#btn-back-list').click();await page.locator('#student-grid .student-card').filter({hasText:'Ana Teste'}).getByRole('button',{name:'Abrir PEI',exact:true}).click();
+  page.once('dialog',d=>d.accept());await page.locator('#btn-back-list').click();await page.locator('#student-grid .student-card').filter({hasText:'Ana Teste'}).locator('[data-pei-editar]').click();
   await field('estrategias.processoAvaliativo').fill('Observação contínua com registro descritivo.');
   await page.evaluate(()=>{mockDeny=true;});await page.locator('#btn-save').click();
   await page.waitForFunction(()=>document.querySelector('#peiError').textContent.includes('Sem permissão'));
@@ -297,7 +297,7 @@ let total=0;function check(a,b){assert.deepEqual(a,b);total++;}
   check(await bridge.evaluate(()=>mockWrites.some(w=>w.path.includes('/metas/'))),false);
   await bridge.evaluate(()=>{mockStore['alunos/a/metas/meta-a'].objetivo='Meta alterada depois do PEI salvo.';});
   check(await objetivo.inputValue(),textoCompleto);
-  await bridge.locator('#btn-back-list').click();await bridge.locator('#student-grid .student-card').filter({hasText:'Ana Teste'}).getByRole('button',{name:'Abrir PEI',exact:true}).click();
+  await bridge.locator('#btn-back-list').click();await bridge.locator('#student-grid .student-card').filter({hasText:'Ana Teste'}).locator('[data-pei-editar]').click();
   check(await objetivo.inputValue(),textoCompleto);
   for(const format of ['docx','odt']){
     const [download]=await Promise.all([bridge.waitForEvent('download',{timeout:60000}),bridge.locator('#btn-export-'+format).click()]);

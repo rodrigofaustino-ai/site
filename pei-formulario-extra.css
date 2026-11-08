@@ -45,3 +45,5 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .pei-history-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:10px 0}.pei-history-row>[data-pei-visualizar]{flex:1;min-width:180px;text-align:left;white-space:normal}#pei-history-list .pei-history-delete{color:#9b2c23;background:#fff3ef;border:1px solid #dbafa5;min-height:44px}.pei-history-row small{color:#53616b}
 
 .pei-history-item-status{flex-basis:100%;font-size:13px;color:#8b281e;margin:2px 0}
+
+.pei-list-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.pei-list-actions .btn{min-height:44px}#student-grid .pei-list-delete{color:#9b2c23;background:#fff3ef;border:1px solid #dbafa5}#peiListaFiltro{font:inherit;padding:9px;border:1px solid #cbdccd;border-radius:8px;max-width:100%}
