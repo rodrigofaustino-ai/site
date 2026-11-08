@@ -5,3 +5,5 @@
 #chatEquipe #chatForm>.ia-campo-acoes{position:absolute;right:118px;bottom:14px;margin:0;z-index:1}#chatEquipe #chatForm .ia-campo-botao{min-height:28px;width:28px;padding:2px;font-size:16px}#chatEquipe #chatTexto{padding-right:40px}
 .ia-campo-acoes[hidden]{display:none!important}
 #iaCamposDialog{margin:auto;inset:0;max-width:calc(100vw - 24px)}
+
+#iaCamposOriginalDetalhes{margin:12px 0}#iaCamposOriginalDetalhes summary{cursor:pointer;color:#155e52;font-weight:600;min-height:32px}

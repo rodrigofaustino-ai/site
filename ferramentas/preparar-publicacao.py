@@ -37,7 +37,7 @@ def validar(pasta):
     if faltantes:raise ValueError('Referências locais ausentes: '+repr(faltantes))
 
 def main():
-    p=argparse.ArgumentParser();p.add_argument('destino',type=Path);p.add_argument('zip',type=Path);p.add_argument('--etapa',type=int,default=45);args=p.parse_args()
+    p=argparse.ArgumentParser();p.add_argument('destino',type=Path);p.add_argument('zip',type=Path);p.add_argument('--etapa',type=int,default=46);args=p.parse_args()
     destino=args.destino.resolve();arquivo_zip=args.zip.resolve()
     if destino==ROOT or destino.is_relative_to(ROOT):raise ValueError('Use uma pasta nova fora do repositório de fonte.')
     if destino.exists() and any(destino.iterdir()):raise ValueError('A pasta de destino precisa estar vazia ou não existir.')
@@ -148,6 +148,13 @@ serviços externos de IA ou a configuração remota atual de todos os serviços.
         inicio=texto.index('ATENÇÃO — QUESTIONÁRIO DA FAMÍLIA')
         fim=texto.index('PARA PUBLICAR',inicio)
         texto=texto[:inicio]+"ETAPA 45 — MELHORAR CAMPOS COM IA\nAmplia a revisão de texto para os campos de redação das áreas dos professores.\nInclui planner, notas, metas, próximo passo, roteiro, observações da Diagnóstica, descrições e comunicação.\nPreserva os controles já existentes do relato e do PEI, sem duplicação.\nNão inclui nomes, datas, telefones, endereços, assinaturas, buscas ou códigos.\nO questionário das famílias permanece sem IA, conforme escolha do usuário.\nClique em Melhorar com IA, confira a prévia e escolha Aplicar sugestão ou Manter meu texto.\nSomente o campo solicitado é enviado ao serviço de IA já usado pelo site.\nNão requer alteração nas regras do Firebase. Publique somente este pacote completo no Netlify.\n\n"+texto[fim:]
+        guia.write_text(texto)
+    if args.etapa == 46:
+        guia=destino/'LEIA-ME-PUBLICACAO.txt'
+        texto=guia.read_text()
+        inicio=texto.index('ATENÇÃO — QUESTIONÁRIO DA FAMÍLIA')
+        fim=texto.index('PARA PUBLICAR',inicio)
+        texto=texto[:inicio]+'ETAPA 46 — REFORMULAÇÃO COM IA EM NOTAS E PLANNER\nReforça o pedido de outra redação, mantendo os fatos do texto original.\nSe houver repetição, a segunda rodada inclui a resposta anterior e pede outra construção.\nCópias com apenas pontuação, maiúsculas, rótulos ou formatação não são oferecidas como nova sugestão.\nO original fica em Ver texto original para comparar. A nova redação aparece em área separada.\nOs testes locais usam IA simulada. Após publicar, confira uma nota e um dia do planner com o serviço real.\nNão precisa alterar Firebase. Publique somente este pacote completo no Netlify.\n\n'+texto[fim:]
         guia.write_text(texto)
     validar(destino)
     files={str(f.relative_to(destino)):hashlib.sha256(f.read_bytes()).hexdigest() for f in sorted(destino.rglob('*')) if f.is_file()}
