@@ -37,7 +37,7 @@
     ]}
   ];
   let user = null, alunoId = null, perfil = {}, estado = null, atual = null;
-  let base = '', dirty = false, busy = false, generation = 0, alunos = [];
+  let base = '', dirty = false, busy = false, generation = 0, historyGeneration = 0, alunos = [];
   const esc = value => String(value || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const assinatura = value => JSON.stringify(value, function(key, data) {
     if (data && !Array.isArray(data) && typeof data === 'object') {
@@ -66,6 +66,7 @@
     busy=value;
     for(const id of ['btn-save','btn-back-list','btn-export-docx','btn-export-odt','btn-history'])$(id).disabled=value;
     $('form-sections').querySelectorAll('input,textarea,.pei-ai button,.pei-metas button').forEach(field=>field.disabled=value||field.dataset.loading==='true');
+    $('pei-history-list').querySelectorAll('button').forEach(button=>button.disabled=value);
   }
   function adicionarMetasAoPei(wrap,input) {
     const token=generation,formState=estado,id=alunoId;
@@ -310,13 +311,44 @@
       return false;
     }
   }
+  async function excluirVersao(doc,data,text,row,contextoValido) {
+    if(busy||!contextoValido()||!row.isConnected||!doc.id.startsWith('versao-'))return;
+    const id=alunoId,owner=user.uid,expected=assinatura(data);
+    if(!window.confirm('Excluir definitivamente esta versão de PEI de '+(perfil.nome||'este aluno')+'?\n\n'+text+'\n\nO PEI atual será mantido. Não será possível recuperar esta versão pelo site.'))return;
+    if(!contextoValido()||!row.isConnected)return;
+    const operation=++historyGeneration,studentRef=db.collection('alunos').doc(id),ref=studentRef.collection('pei').doc(doc.id);
+    let foco=row.querySelector('.pei-history-delete');
+    const mensagem=text=>{$('pei-history-status').textContent=text;if(!row.isConnected)return;let note=row.querySelector('.pei-history-item-status');if(!note){note=el('p');note.className='pei-history-item-status';note.setAttribute('role','status');row.append(note);}note.textContent=text;};
+    setBusy(true);mensagem('Excluindo a versão escolhida…');
+    try{
+      await db.runTransaction(async transaction=>{
+        const [student,saved]=await Promise.all([transaction.get(studentRef),transaction.get(ref)]);
+        if(!contextoValido())throw new Error('A sessão ou o aluno mudou.');
+        if(!student.exists||student.data().professorUid!==owner)throw new Error('Este aluno não está mais vinculado à sua conta.');
+        if(!saved.exists)return;
+        if(assinatura(saved.data())!==expected)throw new Error('Esta versão mudou em outra sessão. Atualize o histórico e confira antes de excluir.');
+        transaction.delete(ref);
+      });
+      if(!contextoValido()||historyGeneration!==operation)return;
+      const frame=$('pei-legacy-preview');
+      if(frame.dataset.versao===doc.id){frame.hidden=true;frame.srcdoc='';delete frame.dataset.versao;}
+      foco=row.nextElementSibling?.querySelector('[data-pei-visualizar]')||row.previousElementSibling?.querySelector('[data-pei-visualizar]')||$('btn-history');
+      row.remove();
+      if(!$('pei-history-list').children.length)$('pei-history-list').textContent='Não há versões anteriores neste cadastro.';
+      $('pei-history-status').textContent='Versão excluída do histórico. O PEI atual e seu preenchimento foram mantidos.';
+    }catch(error){if(contextoValido())mensagem(error?.code==='permission-denied'?'Sem permissão para excluir esta versão. Confira as permissões da sua conta.':error?.message?.includes('mudou')?error.message:'Não foi possível confirmar a exclusão. Atualize o histórico para conferir antes de tentar novamente.');}
+    finally{if(contextoValido()){setBusy(false);if(foco?.isConnected)foco.focus();}}
+  }
   async function historico() {
     if(!user||!alunoId||busy)return;
-    const token=generation;const root=$('pei-history-list');root.textContent='Carregando versões…';
-    $('pei-history-status').textContent='';$('pei-legacy-preview').hidden=true;$('pei-legacy-preview').srcdoc='';
+    const token=generation,id=alunoId,owner=user.uid,request=++historyGeneration;
+    const contextoValido=()=>token===generation&&alunoId===id&&user?.uid===owner&&auth.currentUser?.uid===owner;
+    const root=$('pei-history-list');root.textContent='Carregando versões…';$('btn-history').disabled=true;
+    $('pei-history-status').textContent='';$('pei-legacy-preview').hidden=true;$('pei-legacy-preview').srcdoc='';delete $('pei-legacy-preview').dataset.versao;
     try{
-      const snapshot=await db.collection('alunos').doc(alunoId).collection('pei').get();
-      if(token!==generation)return;
+      const snapshot=await db.collection('alunos').doc(id).collection('pei').get({source:'server'});
+      if(!contextoValido()||request!==historyGeneration)return;
+      if(snapshot.metadata?.fromCache)throw new Error('Histórico sem confirmação do servidor.');
       root.replaceChildren();
       const docs=snapshot.docs.filter(d=>d.id.startsWith('versao-')||(d.id==='atual'&&!d.data().peiFormulario));
       docs.sort((a,b)=>String(b.data().peiData||'').localeCompare(String(a.data().peiData||'')));
@@ -324,15 +356,22 @@
       for(const doc of docs){
         const data=doc.data();const date=new Date(data.peiData);
         const text=(data.peiFormulario?'PEI do formulário':'PEI importado')+' — '+(Number.isNaN(date.getTime())?'data não informada':date.toLocaleString('pt-BR'));
-        const button=el('button','Visualizar '+text);button.type='button';button.className='btn secondary';
+        const row=el('div');row.className='pei-history-row';row.dataset.versao=doc.id;
+        const button=el('button','Visualizar '+text);button.type='button';button.className='btn secondary';button.dataset.peiVisualizar=doc.id;button.disabled=busy;
         const visualizar=()=>{
-          root.querySelectorAll('button').forEach(item=>item.setAttribute('aria-pressed','false'));
-          if(mostrarVersao(data,text))button.setAttribute('aria-pressed','true');
+          if(busy||!contextoValido()||!row.isConnected)return;
+          root.querySelectorAll('[data-pei-visualizar]').forEach(item=>item.setAttribute('aria-pressed','false'));
+          if(mostrarVersao(data,text)){button.setAttribute('aria-pressed','true');$('pei-legacy-preview').dataset.versao=doc.id;}
         };
-        button.addEventListener('click',visualizar);root.append(button);
-        if(doc===docs[0])visualizar();
+        button.addEventListener('click',visualizar);row.append(button);
+        if(doc.id.startsWith('versao-')){
+          const excluir=el('button','Excluir');excluir.type='button';excluir.className='btn pei-history-delete';excluir.disabled=busy;
+          excluir.setAttribute('aria-label','Excluir versão '+text);excluir.addEventListener('click',()=>excluirVersao(doc,data,text,row,contextoValido));row.append(excluir);
+        }else row.append(el('small','Documento atual — mantido.'));
+        root.append(row);if(doc===docs[0])visualizar();
       }
-    }catch(error){if(token===generation)root.textContent='Não foi possível consultar o histórico. Verifique a conexão e as permissões.';}
+    }catch(error){if(contextoValido()&&request===historyGeneration)root.textContent='Não foi possível consultar o histórico. Verifique a conexão e as permissões.';}
+    finally{if(contextoValido()&&request===historyGeneration)$('btn-history').disabled=busy;}
   }
   function lista() {
     const q=$('search-input').value.toLocaleLowerCase('pt-BR');const root=$('student-grid');root.replaceChildren();

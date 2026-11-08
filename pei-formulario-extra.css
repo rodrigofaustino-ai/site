@@ -41,3 +41,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .pei-modelo-logo{display:block;max-width:100%;height:auto;margin:0 auto 16px;}
 .student-card{overflow-wrap:anywhere;}
 @media(max-width:500px){.topbar{padding:12px;}.form-actions{display:grid;grid-template-columns:1fr 1fr;width:100%;}.form-actions .btn{width:100%;}.list-head{flex-wrap:wrap;}.brand-text .title{font-size:17px;}.form-nav{max-width:100%;}.pei-field{overflow-wrap:anywhere;}}
+
+.pei-history-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:10px 0}.pei-history-row>[data-pei-visualizar]{flex:1;min-width:180px;text-align:left;white-space:normal}#pei-history-list .pei-history-delete{color:#9b2c23;background:#fff3ef;border:1px solid #dbafa5;min-height:44px}.pei-history-row small{color:#53616b}
+
+.pei-history-item-status{flex-basis:100%;font-size:13px;color:#8b281e;margin:2px 0}

@@ -37,7 +37,7 @@ def validar(pasta):
     if faltantes:raise ValueError('Referências locais ausentes: '+repr(faltantes))
 
 def main():
-    p=argparse.ArgumentParser();p.add_argument('destino',type=Path);p.add_argument('zip',type=Path);p.add_argument('--etapa',type=int,default=48);args=p.parse_args()
+    p=argparse.ArgumentParser();p.add_argument('destino',type=Path);p.add_argument('zip',type=Path);p.add_argument('--etapa',type=int,default=49);args=p.parse_args()
     destino=args.destino.resolve();arquivo_zip=args.zip.resolve()
     if destino==ROOT or destino.is_relative_to(ROOT):raise ValueError('Use uma pasta nova fora do repositório de fonte.')
     if destino.exists() and any(destino.iterdir()):raise ValueError('A pasta de destino precisa estar vazia ou não existir.')
@@ -169,6 +169,13 @@ serviços externos de IA ou a configuração remota atual de todos os serviços.
         inicio=texto.index('ATENÇÃO — QUESTIONÁRIO DA FAMÍLIA')
         fim=texto.index('PARA PUBLICAR',inicio)
         texto=texto[:inicio]+'ETAPA 48 — PADRÃO ÚNICO PARA MELHORAR TEXTOS COM IA\nRelato do Diário, PEI e demais campos dos professores usam o mesmo mecanismo de revisão.\nA regra de reformulação, a detecção de cópias e a segunda tentativa são compartilhadas.\nNada é aplicado sem a escolha do professor. Nomes/dados pessoais e questionário das famílias continuam excluídos.\nPreserva os controles e telas existentes. Os totais de frequência do histórico da etapa 47 estão incluídos.\nOs testes usam IA simulada: confira a resposta real após publicar.\nNão precisa alterar Firebase. Publique este pacote completo no Netlify, aguarde Published e use Ctrl + Shift + R.\n\n'+texto[fim:]
+        guia.write_text(texto)
+    if args.etapa == 49:
+        guia=destino/'LEIA-ME-PUBLICACAO.txt'
+        texto=guia.read_text()
+        inicio=texto.index('ATENÇÃO — QUESTIONÁRIO DA FAMÍLIA')
+        fim=texto.index('PARA PUBLICAR',inicio)
+        texto=texto[:inicio]+'ETAPA 49 — EXCLUIR VERSÕES ANTERIORES DO PEI\nEm Documentos anteriores e versões salvas, cada versão anterior tem Visualizar e Excluir.\nA exclusão pede confirmação e apaga somente a versão escolhida. O PEI atual e o rascunho são mantidos.\nO documento atual, inclusive importado, não pode ser excluído por esse botão.\nNão precisa alterar as regras do Firebase. Publique este pacote completo no Netlify.\nAguarde Published e atualize com Ctrl + Shift + R. As melhorias anteriores estão incluídas.\n\n'+texto[fim:]
         guia.write_text(texto)
     validar(destino)
     files={str(f.relative_to(destino)):hashlib.sha256(f.read_bytes()).hexdigest() for f in sorted(destino.rglob('*')) if f.is_file()}

@@ -34,9 +34,9 @@ function ref(parts){return {
 };}
 window.mockDb={collection:name=>ref([name]),async runTransaction(fn){
  const pending=[];
- await fn({get:reference=>reference.get(),set:(reference,data,options)=>pending.push({path:reference.path,data:clone(data),options})});
+ await fn({get:reference=>reference.get(),set:(reference,data,options)=>pending.push({path:reference.path,data:clone(data),options}),delete:reference=>pending.push({path:reference.path,delete:true})});
  if(mockDeny)throw Object.assign(new Error('Negado'),{code:'permission-denied'});
- for(const write of pending){mockStore[write.path]=write.options?.merge?{...mockStore[write.path],...write.data}:write.data;mockWrites.push(write);}
+ for(const write of pending){if(write.delete){delete mockStore[write.path];mockWrites.push(write);continue;}mockStore[write.path]=write.options?.merge?{...mockStore[write.path],...write.data}:write.data;mockWrites.push(write);}
 }};
 window.authCallbacks=[];
 window.mockAuth={currentUser:{uid:'prof-teste',email:'professor@example.com'},onAuthStateChanged(fn){authCallbacks.push(fn);Promise.resolve().then(()=>{
@@ -98,7 +98,7 @@ let total=0;function check(a,b){assert.deepEqual(a,b);total++;}
   });
   check(await page.frameLocator('#pei-legacy-preview').locator('#peiConteudo').evaluate(formatting),await reference.locator('#peiConteudo').evaluate(formatting));
   await reference.close();
-  await page.locator('#pei-history-list button').first().click();
+  await page.locator('#pei-history-list [data-pei-visualizar]').first().click();
   check((await page.locator('#pei-legacy-preview').getAttribute('srcdoc')).includes('Texto original preservado.'),true);
   check((await page.locator('#pei-legacy-preview').getAttribute('srcdoc')).includes('<script>'),false);
   check(await page.evaluate(()=>!!window.executou),false);
@@ -107,9 +107,9 @@ let total=0;function check(a,b){assert.deepEqual(a,b);total++;}
   await page.locator('#btn-history').click();
   check((await page.locator('#pei-history-status').textContent()).includes('Não foi possível visualizar'),true);
   check(await page.locator('#pei-legacy-preview').isVisible(),false);
-  await page.locator('#pei-history-list button').last().click();
+  await page.locator('#pei-history-list [data-pei-visualizar]').last().click();
   await page.frameLocator('#pei-legacy-preview').getByText('Texto original preservado.',{exact:true}).waitFor({state:'visible'});
-  check(await page.locator('#pei-history-list button').last().getAttribute('aria-pressed'),'true');
+  check(await page.locator('#pei-history-list [data-pei-visualizar]').last().getAttribute('aria-pressed'),'true');
   await page.evaluate(()=>{delete mockStore['alunos/a/pei/versao-vazia'];});
   await field('contextoEscolar.socioafetivos').fill('Participa de atividades em pequenos grupos.');
   check(await field('contextoEscolar.socioafetivos').evaluate(n=>n.matches(':placeholder-shown')),false);
