@@ -1017,6 +1017,7 @@ hr.sep{border:none;border-top:2px dashed rgba(0,0,0,.06);margin:.2rem 0;}
         <div class="fg">
           <div class="field full"><label for="pdfLocal">Local (cidade / escola)</label><input type="text" id="pdfLocal" placeholder="Ex: Londrina, Escola Municipal..."></div>
           <div class="field"><label for="pdfProfessor">Nome do professor para assinatura</label><input type="text" id="pdfProfessor" placeholder="Nome completo"></div>
+          <div class="field"><label for="pdfFaltas">Faltas no histórico — ano vigente (manual)</label><input type="number" id="pdfFaltas" min="0" step="1" inputmode="numeric" placeholder="Preenchimento pelo professor"><small>Opcional. Salve a ficha para usar também em Exportar Documentos. Em branco, o documento deixa uma linha para preencher.</small></div>
           <div class="field"><label for="pdfCargo">Cargo / Função</label><input type="text" id="pdfCargo" placeholder="Ex: Professor da SRM"></div>
         </div>
       </div>
@@ -3676,7 +3677,7 @@ const FIELDS={nomeAluno:'nome',dataNasc:'dataNasc',turma:'turma',escola:'escola'
 function clearForm(){
   $('perfilArquivoAviso').hidden=true;
   Object.keys(FIELDS).forEach(f=>$(f).value='');
-  ['pdfLocal','pdfProfessor','pdfCargo','entryText','registradoPor'].forEach(f=>$(f).value='');
+  ['pdfLocal','pdfProfessor','pdfCargo','pdfFaltas','entryText','registradoPor'].forEach(f=>$(f).value='');
   $('charCount').textContent='0 caracteres';
   document.querySelectorAll('.humor-opt').forEach(o=>o.classList.remove('sel'));$('humorVal').value='';
   $('photoPreview').src='';$('photoPreview').style.display='none';
@@ -3689,6 +3690,7 @@ function fillForm(p){
   if(p.pdfLocal)$('pdfLocal').value=p.pdfLocal;
   if(p.pdfProfessor)$('pdfProfessor').value=p.pdfProfessor;
   if(p.pdfCargo)$('pdfCargo').value=p.pdfCargo;
+  $('pdfFaltas').value=HistoricoAtendimentosFrequencia.faltasDoAluno(p)??'';
   contacts=p.contacts&&p.contacts.length?[...p.contacts]:[];
   renderContacts();if(!contacts.length)addContact();
   // compatível com cadastros antigos (um único dia/horário salvo em campos separados)
@@ -3724,6 +3726,7 @@ function selecionarTurnoAluno(turno){
 }
 
 async function saveProfile(){
+  let faltas;try{faltas=HistoricoAtendimentosFrequencia.faltasManuais(val('pdfFaltas'));}catch(error){showToast(error.message);$('pdfFaltas').focus();return;}
   const eraNovo = !currentStudentId;
   setBadge('syncing','Salvando...');$('btnSalvarPerfil').disabled=true;showLoad('Salvando...');
   const data={
@@ -3731,7 +3734,7 @@ async function saveProfile(){
     municipio:val('municipio'),periodo:val('periodo'),laudo:val('laudo'),cid:val('cid'),
     dataLaudo:val('dataLaudo'),obsClinicas:val('obsClinicas'),contacts:[...contacts],
     atendimentos:atendimentos.filter(r=>r.dia&&r.horario),
-    pdfLocal:val('pdfLocal'),pdfProfessor:val('pdfProfessor'),pdfCargo:val('pdfCargo'),
+    pdfLocal:val('pdfLocal'),pdfProfessor:val('pdfProfessor'),pdfCargo:val('pdfCargo'),pdfFaltas:faltas,pdfFaltasAno:Number(HistoricoAtendimentosFrequencia.hoje().slice(0,4)),
     turno: turnoAlunoSelecionado,
     professorUid,
     professorEmail: auth.currentUser ? auth.currentUser.email : null,
@@ -4049,17 +4052,17 @@ function voltarPeiLista(){
 async function exportPDF(){
   if(typeof docx === 'undefined'){showToast('Biblioteca DOCX carregando, tente novamente em instantes.');return;}
   const button=$('btnExportPDF');if(button.disabled)return;
-  const uid=professorUid,id=currentStudentId,profile=currentProfile,entries=[...currentEntries],turno=turnoAtual,version=perfilLoadVersion;
+  const uid=professorUid,id=currentStudentId,profile=currentProfile,turno=turnoAtual,version=perfilLoadVersion;
   if(!uid||!id||auth.currentUser?.uid!==uid){showToast('Salve o cadastro e abra a ficha do aluno antes de exportar.');return;}
   const vigente=()=>professorUid===uid&&auth.currentUser?.uid===uid&&currentStudentId===id&&currentProfile===profile&&turnoAtual===turno&&perfilLoadVersion===version;
-  const assinatura={professor:val('pdfProfessor'),cargo:val('pdfCargo'),local:val('pdfLocal')};
+  const assinatura={professor:val('pdfProfessor'),cargo:val('pdfCargo'),local:val('pdfLocal'),faltas:val('pdfFaltas')};
   button.disabled=true;
   try{
-    const frequencia=await HistoricoAtendimentosFrequencia.carregar({db,uid,alunoId:id,vigente});if(!vigente())return;
-    const blob=await HistoricoAtendimentosDocumento.gerar({aluno:profile,registros:entries,...assinatura,frequencia,frequenciaDescricao:HistoricoAtendimentosFrequencia.descricao(frequencia)});if(!vigente())return;
+    const registros=await HistoricoAtendimentosFrequencia.carregar({db,uid,alunoId:id,vigente});if(!vigente())return;
+    const blob=await HistoricoAtendimentosDocumento.gerar({aluno:profile,registros,...assinatura});if(!vigente())return;
     const safe=(profile.nome||'Aluno').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9]+/g,'_');
     const url=URL.createObjectURL(blob),anchor=document.createElement('a');anchor.href=url;anchor.download='DiarioBordo_SRM_'+safe+'.docx';anchor.click();setTimeout(()=>URL.revokeObjectURL(url),2000);showToast('✓ DOCX gerado com sucesso!');
-  }catch(err){if(vigente()){console.error(err);showToast('Não foi possível confirmar a frequência e gerar o histórico. Confira a conexão e tente novamente.');}}
+  }catch(err){if(vigente()){console.error(err);showToast('Não foi possível gerar o histórico. Confira a conexão e o preenchimento das faltas e tente novamente.');}}
   finally{button.disabled=false;}
 }
 

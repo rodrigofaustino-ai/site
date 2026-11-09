@@ -37,7 +37,7 @@ def validar(pasta):
     if faltantes:raise ValueError('Referências locais ausentes: '+repr(faltantes))
 
 def main():
-    p=argparse.ArgumentParser();p.add_argument('destino',type=Path);p.add_argument('zip',type=Path);p.add_argument('--etapa',type=int,default=52);args=p.parse_args()
+    p=argparse.ArgumentParser();p.add_argument('destino',type=Path);p.add_argument('zip',type=Path);p.add_argument('--etapa',type=int,default=53);args=p.parse_args()
     destino=args.destino.resolve();arquivo_zip=args.zip.resolve()
     if destino==ROOT or destino.is_relative_to(ROOT):raise ValueError('Use uma pasta nova fora do repositório de fonte.')
     if destino.exists() and any(destino.iterdir()):raise ValueError('A pasta de destino precisa estar vazia ou não existir.')
@@ -197,6 +197,13 @@ serviços externos de IA ou a configuração remota atual de todos os serviços.
         inicio=texto.index('ATENÇÃO — QUESTIONÁRIO DA FAMÍLIA')
         fim=texto.index('PARA PUBLICAR',inicio)
         texto=texto[:inicio]+'ETAPA 52 — LISTA DE DOCUMENTOS PEI\nA lista principal mostra somente PEIs salvos, como PAEE, Diagnóstica e Relatório.\nCadastros sem PEI não aparecem como cartões. Excluir PEI remove o documento atual e seu cartão.\nNovo PEI / Consultar histórico abre a seleção de aluno para preencher ou consultar versões anteriores.\nExcluir PEI preserva o cadastro no Diário e outros documentos.\nPacote cumulativo. Sem mudanças no Firebase. Publique a pasta completa no Netlify, aguarde Published e atualize com Ctrl + Shift + R.\n\n'+texto[fim:]
+        guia.write_text(texto)
+    if args.etapa == 53:
+        guia=destino/'LEIA-ME-PUBLICACAO.txt'
+        texto=guia.read_text()
+        inicio=texto.index('ATENÇÃO — QUESTIONÁRIO DA FAMÍLIA')
+        fim=texto.index('PARA PUBLICAR',inicio)
+        texto=texto[:inicio]+'ETAPA 53 — HISTÓRICO ANUAL E FALTAS MANUAIS\nAtendimentos previstos corresponde ao número de registros do histórico exportado.\nConsidera somente o ano vigente, de janeiro até o último atendimento registrado até a emissão.\nFaltas são informadas manualmente na ficha do aluno, no campo Faltas no histórico — ano vigente.\nSalve a ficha para usar o valor em Exportar Documentos. Em branco, sai uma linha para preencher.\nNão usa marcações da Frequência para esses totais. Não altera registros antigos.\nPacote cumulativo. Sem atualização de regras Firebase. Publique no Netlify, aguarde Published e atualize com Ctrl + Shift + R.\n\n'+texto[fim:]
         guia.write_text(texto)
     validar(destino)
     files={str(f.relative_to(destino)):hashlib.sha256(f.read_bytes()).hexdigest() for f in sorted(destino.rglob('*')) if f.is_file()}
