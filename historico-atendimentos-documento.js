@@ -265,6 +265,8 @@ const faltas=HistoricoAtendimentosFrequencia.faltasManuais(Object.hasOwn(dados,'
     layout:TableLayoutType.FIXED,
   }));
 
+  const extras=AssinaturasAdicionais.grupos(Object.hasOwn(dados,'assinaturasAdicionais')?dados.assinaturasAdicionais:p.pdfAssinaturasAdicionais);if(extras.length)children.push(AssinaturasDocumentos.docx(extras));
+
   // Gerar e baixar
   const docxDoc = new Document({
     styles:{default:{document:{run:{font:'Arial',size:22},paragraph:{alignment:AlignmentType.JUSTIFIED}}}},

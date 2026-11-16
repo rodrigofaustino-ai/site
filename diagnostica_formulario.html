@@ -219,7 +219,7 @@
 <script src="orientacoes-preenchimento.js" defer></script>
 <link rel="stylesheet" href="formularios-visual.css">
 <link rel="stylesheet" href="ia-campos.css">
-<script src="assinaturas-documentos.js"></script><link rel="stylesheet" href="biblioteca-assinaturas.css"><script src="assinaturas-conexao.js"></script><script src="assinaturas-campos.js"></script>
+<script src="assinaturas-documentos.js"></script><link rel="stylesheet" href="biblioteca-assinaturas.css"><script src="assinaturas-conexao.js"></script><script src="assinaturas-campos.js"></script><script src="assinaturas-adicionais.js"></script>
 </head>
 <body data-ia-pagina="diagnostica_formulario.html" class="srm-form-visual">
 
@@ -630,6 +630,7 @@ function listenStudents(){
 }
 
 async function saveStudent(){
+  try{AssinaturasAdicionais.grupos(state.assinaturasAdicionais);AssinaturasAdicionais.validarDocumento(state);}catch(error){showToast(error.message);return;}
   if(!firebaseReady){showToast('Firebase não configurado.');return;}
   if(!professorUid){showToast('Faça login antes de salvar.');return;}
   if(!state.identificacao.nome.trim()){showToast('Informe ao menos o nome do aluno antes de salvar.');return;}
@@ -919,6 +920,7 @@ function renderForm(){
   document.getElementById('form-sections').innerHTML=html;
 
   for(const slot of ['s1','s2']){const input=document.querySelector('[data-freq="'+slot+'AssinResp"]');AssinaturasCampos.montar({input,auth,obter:()=>s.assinaturasImagens?.[slot],gravar:a=>{s.assinaturasImagens||={};if(a)s.assinaturasImagens[slot]=a;else delete s.assinaturasImagens[slot];},vigente:()=>state===s&&input.isConnected&&!!auth?.currentUser});}
+  const areaExtras=document.createElement('div');document.getElementById('form-sections').append(areaExtras);AssinaturasAdicionais.montar({container:areaExtras,auth,obter:()=>s.assinaturasAdicionais,gravar:a=>s.assinaturasAdicionais=a,vigente:()=>state===s});
   // Toggle obs vazias
   toggleObsVazias();
   const chkObs=document.getElementById('toggleObsVazias');
@@ -999,6 +1001,7 @@ document.getElementById('form-sections').addEventListener('change',e=>{
 
 /* ========================= DOCX EXPORT ========================= */
 function exportDOCX(s, formato='docx'){
+  let adicionaisParaExportar;try{adicionaisParaExportar=AssinaturasAdicionais.grupos(s.assinaturasAdicionais);}catch(error){if(window.SRMExportacaoWorker)throw error;showToast(error.message);return;}
   const {
     Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
     WidthType, AlignmentType, BorderStyle, ShadingType, TableLayoutType,
@@ -1279,6 +1282,8 @@ function exportDOCX(s, formato='docx'){
     ]})],
   }));
 
+  if(adicionaisParaExportar.length)children.push(AssinaturasDocumentos.docx(adicionaisParaExportar));
+
   // Aviso legal
   children.push(new Paragraph({spacing:{before:160,after:40}}));
   children.push(new Paragraph({
@@ -1307,7 +1312,7 @@ function exportDOCX(s, formato='docx'){
 
   return Packer.toBlob(doc).then(async blob=>{
     const nome=(s.identificacao.nome||'Diagnostica').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9]+/g,'_');
-    await SRMExport.fromDocx(blob, formato, `Diagnostica_SRM_${nome}`,{imagensAssinaturas:Object.values(s.assinaturasImagens||{})});
+    await SRMExport.fromDocx(blob, formato, `Diagnostica_SRM_${nome}`,{imagensAssinaturas:Object.values(s.assinaturasImagens||{}),...(adicionaisParaExportar.length?{assinaturasHtml:AssinaturasDocumentos.html(adicionaisParaExportar)}:{})});
     showToast(formato.toUpperCase()+' gerado com sucesso.');
   }).catch(err=>{
     if(window.SRMExportacaoWorker)throw err;

@@ -3674,16 +3674,18 @@ function melhorarObsClinicasIA(){
   showToast('A revisão de texto ainda não está disponível. Atualize a página e tente novamente.');
 }
 
-let assinaturaHistorico=null;
+let assinaturaHistorico=null,assinaturasHistoricoAdicionais=[];
 function montarAssinaturaHistorico(){
  const input=$('pdfProfessor'),uid=professorUid,id=currentStudentId,profile=currentProfile;
  if(!window.AssinaturasCampos||!input)return;
  const vigente=()=>professorUid===uid&&auth.currentUser?.uid===uid&&currentStudentId===id&&currentProfile===profile;
  AssinaturasCampos.montar({input,auth,obter:()=>assinaturaHistorico,gravar:a=>assinaturaHistorico=a,vigente,abrir:()=>BibliotecaAssinaturas.abrir({db,auth,uid,vigente})});
+ let area=$('assinaturasHistoricoExtras');if(!area){area=document.createElement('div');area.id='assinaturasHistoricoExtras';input.closest('.pdf-fields').append(area);}
+ AssinaturasAdicionais.montar({container:area,auth,obter:()=>assinaturasHistoricoAdicionais,gravar:a=>assinaturasHistoricoAdicionais=a,vigente,abrir:vigenteLinha=>BibliotecaAssinaturas.abrir({db,auth,uid,vigente:vigenteLinha})});
 }
 const FIELDS={nomeAluno:'nome',dataNasc:'dataNasc',turma:'turma',escola:'escola',municipio:'municipio',periodo:'periodo',laudo:'laudo',cid:'cid',cid11:'cid11',dataLaudo:'dataLaudo',obsClinicas:'obsClinicas'};
 function clearForm(){
-  assinaturaHistorico=null;montarAssinaturaHistorico();
+  assinaturaHistorico=null;assinaturasHistoricoAdicionais=[];montarAssinaturaHistorico();
   $('perfilArquivoAviso').hidden=true;
   Object.keys(FIELDS).forEach(f=>$(f).value='');
   ['pdfLocal','pdfProfessor','pdfCargo','pdfFaltas','entryText','registradoPor'].forEach(f=>$(f).value='');
@@ -3699,7 +3701,7 @@ function fillForm(p){
   if(p.pdfLocal)$('pdfLocal').value=p.pdfLocal;
   if(p.pdfProfessor)$('pdfProfessor').value=p.pdfProfessor;
   if(p.pdfCargo)$('pdfCargo').value=p.pdfCargo;
-  assinaturaHistorico=AssinaturasDocumentos.paraNome(p.pdfAssinatura,p.pdfProfessor);montarAssinaturaHistorico();
+  assinaturaHistorico=AssinaturasDocumentos.paraNome(p.pdfAssinatura,p.pdfProfessor);assinaturasHistoricoAdicionais=AssinaturasAdicionais.normalizar(p.pdfAssinaturasAdicionais);montarAssinaturaHistorico();
   $('pdfFaltas').value=HistoricoAtendimentosFrequencia.faltasDoAluno(p)??'';
   contacts=p.contacts&&p.contacts.length?[...p.contacts]:[];
   renderContacts();if(!contacts.length)addContact();
@@ -3736,7 +3738,7 @@ function selecionarTurnoAluno(turno){
 }
 
 async function saveProfile(){
-  let faltas;try{faltas=HistoricoAtendimentosFrequencia.faltasManuais(val('pdfFaltas'));}catch(error){showToast(error.message);$('pdfFaltas').focus();return;}
+  let faltas;try{faltas=HistoricoAtendimentosFrequencia.faltasManuais(val('pdfFaltas'));AssinaturasAdicionais.grupos(assinaturasHistoricoAdicionais);}catch(error){showToast(error.message);$('pdfFaltas').focus();return;}
   const eraNovo = !currentStudentId;
   setBadge('syncing','Salvando...');$('btnSalvarPerfil').disabled=true;showLoad('Salvando...');
   const data={
@@ -3744,13 +3746,14 @@ async function saveProfile(){
     municipio:val('municipio'),periodo:val('periodo'),laudo:val('laudo'),cid:val('cid'),
     dataLaudo:val('dataLaudo'),obsClinicas:val('obsClinicas'),contacts:[...contacts],
     atendimentos:atendimentos.filter(r=>r.dia&&r.horario),
-    pdfLocal:val('pdfLocal'),pdfProfessor:val('pdfProfessor'),pdfCargo:val('pdfCargo'),pdfAssinatura:assinaturaHistorico,pdfFaltas:faltas,pdfFaltasAno:Number(HistoricoAtendimentosFrequencia.hoje().slice(0,4)),
+    pdfLocal:val('pdfLocal'),pdfProfessor:val('pdfProfessor'),pdfCargo:val('pdfCargo'),pdfAssinatura:assinaturaHistorico,pdfAssinaturasAdicionais:AssinaturasAdicionais.normalizar(assinaturasHistoricoAdicionais),pdfFaltas:faltas,pdfFaltasAno:Number(HistoricoAtendimentosFrequencia.hoje().slice(0,4)),
     turno: turnoAlunoSelecionado,
     professorUid,
     professorEmail: auth.currentUser ? auth.currentUser.email : null,
     updatedAt:new Date().toISOString()
   };
   if(currentPhotoB64)data.photoB64=currentPhotoB64;
+  try{AssinaturasAdicionais.validarDocumento(data);}catch(error){setBadge('offline','Não salvo');showToast(error.message);$('btnSalvarPerfil').disabled=false;hideLoad();return;}
   // laudoImagens são salvas na subcoleção — nunca no doc principal (evita estouro do 1 MB)
   try{
     if(currentStudentId){await db.collection('alunos').doc(currentStudentId).set(data,{merge:true});}
@@ -4065,7 +4068,7 @@ async function exportPDF(){
   const uid=professorUid,id=currentStudentId,profile=currentProfile,turno=turnoAtual,version=perfilLoadVersion;
   if(!uid||!id||auth.currentUser?.uid!==uid){showToast('Salve o cadastro e abra a ficha do aluno antes de exportar.');return;}
   const vigente=()=>professorUid===uid&&auth.currentUser?.uid===uid&&currentStudentId===id&&currentProfile===profile&&turnoAtual===turno&&perfilLoadVersion===version;
-  const assinatura={professor:val('pdfProfessor'),cargo:val('pdfCargo'),local:val('pdfLocal'),faltas:val('pdfFaltas'),assinaturaImagem:assinaturaHistorico};
+  const assinatura={professor:val('pdfProfessor'),cargo:val('pdfCargo'),local:val('pdfLocal'),faltas:val('pdfFaltas'),assinaturaImagem:assinaturaHistorico,assinaturasAdicionais:AssinaturasAdicionais.normalizar(assinaturasHistoricoAdicionais)};
   button.disabled=true;
   try{
     const registros=await HistoricoAtendimentosFrequencia.carregar({db,uid,alunoId:id,vigente});if(!vigente())return;
@@ -4078,7 +4081,7 @@ async function exportPDF(){
 
 </script>
 <script src="historico-atendimentos-frequencia.js"></script>
-<script src="historico-atendimentos-documento.js"></script><script src="biblioteca-assinaturas.js"></script><script src="assinaturas-campos.js"></script><link rel="stylesheet" href="biblioteca-assinaturas.css">
+<script src="historico-atendimentos-documento.js"></script><script src="biblioteca-assinaturas.js"></script><script src="assinaturas-campos.js"></script><script src="assinaturas-adicionais.js"></script><link rel="stylesheet" href="biblioteca-assinaturas.css">
 <script src="planos-aula.js"></script>
 <script src="recursos-didaticos.js"></script>
 <script src="chat-anexos-modelo.js"></script>

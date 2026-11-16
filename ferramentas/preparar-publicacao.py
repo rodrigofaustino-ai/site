@@ -37,7 +37,7 @@ def validar(pasta):
     if faltantes:raise ValueError('Referências locais ausentes: '+repr(faltantes))
 
 def main():
-    p=argparse.ArgumentParser();p.add_argument('destino',type=Path);p.add_argument('zip',type=Path);p.add_argument('--etapa',type=int,default=55);args=p.parse_args()
+    p=argparse.ArgumentParser();p.add_argument('destino',type=Path);p.add_argument('zip',type=Path);p.add_argument('--etapa',type=int,default=56);args=p.parse_args()
     destino=args.destino.resolve();arquivo_zip=args.zip.resolve()
     if destino==ROOT or destino.is_relative_to(ROOT):raise ValueError('Use uma pasta nova fora do repositório de fonte.')
     if destino.exists() and any(destino.iterdir()):raise ValueError('A pasta de destino precisa estar vazia ou não existir.')
@@ -220,6 +220,15 @@ serviços externos de IA ou a configuração remota atual de todos os serviços.
         texto=texto[:inicio]+'ETAPA 55 — ASSINATURAS EM TODOS OS DOCUMENTOS\nPacote completo: inclui as melhorias anteriores, biblioteca e assinaturas do PEI, PAEE, Diagnóstica, Relatório e Histórico.\nA biblioteca é única e privada na conta do Diário. Nos formulários, entre na janela com a conta do Diário se solicitado.\nA imagem escolhida entra apenas no local selecionado; salve o documento normalmente.\nDOCX e ODT incorporam as imagens; sem imagem, permanece espaço para assinar à mão.\nANTES DA PUBLICAÇÃO: leia PERMISSOES-ASSINATURAS-FIRESTORE.txt e acrescente o bloco nas regras EXISTENTES de salamulti.\nNão altere paee-3fea6, Storage ou Realtime Database para esta melhoria.\nDepois, publique a pasta completa no Netlify, aguarde Published e use Ctrl + Shift + R.\nO assistente NÃO aplicou regras nem publicou no Netlify.\n\n'+texto[fim:]
         guia.write_text(texto)
         (destino/'PERMISSOES-ASSINATURAS-FIRESTORE.txt').write_text((ROOT/'producao'/'GUIA-ASSINATURAS-FIRESTORE.txt').read_text())
+    if args.etapa == 56:
+        guia=destino/'LEIA-ME-PUBLICACAO.txt'
+        texto=guia.read_text()
+        inicio=texto.index('ATENÇÃO — QUESTIONÁRIO DA FAMÍLIA')
+        fim=texto.index('PARA PUBLICAR',inicio)
+        texto=texto[:inicio]+'ETAPA 56 — PESSOAS ADICIONAIS PARA ASSINAR\nEm PEI, PAEE, Diagnóstica, Relatório e Histórico, use Outras pessoas que assinam → Adicionar pessoa para assinar.\nPreencha nome e cargo/função. A imagem é opcional; sem imagem, o documento mantém espaço para assinatura manual.\nPermite incluir pedagoga, direção, pais e outros responsáveis, preservando os campos originais.\nSalve cada documento ou a ficha do Histórico para incluir também nas exportações pela lista e por Exportar Documentos.\nAs assinaturas adicionais são próprias de cada documento. Excluir uma pessoa deste preenchimento não apaga a biblioteca.\nNÃO há novas regras de Firebase nesta etapa. Se as permissões da etapa 55 já foram publicadas, não precisa atualizá-las novamente.\nPacote cumulativo com todas as melhorias anteriores. Publique a pasta completa no Netlify, aguarde Published e use Ctrl + Shift + R.\nO assistente não publicou no Netlify nem alterou dados reais.\n\n'+texto[fim:]
+        guia.write_text(texto)
+        nota='ETAPA 56: se as permissões de assinaturas da etapa 55 já foram publicadas, NÃO precisa alterar o Firebase novamente. O guia abaixo é mantido apenas para quem ainda não habilitou a biblioteca.\n\n'
+        (destino/'PERMISSOES-ASSINATURAS-FIRESTORE.txt').write_text(nota+(ROOT/'producao'/'GUIA-ASSINATURAS-FIRESTORE.txt').read_text().replace('etapa 55.','etapa 56.'))
     guia=destino/'LEIA-ME-PUBLICACAO.txt'
     guia.write_text(guia.read_text().replace('até a etapa 33.',f'até a etapa {args.etapa}.'))
     validar(destino)

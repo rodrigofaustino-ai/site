@@ -317,7 +317,7 @@
 <script src="orientacoes-preenchimento.js" defer></script>
 <link rel="stylesheet" href="formularios-visual.css">
 <link rel="stylesheet" href="ia-campos.css">
-<script src="assinaturas-documentos.js"></script><link rel="stylesheet" href="biblioteca-assinaturas.css"><script src="assinaturas-conexao.js"></script><script src="assinaturas-campos.js"></script>
+<script src="assinaturas-documentos.js"></script><link rel="stylesheet" href="biblioteca-assinaturas.css"><script src="assinaturas-conexao.js"></script><script src="assinaturas-campos.js"></script><script src="assinaturas-adicionais.js"></script>
 </head>
 <body data-ia-pagina="paee_formulario_02.html" class="srm-form-visual">
 
@@ -839,6 +839,7 @@ function listenStudents(){
 }
 
 async function saveStudent(){
+  try{AssinaturasAdicionais.grupos(state.assinaturasAdicionais);AssinaturasAdicionais.validarDocumento(state);}catch(error){showToast(error.message);return;}
   if(!firebaseReady){ showToast('Firebase não configurado — veja firebaseConfig no código.'); return; }
   if(!state.identificacao.nome.trim()){
     showToast('Informe ao menos o nome do aluno antes de salvar.');
@@ -1257,6 +1258,7 @@ function renderForm(){
   `;
   document.getElementById('form-sections').innerHTML = html;
   for(const slot of ['aee','coordenacao','responsavel','gestao']){const input=document.querySelector('[data-bind="assinaturasNomes.'+slot+'"]');AssinaturasCampos.montar({input,auth,obter:()=>s.assinaturasImagens?.[slot],gravar:a=>{s.assinaturasImagens||={};if(a)s.assinaturasImagens[slot]=a;else delete s.assinaturasImagens[slot];},vigente:()=>state===s&&input.isConnected&&!!auth?.currentUser});}
+  const areaExtras=document.createElement('div'),assinaturasBody=document.querySelector('#sec-sign .card-body');assinaturasBody.insertBefore(areaExtras,assinaturasBody.querySelector('.notice'));AssinaturasAdicionais.montar({container:areaExtras,auth,obter:()=>s.assinaturasAdicionais,gravar:a=>s.assinaturasAdicionais=a,vigente:()=>state===s});
   document.getElementById('form-title').textContent = s.identificacao.nome || (s.id ? 'PAEE' : 'Novo PAEE');
   montarAssinaturasInstrumentos();
   bindNavScroll();
@@ -1454,6 +1456,7 @@ function bindNavScroll(){
 /* ========================= DOCX EXPORT ========================= */
 
 function exportDOCX(s, formato='docx'){
+  let adicionaisParaExportar;try{adicionaisParaExportar=AssinaturasAdicionais.grupos(s.assinaturasAdicionais);}catch(error){if(window.SRMExportacaoWorker)throw error;showToast(error.message);return;}
   const {
     Document, Packer, Paragraph, TextRun, HeadingLevel, Table, TableRow, TableCell,
     WidthType, AlignmentType, BorderStyle, ShadingType, PageOrientation,
@@ -1735,8 +1738,8 @@ function exportDOCX(s, formato='docx'){
     'Gestor(a) Escolar — assinatura e data',
   ];
   const nomesAss=s.assinaturasNomes||{},imagensAss=s.assinaturasImagens||{};
-  const assinantesPAEE=[['aee','coordenacao'],['responsavel','gestao']].map(g=>g.map(slot=>({nome:nomesAss[slot]||'',cargo:({aee:'Professor(a) do AEE',coordenacao:'Coordenação Pedagógica',responsavel:'Responsável pelo Estudante',gestao:'Gestor(a) Escolar'})[slot],assinatura:AssinaturasDocumentos.paraNome(imagensAss[slot],nomesAss[slot])})));
-  const temAssinantesPAEE=Object.values(nomesAss).some(Boolean);
+  const assinantesPAEE=[['aee','coordenacao'],['responsavel','gestao']].map(g=>g.map(slot=>({nome:nomesAss[slot]||'',cargo:({aee:'Professor(a) do AEE',coordenacao:'Coordenação Pedagógica',responsavel:'Responsável pelo Estudante',gestao:'Gestor(a) Escolar'})[slot],assinatura:AssinaturasDocumentos.paraNome(imagensAss[slot],nomesAss[slot])}))).concat(adicionaisParaExportar);
+  const temAssinantesPAEE=Object.values(nomesAss).some(Boolean)||adicionaisParaExportar.length>0;
   if(temAssinantesPAEE)children.push(AssinaturasDocumentos.docx(assinantesPAEE));else {
   signLabels.forEach(label=>{
     children.push(new Paragraph({spacing:{before:340,after:0}})); // espaço para assinar acima da linha

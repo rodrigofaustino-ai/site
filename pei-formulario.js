@@ -60,13 +60,14 @@
       definir(data,path,typeof saved?.[g]?.[k]==='string'?v:valor(defaults,path));
     }
     data.assinaturas.imagens={};for(const slot of ['regente','apoio','coordenador']){const image=saved?.assinaturas?.imagens?.[slot];if(AssinaturasDocumentos.imagemValida(image))data.assinaturas.imagens[slot]=JSON.parse(JSON.stringify(image));}
+    data.assinaturas.adicionais=AssinaturasAdicionais.normalizar(saved?.assinaturas?.adicionais);
     return data;
   }
   function erro(message='') {$('peiError').textContent=message;}
   function setBusy(value) {
     busy=value;
     for(const id of ['btn-save','btn-back-list','btn-export-docx','btn-export-odt','btn-history'])$(id).disabled=value;
-    $('form-sections').querySelectorAll('input,textarea,.pei-ai button,.pei-metas button,.pei-assinatura-controls button').forEach(field=>field.disabled=value||field.dataset.loading==='true');
+    $('form-sections').querySelectorAll('input,textarea,.pei-ai button,.pei-metas button,.pei-assinatura-controls button,.assinaturas-adicionais button').forEach(field=>field.disabled=value||field.dataset.loading==='true');
     $('pei-history-list').querySelectorAll('button').forEach(button=>button.disabled=value);
     $('student-grid').querySelectorAll('button').forEach(button=>button.disabled=value);
     $('peiNovo').disabled=value;$('search-input').disabled=value;$('peiListaAtualizar').disabled=value;
@@ -209,6 +210,7 @@
         body.append(wrap);
       }
       section.append(head,body);root.append(section);
+      if(grupo.id==='sec-sign'){const extras=el('div');body.append(extras);const original=estado,token=generation,id=alunoId,owner=user?.uid;AssinaturasAdicionais.montar({container:extras,auth,obter:()=>original.assinaturas.adicionais,gravar:a=>original.assinaturas.adicionais=a,vigente:()=>estado===original&&generation===token&&alunoId===id&&user?.uid===owner,bloqueado:()=>busy,aoAlterar:()=>{dirty=true;$('save-note').textContent='Alterações ainda não salvas.';},abrir:vigente=>BibliotecaAssinaturas.abrir({db,auth,uid:owner,vigente})});}
     }
   }
   async function abrir(id) {
@@ -251,7 +253,7 @@
     const date=valor(data,'assinaturas.data');
     const written=/^\d{4}-\d{2}-\d{2}$/.test(date)?new Intl.DateTimeFormat('pt-BR',{day:'numeric',month:'long',year:'numeric'}).format(new Date(date+'T12:00:00')):'____ de __________________ de ______';
     html+='<p data-srm-sign-data="left">'+esc(valor(data,'assinaturas.local')||'Cambé')+', '+esc(written)+'.</p>';
-    html+=AssinaturasDocumentos.html([[{nome:valor(data,'assinaturas.regente'),assinatura:data.assinaturas?.imagens?.regente,cargo:'Professor(a) regente'},{nome:valor(data,'assinaturas.apoio'),assinatura:data.assinaturas?.imagens?.apoio,cargo:'Professor(a) de apoio'}],[{nome:valor(data,'assinaturas.coordenador'),assinatura:data.assinaturas?.imagens?.coordenador,cargo:'Coordenador(a) pedagógico(a)'}]]);
+    html+=AssinaturasDocumentos.html([[{nome:valor(data,'assinaturas.regente'),assinatura:data.assinaturas?.imagens?.regente,cargo:'Professor(a) regente'},{nome:valor(data,'assinaturas.apoio'),assinatura:data.assinaturas?.imagens?.apoio,cargo:'Professor(a) de apoio'}],[{nome:valor(data,'assinaturas.coordenador'),assinatura:data.assinaturas?.imagens?.coordenador,cargo:'Coordenador(a) pedagógico(a)'}]].concat(AssinaturasAdicionais.grupos(data.assinaturas?.adicionais)));
     return html;
   }
   if(window.SRMExportacaoWorker){window.PEIFormulario={grupos,criarEstado,conteudo};return;}
@@ -265,6 +267,7 @@
     setBusy(true);erro();$('save-note').textContent='Salvando PEI e preservando a versão anterior…';
     try{
       const payload={peiFormulario:data,peiHtml:conteudo(data),peiComprimido:false,peiData:new Date().toISOString(),peiNomeArquivo:'PEI preenchido no formulário',professorUid:owner};
+      AssinaturasAdicionais.validarDocumento(payload);
       await db.runTransaction(async transaction=>{
         const [student,previous]=await Promise.all([transaction.get(studentRef),transaction.get(ref)]);
         if(token!==generation||user?.uid!==owner)throw new Error('A sessão ou o aluno mudou. Reabra o PEI para continuar.');
