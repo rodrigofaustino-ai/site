@@ -10,7 +10,7 @@ function mock(){
  const clone=data=>data==null?data:JSON.parse(JSON.stringify(data));
  const auth={currentUser:null,onAuthStateChanged(fn){callbacks.push(fn);queueMicrotask(()=>fn(this.currentUser));},async signOut(){this.currentUser=null;callbacks.forEach(fn=>fn(null));}};
  const state={store,deny:false,ackLost:false,pause:null,calls:0};
- function ref(parts,filter){return {path:parts.join('/'),doc:id=>ref([...parts,id]),collection:name=>ref([...parts,name]),where:(key,op,value)=>ref(parts,{key,value}),orderBy(){return this;},limit(){return this;},onSnapshot(fn){queueMicrotask(()=>fn({docs:[],forEach(){}}));return ()=>{};},
+ function ref(parts,filter){return {path:parts.join('/'),doc:id=>ref([...parts,id]),collection:name=>ref([...parts,name]),where:(key,op,value)=>ref(parts,{key,value}),orderBy(){return this;},limit(){return this;},onSnapshot(options,fn){if(typeof options==='function')fn=options;queueMicrotask(()=>fn({docs:[],forEach(){}}));return ()=>{};},
   async get(){const value=store[this.path];if(parts.length%2===0)return {exists:!!value,data:()=>clone(value)};
    const docs=Object.entries(store).filter(([p,d])=>p.startsWith(this.path+'/')&&p.split('/').length===parts.length+1&&(!filter||d[filter.key]===filter.value)).map(([p,d])=>({id:p.split('/').at(-1),data:()=>clone(d)}));return {docs,forEach:fn=>docs.forEach(fn)};
   },async add(data){const id='novo-'+(++next);store[this.path+'/'+id]=clone(data);return {id};},async set(data,options){store[this.path]=options?.merge?{...store[this.path],...clone(data)}:clone(data);}

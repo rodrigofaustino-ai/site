@@ -37,7 +37,7 @@ def validar(pasta):
     if faltantes:raise ValueError('Referências locais ausentes: '+repr(faltantes))
 
 def main():
-    p=argparse.ArgumentParser();p.add_argument('destino',type=Path);p.add_argument('zip',type=Path);p.add_argument('--etapa',type=int,default=57);args=p.parse_args()
+    p=argparse.ArgumentParser();p.add_argument('destino',type=Path);p.add_argument('zip',type=Path);p.add_argument('--etapa',type=int,default=58);args=p.parse_args()
     destino=args.destino.resolve();arquivo_zip=args.zip.resolve()
     if destino==ROOT or destino.is_relative_to(ROOT):raise ValueError('Use uma pasta nova fora do repositório de fonte.')
     if destino.exists() and any(destino.iterdir()):raise ValueError('A pasta de destino precisa estar vazia ou não existir.')
@@ -238,9 +238,18 @@ serviços externos de IA ou a configuração remota atual de todos os serviços.
         guia.write_text(texto)
         nota='ETAPA 57: não há nova alteração de Firebase para quem já publicou as permissões das assinaturas. O guia abaixo é apenas para quem ainda não habilitou a biblioteca.\n\n'
         (destino/'PERMISSOES-ASSINATURAS-FIRESTORE.txt').write_text(nota+(ROOT/'producao'/'GUIA-ASSINATURAS-FIRESTORE.txt').read_text().replace('etapa 55.','etapa 57.'))
+    if args.etapa == 58:
+        guia=destino/'LEIA-ME-PUBLICACAO.txt'
+        texto=guia.read_text()
+        inicio=texto.index('ATENÇÃO — QUESTIONÁRIO DA FAMÍLIA')
+        fim=texto.index('PARA PUBLICAR',inicio)
+        texto=texto[:inicio]+'ETAPA 58 — AVISO DE NOVA MENSAGEM NO CHAT\nAviso pequeno no canto inferior esquerdo, com autor e trecho da nova mensagem. Fecha após 3 segundos; clicar abre o chat.\nAvisa mensagens de outras pessoas enquanto você usa o site, com o chat fechado ou lendo mensagens anteriores.\nNão avisa histórico inicial, mensagens próprias, edições, exclusões ou repetição da conexão. Se já estiver vendo o fim da conversa, não repete o aviso.\nMensagens em sequência são agrupadas, reiniciando os 3 segundos a partir da última chegada.\nO aviso não marca a mensagem como lida. Anexos são indicados pelo nome do arquivo.\nSem novas regras de Firebase. Inclui as assinaturas padronizadas e todas as melhorias anteriores.\nPublique a pasta completa no Netlify, aguarde Published e use Ctrl + Shift + R. O assistente não publicou no Netlify.\n\n'+texto[fim:]
+        guia.write_text(texto)
+        nota='ETAPA 58: não há nova alteração de Firebase. Quem já publicou as permissões das assinaturas não precisa repeti-las. O guia abaixo é apenas para quem ainda não habilitou a biblioteca.\n\n'
+        (destino/'PERMISSOES-ASSINATURAS-FIRESTORE.txt').write_text(nota+(ROOT/'producao'/'GUIA-ASSINATURAS-FIRESTORE.txt').read_text().replace('etapa 55.','etapa 58.'))
     guia=destino/'LEIA-ME-PUBLICACAO.txt'
     guia.write_text(guia.read_text().replace('até a etapa 33.',f'até a etapa {args.etapa}.'))
-    if args.etapa == 57:
+    if args.etapa >= 57:
         texto=guia.read_text()
         inicio=texto.index('ASSINATURAS\n',texto.index('DOCUMENTOS DOS PROFESSORES'))
         fim=texto.index('OBSERVAÇÕES',inicio)

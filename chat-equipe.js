@@ -5,6 +5,9 @@
   widget.setAttribute('aria-label', 'Chat coletivo da equipe');
   widget.innerHTML = '<section id="chatPainel" hidden aria-label="Conversa da equipe"><header class="chat-cabecalho"><strong>Chat da equipe</strong><button id="chatAmpliar" type="button" aria-pressed="false" aria-label="Ampliar painel do chat">Ampliar</button><button id="chatFechar" type="button" aria-label="Fechar chat">Fechar ×</button></header><button id="chatHistorico" type="button">Carregar mensagens anteriores</button><div id="chatMensagens" role="log" aria-label="Mensagens da equipe" aria-live="polite" aria-relevant="additions"></div><div id="chatStatus" role="status"></div><form id="chatForm"><label for="chatTexto">Mensagem para a equipe</label><textarea id="chatTexto" maxlength="2000" placeholder="Escreva sua mensagem…" required></textarea><button id="chatEnviar" type="submit">Enviar</button></form></section><button id="chatAbrir" type="button" aria-controls="chatPainel" aria-expanded="false">💬 Chat da equipe <span id="chatNaoLidas" hidden></span></button>';
   document.body.appendChild(widget);
+  const notificacao=document.createElement('aside');notificacao.id='chatNotificacao';notificacao.hidden=true;notificacao.setAttribute('role','status');notificacao.setAttribute('aria-live','polite');notificacao.setAttribute('aria-atomic','true');
+  notificacao.innerHTML='<button type="button" id="chatNotificacaoAbrir"><span id="chatNotificacaoTitulo">Nova mensagem no chat</span><strong id="chatNotificacaoAutor"></strong><span id="chatNotificacaoTexto"></span><small>Ver conversa →</small></button><button type="button" id="chatNotificacaoFechar" aria-label="Fechar aviso de nova mensagem">×</button>';
+  document.body.append(notificacao);
   const layout = document.createElement('div'); layout.className = 'chat-conteudo';
   const conversation = document.createElement('div'); conversation.className = 'chat-conversa';
   const header = document.getElementById('chatHistorico');
@@ -32,6 +35,20 @@
   let novasPendentes=new Set(),recebeuSnapshot=false;
   let respostaSelecionada=null,referenciaVersao=0,referenciaPendente=false;
   let apagando=new Set(),antigasGrupos=[],antigasObservadas=new Set(),mensagemDestacada=null;
+  let notificacaoTimer=null,notificacaoVersao=0,notificacaoPronta=false,notificacaoLimite=0,notificacaoConhecidas=new Set(),notificacaoPendentes=new Set();
+  function limparNotificacao(){notificacaoVersao++;clearTimeout(notificacaoTimer);notificacaoTimer=null;notificacaoPendentes.clear();notificacao.hidden=true;el('chatNotificacaoTitulo').textContent='';el('chatNotificacaoAutor').textContent='';el('chatNotificacaoTexto').textContent='';}
+  function preencherNotificacao(){const validas=[...notificacaoPendentes].map(id=>messages.get(id)).filter(m=>m&&!m.apagada&&!m._indisponivel&&m.autorUid!==user?.uid).sort((a,b)=>millis(b)-millis(a)||b.id.localeCompare(a.id));notificacaoPendentes=new Set(validas.map(m=>m.id));if(!validas.length){limparNotificacao();return;}const message=validas[0];el('chatNotificacaoTitulo').textContent=validas.length>1?validas.length+' novas mensagens no chat':'Nova mensagem no chat';el('chatNotificacaoAutor').textContent=Array.from(String(message.autorNome||message.autorEmail||'Equipe')).slice(0,120).join('');el('chatNotificacaoTexto').textContent=Array.from(String(textoMensagem(message)).replace(/\s+/g,' ').trim()).slice(0,140).join('');}
+  function avisarNovasMensagens(snapshot,recebidas){
+    if(!notificacao.hidden)preencherNotificacao();
+    if(snapshot.metadata?.fromCache||snapshot.metadata?.hasPendingWrites)return;
+    if(!notificacaoPronta){notificacaoPronta=true;notificacaoLimite=Math.max(0,...recebidas.map(millis));recebidas.forEach(m=>notificacaoConhecidas.add(m.id));return;}
+    const novas=recebidas.filter(m=>!notificacaoConhecidas.has(m.id)&&!m.apagada&&!m._indisponivel&&m.autorUid!==user?.uid&&millis(m)>notificacaoLimite);recebidas.forEach(m=>notificacaoConhecidas.add(m.id));
+    if(!novas.length||!user||auth.currentUser?.uid!==user.uid||document.visibilityState!=='visible'||(opened&&pertoDoFim()))return;
+    novas.forEach(m=>notificacaoPendentes.add(m.id));preencherNotificacao();notificacao.hidden=false;clearTimeout(notificacaoTimer);const current=epoch,versao=++notificacaoVersao;notificacaoTimer=setTimeout(()=>{if(current===epoch&&versao===notificacaoVersao)limparNotificacao();},3000);
+  }
+  el('chatNotificacaoFechar').addEventListener('click',limparNotificacao);
+  el('chatNotificacaoAbrir').addEventListener('click',()=>{if(!user||auth.currentUser?.uid!==user.uid)return;limparNotificacao();toggle(true);});
+  document.addEventListener('visibilitychange',()=>{if(document.visibilityState!=='visible')limparNotificacao();});
   const anexos=ChatAnexos.criar({auth,storage:firebase.storage(),status,render});
   const textoMensagem=message=>message?.apagada===true?'Mensagem apagada pelo autor.':message?._indisponivel?'Mensagem temporariamente indisponível.':String(message?.texto||(message?.anexo?'📎 '+message.anexo.nome:''));
   function aceitarMensagem(message){
@@ -297,7 +314,7 @@
   function listen() {
     if (!user || unsubscribe) return;
     const current = epoch; status('Conectando ao chat…');
-    unsubscribe = collection.orderBy('createdAt','desc').limit(100).onSnapshot(snapshot => {
+    unsubscribe = collection.orderBy('createdAt','desc').limit(100).onSnapshot({includeMetadataChanges:true},snapshot => {
       if (current !== epoch) return;
       const anteriores=new Set(messages.keys()),avisar=recebeuSnapshot&&opened&&!pertoDoFim();
       latest = snapshot.docs.map(doc => ({...doc.data(),id:doc.id}));
@@ -305,16 +322,17 @@
       recebeuSnapshot=true;
       latest.forEach(aceitarMensagem);latest=latest.map(message=>messages.get(message.id)||message);sincronizarAntigas();
       if (!historyLoaded) { cursor = snapshot.docs.at(-1) || null; more = snapshot.docs.length === 100; }
+      avisarNovasMensagens(snapshot,latest);
       status(snapshot.metadata && snapshot.metadata.fromCache ? 'Mostrando mensagens disponíveis neste navegador. Aguardando conexão…' : 'Conversa compartilhada com todos os professores do Diário.'); render();
     }, error => {
       if (current !== epoch) return;
-      status(errorText(error)); if (unsubscribe) unsubscribe(); unsubscribe = null;
+      limparNotificacao();status(errorText(error)); if (unsubscribe) unsubscribe(); unsubscribe = null;
     });
   }
   function toggle(value) {
     opened = value; el('chatPainel').hidden = !value; el('chatAbrir').setAttribute('aria-expanded', String(value));
     if (!value) { emojiPicker.open=false;referenciaVersao++;referenciaPendente=false;stopReadTracking(); closeReceipts();novasPendentes.clear();atualizarNovas();limparBusca(true); }
-    if (value) { listen();sincronizarAntigas(true); irParaFim(); el('chatTexto').focus(); }
+    if (value) { limparNotificacao();listen();sincronizarAntigas(true); irParaFim(); el('chatTexto').focus(); }
   }
   el('chatAbrir').addEventListener('click', () => toggle(!opened));
   el('chatFechar').addEventListener('click', () => { toggle(false); el('chatAbrir').focus(); });
@@ -360,7 +378,7 @@
     finally { if (current === epoch) { sending = false;anexos.bloqueado(false);atualizarResposta();atualizarEmojis();el('chatEnviar').disabled = false;el('chatTexto').disabled = false;render(); } }
   });
   auth.onAuthStateChanged(next => {
-    epoch++;anexos.limpar();pararAntigas();apagando=new Set();mensagemDestacada=null;emojiPicker.open=false;respostaSelecionada=null;referenciaVersao++;referenciaPendente=false;novasPendentes.clear();recebeuSnapshot=false;widget.classList.remove('chat-ampliado');el('chatAmpliar').textContent='Ampliar';el('chatAmpliar').setAttribute('aria-label','Ampliar painel do chat');el('chatAmpliar').setAttribute('aria-pressed','false');el('chatNovas').hidden=true;stopReadTracking(); closeReceipts(); acknowledged=new Set(); el('chatOnlineLista').replaceChildren(); el('chatOnlineTotal').textContent='';el('chatOnlineTotal').hidden=true;el('chatOnlineRotulo').textContent='Presença indisponível';el('chatPresencaStatus').textContent='Não é possível confirmar quem está online agora.'; if (unsubscribe) unsubscribe(); unsubscribe = null;
+    epoch++;limparNotificacao();notificacaoPronta=false;notificacaoLimite=0;notificacaoConhecidas=new Set();anexos.limpar();pararAntigas();apagando=new Set();mensagemDestacada=null;emojiPicker.open=false;respostaSelecionada=null;referenciaVersao++;referenciaPendente=false;novasPendentes.clear();recebeuSnapshot=false;widget.classList.remove('chat-ampliado');el('chatAmpliar').textContent='Ampliar';el('chatAmpliar').setAttribute('aria-label','Ampliar painel do chat');el('chatAmpliar').setAttribute('aria-pressed','false');el('chatNovas').hidden=true;stopReadTracking(); closeReceipts(); acknowledged=new Set(); el('chatOnlineLista').replaceChildren(); el('chatOnlineTotal').textContent='';el('chatOnlineTotal').hidden=true;el('chatOnlineRotulo').textContent='Presença indisponível';el('chatPresencaStatus').textContent='Não é possível confirmar quem está online agora.'; if (unsubscribe) unsubscribe(); unsubscribe = null;
     user = next; messages = new Map(); latest = []; cursor = null; more = false; historyLoaded = false; opened = false; sending = false; loading = false; pendingSend = null;
     el('chatMensagens').replaceChildren();atualizarResposta();atualizarEmojis();limparBusca(true); el('chatTexto').value = ''; el('chatTexto').disabled = false; el('chatEnviar').disabled = false; el('chatHistorico').disabled = false; el('chatNaoLidas').hidden = true; el('chatPainel').hidden = true; el('chatAbrir').setAttribute('aria-expanded','false'); status(''); widget.hidden = !next;
     if (user) { try { lastRead = Number(localStorage.getItem(key())) || 0; } catch (_) { lastRead = 0; } unread(); listen(); }
