@@ -317,6 +317,7 @@
 <script src="orientacoes-preenchimento.js" defer></script>
 <link rel="stylesheet" href="formularios-visual.css">
 <link rel="stylesheet" href="ia-campos.css">
+<script src="assinaturas-documentos.js"></script><link rel="stylesheet" href="biblioteca-assinaturas.css"><script src="assinaturas-conexao.js"></script><script src="assinaturas-campos.js"></script>
 </head>
 <body data-ia-pagina="paee_formulario_02.html" class="srm-form-visual">
 
@@ -473,6 +474,7 @@ function showScreen(name){
 
 if(firebaseReady){
   auth.onAuthStateChanged(user=>{
+    window.AssinaturasConexao?.fechar();
     VinculoAluno.limpar();
     if(user){
       professorUid = user.uid;
@@ -765,6 +767,7 @@ function emptyBarreiraSet(list){
 function novoEstado(){
   return {
     id: null,
+    assinaturasNomes:{aee:'',coordenacao:'',responsavel:'',gestao:''},
     identificacao:{
       nome:'', dataNascimento:'', escolaRegular:'', turma:'', periodo:'',
       escolaSRM:'', professorSRM:'', necessidades:'', atendimento:'', censo:[]
@@ -1229,7 +1232,7 @@ function renderForm(){
         <div class="field-group"><label>Descrição da avaliação</label>${fieldInput(s.avaliacao,'texto',{path:'avaliacao.texto',textarea:true,rows:5,ph:'Ex.: A avaliação do aluno será realizada de forma contínua e processual, por meio de observação sistemática durante as atividades da Sala de Recursos e da sala regular. Serão utilizados registros descritivos, portfólio de produções e relatórios semestrais elaborados conjuntamente pelo professor do AEE e pelo professor regente. Os instrumentos avaliativos serão adaptados às necessidades do aluno, priorizando a observação de avanços em relação ao próprio desempenho anterior, e não em comparação com os colegas da turma.'})}</div>
         <div class="field-group">
           <label>Instrumentos de avaliação</label>
-          ${checkboxGroupHTML('instrumentos', ['Registros de observação','Relatórios descritivos anuais','Feedback da família e dos professores regentes'], s.avaliacao.instrumentos)}
+          ${checkboxGroupHTML('instrumentos', ['Registros de observação','Relatórios descritivos anuais','Feedback da família e dos professores regentes'], s.avaliacao.instrumentos)}<div id="assinaturasInstrumentos"></div>
         </div>
       </div>
     </section>
@@ -1238,10 +1241,10 @@ function renderForm(){
       <div class="card-head"><span class="roman">·</span><div><h2>Assinaturas e Ciência</h2><div class="desc">Impressas no PDF exportado</div></div></div>
       <div class="card-body">
         <div class="sign-grid">
-          <div class="sign-line">Professor(a) do AEE — assinatura e data</div>
-          <div class="sign-line">Coordenação Pedagógica — assinatura e data</div>
-          <div class="sign-line">Responsável pelo Estudante — assinatura e data</div>
-          <div class="sign-line">Gestor(a) Escolar — assinatura e data</div>
+          <div class="sign-line"><label>Professor(a) do AEE<input type="text" data-bind="assinaturasNomes.aee" value="${esc(s.assinaturasNomes?.aee||'')}"></label></div>
+          <div class="sign-line"><label>Coordenação Pedagógica<input type="text" data-bind="assinaturasNomes.coordenacao" value="${esc(s.assinaturasNomes?.coordenacao||'')}"></label></div>
+          <div class="sign-line"><label>Responsável pelo Estudante<input type="text" data-bind="assinaturasNomes.responsavel" value="${esc(s.assinaturasNomes?.responsavel||'')}"></label></div>
+          <div class="sign-line"><label>Gestor(a) Escolar<input type="text" data-bind="assinaturasNomes.gestao" value="${esc(s.assinaturasNomes?.gestao||'')}"></label></div>
         </div>
         <div class="notice">
           <div>
@@ -1253,11 +1256,17 @@ function renderForm(){
     </section>
   `;
   document.getElementById('form-sections').innerHTML = html;
+  for(const slot of ['aee','coordenacao','responsavel','gestao']){const input=document.querySelector('[data-bind="assinaturasNomes.'+slot+'"]');AssinaturasCampos.montar({input,auth,obter:()=>s.assinaturasImagens?.[slot],gravar:a=>{s.assinaturasImagens||={};if(a)s.assinaturasImagens[slot]=a;else delete s.assinaturasImagens[slot];},vigente:()=>state===s&&input.isConnected&&!!auth?.currentUser});}
   document.getElementById('form-title').textContent = s.identificacao.nome || (s.id ? 'PAEE' : 'Novo PAEE');
+  montarAssinaturasInstrumentos();
   bindNavScroll();
   attachAIButtons(document.getElementById('form-sections'));
 }
 
+function montarAssinaturasInstrumentos(){
+ const s=state,root=document.getElementById('assinaturasInstrumentos');if(!root)return;root.replaceChildren();
+ for(const inst of s.avaliacao.instrumentos){const wrap=document.createElement('div'),label=document.createElement('label'),input=document.createElement('input');wrap.className='field-group';label.textContent='Assinatura — '+inst;input.type='text';input.placeholder='Nome de quem assina este instrumento';input.dataset.instrumentoAssinatura=inst;input.value=s.assinaturasInstrumentos?.[inst]?.nome||'';label.append(input);wrap.append(label);root.append(wrap);input.addEventListener('input',()=>{s.assinaturasInstrumentos||={};s.assinaturasInstrumentos[inst]||={};s.assinaturasInstrumentos[inst].nome=input.value;});AssinaturasCampos.montar({input,auth,obter:()=>s.assinaturasInstrumentos?.[inst]?.imagem,gravar:a=>{s.assinaturasInstrumentos||={};s.assinaturasInstrumentos[inst]||={};s.assinaturasInstrumentos[inst].imagem=a;},vigente:()=>state===s&&input.isConnected&&!!auth?.currentUser});}
+}
 /* --- generic input binding (no full rerender on keystroke) --- */
 document.getElementById('form-sections').addEventListener('input', e=>{
   const t = e.target;
@@ -1301,7 +1310,7 @@ document.getElementById('form-sections').addEventListener('change', e=>{
     const idx = target.indexOf(val);
     if(t.checked && idx===-1) target.push(val);
     if(!t.checked && idx!==-1) target.splice(idx,1);
-    t.closest('.checkbox-pill').classList.toggle('checked', t.checked);
+    t.closest('.checkbox-pill').classList.toggle('checked', t.checked);if(group==='instrumentos')montarAssinaturasInstrumentos();
   }
   else if(t.matches('.cell-input')){
     const table=t.dataset.table, idx=+t.dataset.idx, field=t.dataset.field;
@@ -1591,7 +1600,7 @@ function exportDOCX(s, formato='docx'){
           width:{size:colWidths[1],type:WidthType.DXA},
           margins:cellMargins,
           verticalAlign:VerticalAlign.CENTER,
-          children:[new Paragraph({spacing:{before:30,after:30}})],
+          children:[...(AssinaturasDocumentos.paraNome(s.assinaturasInstrumentos?.[inst]?.imagem,s.assinaturasInstrumentos?.[inst]?.nome)?[AssinaturasDocumentos.paragrafoImagem(s.assinaturasInstrumentos[inst].imagem)]:[]),new Paragraph({children:[new TextRun({text:s.assinaturasInstrumentos?.[inst]?.nome||'',size:22})],spacing:{before:30,after:30},alignment:AlignmentType.CENTER})],
         }),
       ],
     }));
@@ -1725,6 +1734,10 @@ function exportDOCX(s, formato='docx'){
     'Responsável pelo Estudante — assinatura e data',
     'Gestor(a) Escolar — assinatura e data',
   ];
+  const nomesAss=s.assinaturasNomes||{},imagensAss=s.assinaturasImagens||{};
+  const assinantesPAEE=[['aee','coordenacao'],['responsavel','gestao']].map(g=>g.map(slot=>({nome:nomesAss[slot]||'',cargo:({aee:'Professor(a) do AEE',coordenacao:'Coordenação Pedagógica',responsavel:'Responsável pelo Estudante',gestao:'Gestor(a) Escolar'})[slot],assinatura:AssinaturasDocumentos.paraNome(imagensAss[slot],nomesAss[slot])})));
+  const temAssinantesPAEE=Object.values(nomesAss).some(Boolean);
+  if(temAssinantesPAEE)children.push(AssinaturasDocumentos.docx(assinantesPAEE));else {
   signLabels.forEach(label=>{
     children.push(new Paragraph({spacing:{before:340,after:0}})); // espaço para assinar acima da linha
     children.push(new Paragraph({
@@ -1733,6 +1746,7 @@ function exportDOCX(s, formato='docx'){
       children:[new TextRun({text:label,size:22,color:'555555'})],
     }));
   });
+  }
 
   // Aviso legal
   children.push(new Paragraph({spacing:{before:200,after:60}}));
@@ -1782,7 +1796,7 @@ function exportDOCX(s, formato='docx'){
   return Packer.toBlob(doc).then(async blob=>{
     const nome = (s.identificacao.nome||'PAEE')
       .normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9]+/g,'_');
-    await SRMExport.fromDocx(blob, formato, `PAEE_${nome}`);
+    await SRMExport.fromDocx(blob, formato, `PAEE_${nome}`,{...(temAssinantesPAEE?{assinaturasHtml:AssinaturasDocumentos.html(assinantesPAEE)}:{}),imagensAssinaturas:Object.values(s.assinaturasInstrumentos||{}).map(a=>a.imagem).filter(Boolean)});
     showToast(formato.toUpperCase()+' gerado com sucesso.');
   }).catch(err=>{
     if(window.SRMExportacaoWorker)throw err;

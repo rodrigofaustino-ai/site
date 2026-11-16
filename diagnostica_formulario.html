@@ -219,6 +219,7 @@
 <script src="orientacoes-preenchimento.js" defer></script>
 <link rel="stylesheet" href="formularios-visual.css">
 <link rel="stylesheet" href="ia-campos.css">
+<script src="assinaturas-documentos.js"></script><link rel="stylesheet" href="biblioteca-assinaturas.css"><script src="assinaturas-conexao.js"></script><script src="assinaturas-campos.js"></script>
 </head>
 <body data-ia-pagina="diagnostica_formulario.html" class="srm-form-visual">
 
@@ -564,6 +565,7 @@ function showScreen(name){
 
 if(firebaseReady){
   auth.onAuthStateChanged(user=>{
+    window.AssinaturasConexao?.fechar();
     VinculoAluno.limpar();
     if(user){
       professorUid=user.uid;
@@ -916,6 +918,7 @@ function renderForm(){
   html+=`</div></div>`;
   document.getElementById('form-sections').innerHTML=html;
 
+  for(const slot of ['s1','s2']){const input=document.querySelector('[data-freq="'+slot+'AssinResp"]');AssinaturasCampos.montar({input,auth,obter:()=>s.assinaturasImagens?.[slot],gravar:a=>{s.assinaturasImagens||={};if(a)s.assinaturasImagens[slot]=a;else delete s.assinaturasImagens[slot];},vigente:()=>state===s&&input.isConnected&&!!auth?.currentUser});}
   // Toggle obs vazias
   toggleObsVazias();
   const chkObs=document.getElementById('toggleObsVazias');
@@ -1253,7 +1256,7 @@ function exportDOCX(s, formato='docx'){
     children:[new TextRun({text:'FREQUÊNCIA E ASSINATURAS DOS RESPONSÁVEIS',bold:true,size:22,color:'123D28'})],
     alignment:AlignmentType.CENTER,
   }));
-  const semCell=(titulo,atend,aus,data,assin)=>new TableCell({
+  const semCell=(titulo,atend,aus,data,assin,imagem)=>new TableCell({
     width:{size:4500,type:WidthType.DXA},
     margins:{top:80,bottom:80,left:120,right:120},
     children:[
@@ -1262,6 +1265,7 @@ function exportDOCX(s, formato='docx'){
       new Paragraph({children:[new TextRun({text:'Total de ausências: ',bold:true,size:20}),new TextRun({text:aus||'______',size:20})],spacing:{after:40}}),
       new Paragraph({children:[new TextRun({text:'Data: ',bold:true,size:20}),new TextRun({text:data?new Date(data+'T12:00').toLocaleDateString('pt-BR'):'___/___/______',size:20})],spacing:{after:80}}),
       new Paragraph({children:[new TextRun({text:'Assinatura do(a) responsável:',bold:true,size:20})],spacing:{after:20}}),
+      ...(AssinaturasDocumentos.paraNome(imagem,assin)?[AssinaturasDocumentos.paragrafoImagem(imagem)]:[]),
       new Paragraph({children:[new TextRun({text:assin||'',size:20})],spacing:{before:240,after:40},border:{bottom:{style:BorderStyle.SINGLE,size:6,color:'000000'}}}),
     ],
   });
@@ -1270,8 +1274,8 @@ function exportDOCX(s, formato='docx'){
     width:{size:TABLE_W,type:WidthType.DXA},
     layout:TableLayoutType.FIXED,
     rows:[new TableRow({children:[
-      semCell('1º Semestre',fr.s1Atendimentos,fr.s1Ausencias,fr.s1DataAssin,fr.s1AssinResp),
-      semCell('2º Semestre',fr.s2Atendimentos,fr.s2Ausencias,fr.s2DataAssin,fr.s2AssinResp),
+      semCell('1º Semestre',fr.s1Atendimentos,fr.s1Ausencias,fr.s1DataAssin,fr.s1AssinResp,s.assinaturasImagens?.s1),
+      semCell('2º Semestre',fr.s2Atendimentos,fr.s2Ausencias,fr.s2DataAssin,fr.s2AssinResp,s.assinaturasImagens?.s2),
     ]})],
   }));
 
@@ -1303,7 +1307,7 @@ function exportDOCX(s, formato='docx'){
 
   return Packer.toBlob(doc).then(async blob=>{
     const nome=(s.identificacao.nome||'Diagnostica').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9]+/g,'_');
-    await SRMExport.fromDocx(blob, formato, `Diagnostica_SRM_${nome}`);
+    await SRMExport.fromDocx(blob, formato, `Diagnostica_SRM_${nome}`,{imagensAssinaturas:Object.values(s.assinaturasImagens||{})});
     showToast(formato.toUpperCase()+' gerado com sucesso.');
   }).catch(err=>{
     if(window.SRMExportacaoWorker)throw err;

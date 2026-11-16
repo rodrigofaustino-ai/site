@@ -257,8 +257,10 @@ const faltas=HistoricoAtendimentosFrequencia.faltasManuais(Object.hasOwn(dados,'
     ],
   });
 
+  const assinaturaImagem=window.AssinaturasDocumentos?.paraNome(Object.hasOwn(dados,'assinaturaImagem')?dados.assinaturaImagem:p.pdfAssinatura,professor);
+  const rowsAssinatura=assinaturaImagem?[new TableRow({children:[new TableCell({columnSpan:2,width:{size:TABLE_W,type:WidthType.DXA},borders:{top:noBorder,bottom:noBorder,left:noBorder,right:noBorder},children:[AssinaturasDocumentos.paragrafoImagem(assinaturaImagem)]})]})]:[blankSignRow(),blankSignRow(),blankSignRow()];
   children.push(new Table({
-    rows:[rowData, blankSignRow(), blankSignRow(), blankSignRow(), rowNome, rowCargo],
+    rows:[rowData,...rowsAssinatura,rowNome,rowCargo],
     width:{size:TABLE_W,type:WidthType.DXA},
     layout:TableLayoutType.FIXED,
   }));

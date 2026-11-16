@@ -184,6 +184,7 @@
     const result = await converter.convertToHtml({arrayBuffer:await blob.arrayBuffer()});
     let html=result.value;
     if(options.assinaturasHtml){const root=clean(html),tables=root.querySelectorAll('table'),last=tables[tables.length-1];if(!last)throw new Error('Bloco de assinaturas não encontrado.');const data=last.previousElementSibling;if(data&&data.textContent.trim()===options.assinaturasLocalData)data.setAttribute('data-srm-sign-data','true');last.replaceWith(document.createRange().createContextualFragment(options.assinaturasHtml));html=root.innerHTML;}
+    if(options.imagensAssinaturas?.length){const root=clean(html);for(const img of root.querySelectorAll('img')){const a=options.imagensAssinaturas.find(a=>window.AssinaturasDocumentos?.imagemValida(a)&&a.imagem===img.getAttribute('src'));if(a){img.setAttribute('data-srm-sign-imagem','true');img.setAttribute('data-largura',a.largura);img.setAttribute('data-altura',a.altura);}}html=root.innerHTML;}
     return fromHtml(html,format,filename);
   }
   window.SRMExport = {fromDocx,fromHtml,prepararPei:preparePei};

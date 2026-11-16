@@ -268,6 +268,7 @@
 <script src="orientacoes-preenchimento.js" defer></script>
 <link rel="stylesheet" href="formularios-visual.css">
 <link rel="stylesheet" href="ia-campos.css">
+<link rel="stylesheet" href="biblioteca-assinaturas.css"><script src="assinaturas-conexao.js"></script><script src="assinaturas-campos.js"></script>
 </head>
 <body data-ia-pagina="relatorio_formulario.html" class="srm-form-visual">
 
@@ -406,6 +407,7 @@ function showScreen(name){
 
 if(firebaseReady){
   auth.onAuthStateChanged(user=>{
+    window.AssinaturasConexao?.fechar();
     VinculoAluno.limpar();
     if(user){
       professorUid = user.uid;
@@ -919,6 +921,7 @@ function renderForm(){
   `;
 
   document.getElementById('form-sections').innerHTML = html;
+  for(const [slot,key]of [['professor','nomeProfessor'],['coordenador','nomeCoordenador']]){const input=document.querySelector('[data-bind="assinaturas.'+key+'"]');AssinaturasCampos.montar({input,auth,obter:()=>s.assinaturasImagens?.[slot],gravar:a=>{s.assinaturasImagens||={};if(a)s.assinaturasImagens[slot]=a;else delete s.assinaturasImagens[slot];},vigente:()=>state===s&&input.isConnected&&!!auth?.currentUser});}
   document.getElementById('form-title').textContent = s.identificacao.nome||(s.id?'Relatório':'Novo Relatório');
   bindNavScroll();
   attachAIButtons(document.getElementById('form-sections'));
@@ -1184,7 +1187,7 @@ function exportDOCX(s, formato='docx'){
     spacing:{before:120,after:160},
   }));
 
-  const assinantes=[[{nome:assr.nomeProfessor||id.professorSRM||'',cargo:assr.cargoProfessor||'Professor(a) SRM'},{nome:assr.nomeCoordenador||'',cargo:assr.cargoCoordenador||'Coordenação pedagógica'}]];
+  const assinantes=[[{nome:assr.nomeProfessor||id.professorSRM||'',assinatura:AssinaturasDocumentos.paraNome(s.assinaturasImagens?.professor,assr.nomeProfessor||id.professorSRM||''),cargo:assr.cargoProfessor||'Professor(a) SRM'},{nome:assr.nomeCoordenador||'',assinatura:AssinaturasDocumentos.paraNome(s.assinaturasImagens?.coordenador,assr.nomeCoordenador),cargo:assr.cargoCoordenador||'Coordenação pedagógica'}]];
   children.push(AssinaturasDocumentos.docx(assinantes));
 
   const doc = new Document({

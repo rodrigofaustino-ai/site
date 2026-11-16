@@ -37,7 +37,7 @@ def validar(pasta):
     if faltantes:raise ValueError('Referências locais ausentes: '+repr(faltantes))
 
 def main():
-    p=argparse.ArgumentParser();p.add_argument('destino',type=Path);p.add_argument('zip',type=Path);p.add_argument('--etapa',type=int,default=54);args=p.parse_args()
+    p=argparse.ArgumentParser();p.add_argument('destino',type=Path);p.add_argument('zip',type=Path);p.add_argument('--etapa',type=int,default=55);args=p.parse_args()
     destino=args.destino.resolve();arquivo_zip=args.zip.resolve()
     if destino==ROOT or destino.is_relative_to(ROOT):raise ValueError('Use uma pasta nova fora do repositório de fonte.')
     if destino.exists() and any(destino.iterdir()):raise ValueError('A pasta de destino precisa estar vazia ou não existir.')
@@ -212,6 +212,16 @@ serviços externos de IA ou a configuração remota atual de todos os serviços.
         fim=texto.index('PARA PUBLICAR',inicio)
         texto=texto[:inicio]+'ETAPA 54 — BIBLIOTECA DE ASSINATURAS E PEI\nPrimeira etapa: cadastro privado de imagens e inserção explícita nas três assinaturas do PEI.\nA imagem fica incorporada no documento salvo e nos arquivos DOCX/ODT.\nExcluir da biblioteca não apaga as cópias já inseridas. Remover imagem no PEI mantém espaço para assinatura manual.\nANTES de usar a biblioteca no site publicado, acrescente as regras de producao/assinaturas-biblioteca-acrescimo.rules às regras existentes de salamulti.\nA alteração das regras e a publicação NÃO foram executadas. O usuário optou por acumular melhorias.\nOs demais formulários ainda não têm seletor de imagens nesta etapa.\nPacote cumulativo; publique somente quando desejar, após conferir as permissões pendentes.\n\n'+texto[fim:]
         guia.write_text(texto)
+    if args.etapa == 55:
+        guia=destino/'LEIA-ME-PUBLICACAO.txt'
+        texto=guia.read_text()
+        inicio=texto.index('ATENÇÃO — QUESTIONÁRIO DA FAMÍLIA')
+        fim=texto.index('PARA PUBLICAR',inicio)
+        texto=texto[:inicio]+'ETAPA 55 — ASSINATURAS EM TODOS OS DOCUMENTOS\nPacote completo: inclui as melhorias anteriores, biblioteca e assinaturas do PEI, PAEE, Diagnóstica, Relatório e Histórico.\nA biblioteca é única e privada na conta do Diário. Nos formulários, entre na janela com a conta do Diário se solicitado.\nA imagem escolhida entra apenas no local selecionado; salve o documento normalmente.\nDOCX e ODT incorporam as imagens; sem imagem, permanece espaço para assinar à mão.\nANTES DA PUBLICAÇÃO: leia PERMISSOES-ASSINATURAS-FIRESTORE.txt e acrescente o bloco nas regras EXISTENTES de salamulti.\nNão altere paee-3fea6, Storage ou Realtime Database para esta melhoria.\nDepois, publique a pasta completa no Netlify, aguarde Published e use Ctrl + Shift + R.\nO assistente NÃO aplicou regras nem publicou no Netlify.\n\n'+texto[fim:]
+        guia.write_text(texto)
+        (destino/'PERMISSOES-ASSINATURAS-FIRESTORE.txt').write_text((ROOT/'producao'/'GUIA-ASSINATURAS-FIRESTORE.txt').read_text())
+    guia=destino/'LEIA-ME-PUBLICACAO.txt'
+    guia.write_text(guia.read_text().replace('até a etapa 33.',f'até a etapa {args.etapa}.'))
     validar(destino)
     files={str(f.relative_to(destino)):hashlib.sha256(f.read_bytes()).hexdigest() for f in sorted(destino.rglob('*')) if f.is_file()}
     manifest={'versao':'etapa-'+str(args.etapa),'site':'https://saladerecursos.netlify.app/','commit_fonte':commit,'preparado_em':datetime.datetime.now(ZoneInfo('America/Sao_Paulo')).date().isoformat(),'arquivos_sha256':files}

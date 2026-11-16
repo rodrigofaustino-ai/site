@@ -499,7 +499,7 @@ hr.sep{border:none;border-top:2px dashed rgba(0,0,0,.06);margin:.2rem 0;}
   .tab-btn{font-size:14px;padding:8px 4px;}
 }
 </style>
-<script src="assinaturas-documentos.js"></script>
+
 <script src="exportacao.js"></script>
 <link rel="stylesheet" href="central-aluno.css">
 <link rel="stylesheet" href="questionario-familia.css">
@@ -525,6 +525,7 @@ hr.sep{border:none;border-top:2px dashed rgba(0,0,0,.06);margin:.2rem 0;}
 <script src="historico-atendimentos.js"></script>
 <script src="firebase-producao.js"></script>
 <link rel="stylesheet" href="colaboracao.css">
+<script src="assinaturas-documentos.js"></script>
 <script src="pei-visualizacao.js"></script>
 <script src="colaboracao-modelo.js"></script>
 <script src="colaboracao-servico.js"></script>
@@ -3673,8 +3674,16 @@ function melhorarObsClinicasIA(){
   showToast('A revisão de texto ainda não está disponível. Atualize a página e tente novamente.');
 }
 
+let assinaturaHistorico=null;
+function montarAssinaturaHistorico(){
+ const input=$('pdfProfessor'),uid=professorUid,id=currentStudentId,profile=currentProfile;
+ if(!window.AssinaturasCampos||!input)return;
+ const vigente=()=>professorUid===uid&&auth.currentUser?.uid===uid&&currentStudentId===id&&currentProfile===profile;
+ AssinaturasCampos.montar({input,auth,obter:()=>assinaturaHistorico,gravar:a=>assinaturaHistorico=a,vigente,abrir:()=>BibliotecaAssinaturas.abrir({db,auth,uid,vigente})});
+}
 const FIELDS={nomeAluno:'nome',dataNasc:'dataNasc',turma:'turma',escola:'escola',municipio:'municipio',periodo:'periodo',laudo:'laudo',cid:'cid',cid11:'cid11',dataLaudo:'dataLaudo',obsClinicas:'obsClinicas'};
 function clearForm(){
+  assinaturaHistorico=null;montarAssinaturaHistorico();
   $('perfilArquivoAviso').hidden=true;
   Object.keys(FIELDS).forEach(f=>$(f).value='');
   ['pdfLocal','pdfProfessor','pdfCargo','pdfFaltas','entryText','registradoPor'].forEach(f=>$(f).value='');
@@ -3690,6 +3699,7 @@ function fillForm(p){
   if(p.pdfLocal)$('pdfLocal').value=p.pdfLocal;
   if(p.pdfProfessor)$('pdfProfessor').value=p.pdfProfessor;
   if(p.pdfCargo)$('pdfCargo').value=p.pdfCargo;
+  assinaturaHistorico=AssinaturasDocumentos.paraNome(p.pdfAssinatura,p.pdfProfessor);montarAssinaturaHistorico();
   $('pdfFaltas').value=HistoricoAtendimentosFrequencia.faltasDoAluno(p)??'';
   contacts=p.contacts&&p.contacts.length?[...p.contacts]:[];
   renderContacts();if(!contacts.length)addContact();
@@ -3734,7 +3744,7 @@ async function saveProfile(){
     municipio:val('municipio'),periodo:val('periodo'),laudo:val('laudo'),cid:val('cid'),
     dataLaudo:val('dataLaudo'),obsClinicas:val('obsClinicas'),contacts:[...contacts],
     atendimentos:atendimentos.filter(r=>r.dia&&r.horario),
-    pdfLocal:val('pdfLocal'),pdfProfessor:val('pdfProfessor'),pdfCargo:val('pdfCargo'),pdfFaltas:faltas,pdfFaltasAno:Number(HistoricoAtendimentosFrequencia.hoje().slice(0,4)),
+    pdfLocal:val('pdfLocal'),pdfProfessor:val('pdfProfessor'),pdfCargo:val('pdfCargo'),pdfAssinatura:assinaturaHistorico,pdfFaltas:faltas,pdfFaltasAno:Number(HistoricoAtendimentosFrequencia.hoje().slice(0,4)),
     turno: turnoAlunoSelecionado,
     professorUid,
     professorEmail: auth.currentUser ? auth.currentUser.email : null,
@@ -3745,7 +3755,7 @@ async function saveProfile(){
   try{
     if(currentStudentId){await db.collection('alunos').doc(currentStudentId).set(data,{merge:true});}
     else{const ref=await db.collection('alunos').add(data);currentStudentId=ref.id;}
-    currentProfile=data;
+    currentProfile=data;montarAssinaturaHistorico();
     if (eraNovo) {
       centralRegistrosStatus = 'carregando';
       configurarMetasAluno(currentStudentId);
@@ -4055,7 +4065,7 @@ async function exportPDF(){
   const uid=professorUid,id=currentStudentId,profile=currentProfile,turno=turnoAtual,version=perfilLoadVersion;
   if(!uid||!id||auth.currentUser?.uid!==uid){showToast('Salve o cadastro e abra a ficha do aluno antes de exportar.');return;}
   const vigente=()=>professorUid===uid&&auth.currentUser?.uid===uid&&currentStudentId===id&&currentProfile===profile&&turnoAtual===turno&&perfilLoadVersion===version;
-  const assinatura={professor:val('pdfProfessor'),cargo:val('pdfCargo'),local:val('pdfLocal'),faltas:val('pdfFaltas')};
+  const assinatura={professor:val('pdfProfessor'),cargo:val('pdfCargo'),local:val('pdfLocal'),faltas:val('pdfFaltas'),assinaturaImagem:assinaturaHistorico};
   button.disabled=true;
   try{
     const registros=await HistoricoAtendimentosFrequencia.carregar({db,uid,alunoId:id,vigente});if(!vigente())return;
@@ -4068,7 +4078,7 @@ async function exportPDF(){
 
 </script>
 <script src="historico-atendimentos-frequencia.js"></script>
-<script src="historico-atendimentos-documento.js"></script>
+<script src="historico-atendimentos-documento.js"></script><script src="biblioteca-assinaturas.js"></script><script src="assinaturas-campos.js"></script><link rel="stylesheet" href="biblioteca-assinaturas.css">
 <script src="planos-aula.js"></script>
 <script src="recursos-didaticos.js"></script>
 <script src="chat-anexos-modelo.js"></script>
