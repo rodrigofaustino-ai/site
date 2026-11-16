@@ -37,7 +37,7 @@ def validar(pasta):
     if faltantes:raise ValueError('Referências locais ausentes: '+repr(faltantes))
 
 def main():
-    p=argparse.ArgumentParser();p.add_argument('destino',type=Path);p.add_argument('zip',type=Path);p.add_argument('--etapa',type=int,default=56);args=p.parse_args()
+    p=argparse.ArgumentParser();p.add_argument('destino',type=Path);p.add_argument('zip',type=Path);p.add_argument('--etapa',type=int,default=57);args=p.parse_args()
     destino=args.destino.resolve();arquivo_zip=args.zip.resolve()
     if destino==ROOT or destino.is_relative_to(ROOT):raise ValueError('Use uma pasta nova fora do repositório de fonte.')
     if destino.exists() and any(destino.iterdir()):raise ValueError('A pasta de destino precisa estar vazia ou não existir.')
@@ -229,8 +229,23 @@ serviços externos de IA ou a configuração remota atual de todos os serviços.
         guia.write_text(texto)
         nota='ETAPA 56: se as permissões de assinaturas da etapa 55 já foram publicadas, NÃO precisa alterar o Firebase novamente. O guia abaixo é mantido apenas para quem ainda não habilitou a biblioteca.\n\n'
         (destino/'PERMISSOES-ASSINATURAS-FIRESTORE.txt').write_text(nota+(ROOT/'producao'/'GUIA-ASSINATURAS-FIRESTORE.txt').read_text().replace('etapa 55.','etapa 56.'))
+    if args.etapa == 57:
+        guia=destino/'LEIA-ME-PUBLICACAO.txt'
+        texto=guia.read_text()
+        inicio=texto.index('ATENÇÃO — QUESTIONÁRIO DA FAMÍLIA')
+        fim=texto.index('PARA PUBLICAR',inicio)
+        texto=texto[:inicio]+'ETAPA 57 — CAMPOS DE ASSINATURA PADRONIZADOS\nToda pessoa adicionada em PEI, PAEE, Diagnóstica, Relatório e Histórico usa nome e cargo lado a lado, botões de imagem e prévia abaixo do nome.\nO Relatório não tem mais o bloco fixo de coordenação nem o campo separado de coordenação na Identificação.\nA coordenação preenchida nos relatórios antigos é preservada na lista de pessoas com nome, cargo e imagem, sem duplicar assinaturas.\nSalve normalmente para confirmar a atualização do documento. Nenhuma conversão foi gravada automaticamente no banco.\nSem nova alteração de Firebase. As permissões de assinaturas já publicadas continuam suficientes.\nPacote cumulativo: inclui todas as melhorias anteriores. Publique a pasta completa no Netlify, aguarde Published e use Ctrl + Shift + R.\nO assistente não publicou no Netlify nem alterou dados reais.\n\n'+texto[fim:]
+        guia.write_text(texto)
+        nota='ETAPA 57: não há nova alteração de Firebase para quem já publicou as permissões das assinaturas. O guia abaixo é apenas para quem ainda não habilitou a biblioteca.\n\n'
+        (destino/'PERMISSOES-ASSINATURAS-FIRESTORE.txt').write_text(nota+(ROOT/'producao'/'GUIA-ASSINATURAS-FIRESTORE.txt').read_text().replace('etapa 55.','etapa 57.'))
     guia=destino/'LEIA-ME-PUBLICACAO.txt'
     guia.write_text(guia.read_text().replace('até a etapa 33.',f'até a etapa {args.etapa}.'))
+    if args.etapa == 57:
+        texto=guia.read_text()
+        inicio=texto.index('ASSINATURAS\n',texto.index('DOCUMENTOS DOS PROFESSORES'))
+        fim=texto.index('OBSERVAÇÕES',inicio)
+        texto=texto[:inicio]+'ASSINATURAS\nUse Adicionar pessoa para assinar nos cinco documentos. No Relatório, coordenação e demais responsáveis ficam na lista de pessoas, sem campo fixo separado na Identificação. Nomes e imagens antigos são preservados ao abrir; salve para confirmar.\n\n'+texto[fim:]
+        guia.write_text(texto)
     validar(destino)
     files={str(f.relative_to(destino)):hashlib.sha256(f.read_bytes()).hexdigest() for f in sorted(destino.rglob('*')) if f.is_file()}
     manifest={'versao':'etapa-'+str(args.etapa),'site':'https://saladerecursos.netlify.app/','commit_fonte':commit,'preparado_em':datetime.datetime.now(ZoneInfo('America/Sao_Paulo')).date().isoformat(),'arquivos_sha256':files}

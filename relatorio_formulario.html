@@ -268,7 +268,7 @@
 <script src="orientacoes-preenchimento.js" defer></script>
 <link rel="stylesheet" href="formularios-visual.css">
 <link rel="stylesheet" href="ia-campos.css">
-<link rel="stylesheet" href="biblioteca-assinaturas.css"><script src="assinaturas-conexao.js"></script><script src="assinaturas-campos.js"></script><script src="assinaturas-adicionais.js"></script>
+<link rel="stylesheet" href="biblioteca-assinaturas.css"><script src="assinaturas-conexao.js"></script><script src="assinaturas-campos.js"></script><script src="assinaturas-adicionais.js"></script><script src="relatorio-assinaturas.js"></script>
 </head>
 <body data-ia-pagina="relatorio_formulario.html" class="srm-form-visual">
 
@@ -583,7 +583,7 @@ function listenStudents(){
 }
 
 async function saveStudent(){
-  try{AssinaturasAdicionais.grupos(state.assinaturasAdicionais);AssinaturasAdicionais.validarDocumento(state);}catch(error){showToast(error.message);return;}
+  try{RelatorioAssinaturas.preparar(state);AssinaturasAdicionais.grupos(state.assinaturasAdicionais);AssinaturasAdicionais.validarDocumento(state);}catch(error){showToast(error.message);return;}
   if(!firebaseReady){showToast('Firebase não configurado.');return;}
   if(!professorUid){showToast('Faça login antes de salvar.');return;}
   if(!state.identificacao.nome.trim()){showToast('Informe ao menos o nome do aluno antes de salvar.');return;}
@@ -747,6 +747,7 @@ document.getElementById('modal-confirm').addEventListener('click', async ()=>{
 
 /* ========================= FORM RENDER ========================= */
 function renderForm(){
+  RelatorioAssinaturas.preparar(state);
   VinculoAluno.atualizar();
   const s = state;
   const id = s.identificacao;
@@ -829,7 +830,7 @@ function renderForm(){
         </div>
         <div class="field-row">
           <div class="field-group"><label>Nº de atendimentos realizados</label><input type="number" data-bind="identificacao.atendimentosRealizados" value="${esc(id.atendimentosRealizados)}" min="0"></div>
-          <div class="field-group"><label for="relatorioNomeCoordenacao">Nome da coordenação pedagógica — assinatura</label><input id="relatorioNomeCoordenacao" type="text" data-bind="assinaturas.nomeCoordenador" value="${esc(assr.nomeCoordenador)}"><small>Este nome será impresso no bloco de assinatura da coordenação.</small></div>
+
           <div></div>
         </div>
       </div>
@@ -907,10 +908,6 @@ function renderForm(){
           <div class="field-group"><label>Nome do(a) professor(a) SRM</label><input type="text" data-bind="assinaturas.nomeProfessor" value="${esc(assr.nomeProfessor)}"></div>
           <div class="field-group"><label>Cargo / Função</label><input type="text" data-bind="assinaturas.cargoProfessor" value="${esc(assr.cargoProfessor)}"></div>
         </div>
-        <div class="field-row">
-          <div class="field-group"><p>O nome da coordenação para a assinatura é preenchido na seção Identificação.</p></div>
-          <div class="field-group"><label>Cargo / Função</label><input type="text" data-bind="assinaturas.cargoCoordenador" value="${esc(assr.cargoCoordenador)}"></div>
-        </div>
         <div class="notice" style="margin-top:14px;">
           <div>
             <b>ℹ️ Lembrete</b>
@@ -922,7 +919,7 @@ function renderForm(){
   `;
 
   document.getElementById('form-sections').innerHTML = html;
-  for(const [slot,key]of [['professor','nomeProfessor'],['coordenador','nomeCoordenador']]){const input=document.querySelector('[data-bind="assinaturas.'+key+'"]');AssinaturasCampos.montar({input,auth,obter:()=>s.assinaturasImagens?.[slot],gravar:a=>{s.assinaturasImagens||={};if(a)s.assinaturasImagens[slot]=a;else delete s.assinaturasImagens[slot];},vigente:()=>state===s&&input.isConnected&&!!auth?.currentUser});}
+  for(const [slot,key]of [['professor','nomeProfessor']]){const input=document.querySelector('[data-bind="assinaturas.'+key+'"]');AssinaturasCampos.montar({input,auth,obter:()=>s.assinaturasImagens?.[slot],gravar:a=>{s.assinaturasImagens||={};if(a)s.assinaturasImagens[slot]=a;else delete s.assinaturasImagens[slot];},vigente:()=>state===s&&input.isConnected&&!!auth?.currentUser});}
   const areaExtras=document.createElement('div'),assinaturasBody=document.querySelector('#sec-sign .card-body');assinaturasBody.insertBefore(areaExtras,assinaturasBody.querySelector('.notice'));AssinaturasAdicionais.montar({container:areaExtras,auth,obter:()=>s.assinaturasAdicionais,gravar:a=>s.assinaturasAdicionais=a,vigente:()=>state===s});
   document.getElementById('form-title').textContent = s.identificacao.nome||(s.id?'Relatório':'Novo Relatório');
   bindNavScroll();
@@ -1022,7 +1019,7 @@ function bindNavScroll(){
 
 /* ========================= DOCX EXPORT ========================= */
 function exportDOCX(s, formato='docx'){
-  let adicionaisParaExportar;try{adicionaisParaExportar=AssinaturasAdicionais.grupos(s.assinaturasAdicionais);}catch(error){if(window.SRMExportacaoWorker)throw error;showToast(error.message);return;}
+  let assinantes;try{assinantes=RelatorioAssinaturas.grupos(s);}catch(error){if(window.SRMExportacaoWorker)throw error;showToast(error.message);return;}
   const {
     Document, Packer, Paragraph, TextRun, HeadingLevel, Table, TableRow, TableCell,
     WidthType, AlignmentType, BorderStyle, ShadingType, TableLayoutType, VerticalAlign, HeightRule
@@ -1190,7 +1187,6 @@ function exportDOCX(s, formato='docx'){
     spacing:{before:120,after:160},
   }));
 
-  const assinantes=[[{nome:assr.nomeProfessor||id.professorSRM||'',assinatura:AssinaturasDocumentos.paraNome(s.assinaturasImagens?.professor,assr.nomeProfessor||id.professorSRM||''),cargo:assr.cargoProfessor||'Professor(a) SRM'},{nome:assr.nomeCoordenador||'',assinatura:AssinaturasDocumentos.paraNome(s.assinaturasImagens?.coordenador,assr.nomeCoordenador),cargo:assr.cargoCoordenador||'Coordenação pedagógica'}]].concat(adicionaisParaExportar);
   children.push(AssinaturasDocumentos.docx(assinantes));
 
   const doc = new Document({
@@ -1249,8 +1245,8 @@ function abrirViaParametro(){
       document.getElementById('form-title').textContent = 'Novo Relatório';
       const subtitulo = document.getElementById('form-subtitle');
       if (subtitulo) subtitulo.textContent = 'Documento vinculado ao cadastro do aluno. Clique em Salvar para gravar.';
-      renderForm(); showView('form'); 
-      
+      renderForm(); showView('form');
+
     },
     existente: (doc, alunoId) => {
       state = deepMerge(novoEstado(), {id: doc.id, ...doc.data()});
@@ -1259,8 +1255,8 @@ function abrirViaParametro(){
       document.getElementById('form-title').textContent = 'Editar Relatório';
       const subtitulo = document.getElementById('form-subtitle');
       if (subtitulo) subtitulo.textContent = 'Documento associado ao cadastro do aluno. Clique em Salvar para gravar alterações no conteúdo.';
-      renderForm(); showView('form'); 
-      
+      renderForm(); showView('form');
+
     }
   });
 }
