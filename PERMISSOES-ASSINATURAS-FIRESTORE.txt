@@ -1,6 +1,8 @@
+ETAPA 57: não há nova alteração de Firebase para quem já publicou as permissões das assinaturas. O guia abaixo é apenas para quem ainda não habilitou a biblioteca.
+
 ASSINATURAS — ATUALIZAÇÃO ÚNICA DAS PERMISSÕES
 
-Este pacote reúne todas as melhorias até a etapa 55. Nada foi aplicado pelo assistente.
+Este pacote reúne todas as melhorias até a etapa 57. Nada foi aplicado pelo assistente.
 
 1. Abra Firebase Console e selecione o projeto salamulti.
 2. Entre em Firestore Database → Regras. NÃO use Storage ou Realtime Database.
