@@ -41,7 +41,8 @@
       if (!match) {imageXml.set(img, xml(img.alt || '[Imagem não incorporada]')); return;}
       const path = 'Pictures/imagem'+index+'.'+(match[1] === 'image/jpeg' ? 'jpg' : match[1].split('/')[1]);
       zip.file(path,match[2],{base64:true}); imageEntries.push({path,type:match[1]});
-      imageXml.set(img, `<draw:frame draw:name="Imagem${index}" text:anchor-type="as-char" svg:width="12cm" svg:height="${12 * (Number(img.getAttribute('height')) || 300) / (Number(img.getAttribute('width')) || 450)}cm"><draw:image xlink:href="${path}" xlink:type="simple" xlink:show="embed" xlink:actuate="onLoad"/></draw:frame>`);
+      const imageWidth=img.hasAttribute('data-srm-sign-imagem')?Number(((Number(img.getAttribute('width'))||180)*2.54/96).toFixed(6)):12;
+      imageXml.set(img, `<draw:frame draw:name="Imagem${index}" text:anchor-type="as-char" svg:width="${imageWidth}cm" svg:height="${imageWidth * (Number(img.getAttribute('height')) || 300) / (Number(img.getAttribute('width')) || 450)}cm"><draw:image xlink:href="${path}" xlink:type="simple" xlink:show="embed" xlink:actuate="onLoad"/></draw:frame>`);
     });
     const inline = node => {
       if (node.nodeType === 3) return xml(node.textContent).replace(/\n/g, '<text:line-break/>').replace(/ {2,}/g, s => `<text:s text:c="${s.length}"/>`);
@@ -58,7 +59,7 @@
       if (node.nodeType !== 1) return '';
       const tag = node.tagName.toLowerCase();
       if(node.hasAttribute('data-srm-sign-data'))return '<text:p text:style-name="'+(node.getAttribute('data-srm-sign-data')==='left'?'SrmSignDataLeft':'SrmSignData')+'">'+inline(node)+'</text:p>';
-      if (tag === 'table' && node.hasAttribute('data-srm-assinaturas') && window.AssinaturasDocumentos) return AssinaturasDocumentos.odt(node);
+      if (tag === 'table' && node.hasAttribute('data-srm-assinaturas') && window.AssinaturasDocumentos) return AssinaturasDocumentos.odt(node,imageXml);
       if (tag === 'table') {
         const occupied = [];
         const rows = Array.from(node.rows).map((row,rowIndex) => {
@@ -168,7 +169,7 @@
       try {if (img.decode) await img.decode();} catch (_) {}
       const width = img.naturalWidth || Number(img.getAttribute('width')) || 450;
       const height = img.naturalHeight || Number(img.getAttribute('height')) || 300;
-      const fitted = Math.min(width,450);
+      const fitted = img.hasAttribute('data-srm-sign-imagem')?Math.max(1,Math.round(Math.min(width,180,64*width/height))):Math.min(width,450);
       img.setAttribute('width',fitted); img.setAttribute('height',Math.round(height*fitted/width));
     }));
     if (!root.textContent.trim() && !root.querySelector('img')) throw new Error('O documento está vazio.');

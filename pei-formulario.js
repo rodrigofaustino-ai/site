@@ -59,13 +59,14 @@
       const [g,k]=path.split('.');
       definir(data,path,typeof saved?.[g]?.[k]==='string'?v:valor(defaults,path));
     }
+    data.assinaturas.imagens={};for(const slot of ['regente','apoio','coordenador']){const image=saved?.assinaturas?.imagens?.[slot];if(AssinaturasDocumentos.imagemValida(image))data.assinaturas.imagens[slot]=JSON.parse(JSON.stringify(image));}
     return data;
   }
   function erro(message='') {$('peiError').textContent=message;}
   function setBusy(value) {
     busy=value;
     for(const id of ['btn-save','btn-back-list','btn-export-docx','btn-export-odt','btn-history'])$(id).disabled=value;
-    $('form-sections').querySelectorAll('input,textarea,.pei-ai button,.pei-metas button').forEach(field=>field.disabled=value||field.dataset.loading==='true');
+    $('form-sections').querySelectorAll('input,textarea,.pei-ai button,.pei-metas button,.pei-assinatura-controls button').forEach(field=>field.disabled=value||field.dataset.loading==='true');
     $('pei-history-list').querySelectorAll('button').forEach(button=>button.disabled=value);
     $('student-grid').querySelectorAll('button').forEach(button=>button.disabled=value);
     $('peiNovo').disabled=value;$('search-input').disabled=value;$('peiListaAtualizar').disabled=value;
@@ -171,6 +172,13 @@
       preview.hidden=true;suggestion.value='';status.textContent='Sugestão descartada. Seu texto original foi mantido.';
     });
   }
+  function adicionarAssinatura(wrap,input,slot){
+    const controls=el('div');controls.className='pei-assinatura-controls';const choose=el('button','Inserir assinatura'),remove=el('button','Remover imagem'),preview=el('div');choose.type=remove.type='button';choose.className=remove.className='btn secondary';choose.dataset.assinaturaSlot=slot;remove.dataset.assinaturaRemover=slot;preview.className='pei-assinatura-preview';
+    const token=generation,formState=estado,owner=user?.uid,id=alunoId,valid=()=>generation===token&&estado===formState&&alunoId===id&&user?.uid===owner&&auth.currentUser?.uid===owner&&input.isConnected;
+    function render(){preview.replaceChildren();const a=estado.assinaturas.imagens[slot];remove.hidden=!AssinaturasDocumentos.imagemValida(a);if(!remove.hidden){const img=el('img');img.src=a.imagem;img.alt='Assinatura selecionada de '+a.nome;preview.append(img,el('p',a.nome+' · '+a.cargo));choose.textContent='Trocar assinatura';}else{preview.append(el('p','Sem imagem: o documento mantém espaço para assinar à mão.'));choose.textContent='Inserir assinatura';}}
+    choose.addEventListener('click',async()=>{if(busy||!valid())return;choose.disabled=true;try{const selected=await BibliotecaAssinaturas.abrir({db,auth,uid:owner,vigente:valid});if(!selected||!valid()||busy)return;if(input.value.trim()&&input.value.trim()!==selected.nome&&!confirm('Usar a assinatura de '+selected.nome+' e substituir o nome deste campo?'))return;estado.assinaturas.imagens[slot]=JSON.parse(JSON.stringify(selected));input.value=selected.nome;input.dispatchEvent(new Event('input',{bubbles:true}));render();}finally{if(valid())choose.disabled=busy;}});
+    remove.addEventListener('click',()=>{if(busy||!valid())return;delete estado.assinaturas.imagens[slot];dirty=true;$('save-note').textContent='Alterações ainda não salvas.';render();choose.focus();});input.addEventListener('input',()=>{const a=estado.assinaturas.imagens[slot];if(a&&input.value.trim()!==a.nome){delete estado.assinaturas.imagens[slot];render();}});controls.append(choose,remove,preview);wrap.append(controls);render();
+  }
   function formulario() {
     const root=$('form-sections');root.replaceChildren();
     for(const grupo of grupos){
@@ -195,6 +203,7 @@
           $('save-note').textContent='Alterações ainda não salvas.';
         });
         wrap.append(input);
+        if(/^assinaturas[.](regente|apoio|coordenador)$/.test(path))adicionarAssinatura(wrap,input,path.split('.')[1]);
         if(path==='estrategias.objetivosMetas')adicionarMetasAoPei(wrap,input);
         if(guide)adicionarIA(wrap,input,path,label);
         body.append(wrap);
@@ -242,7 +251,7 @@
     const date=valor(data,'assinaturas.data');
     const written=/^\d{4}-\d{2}-\d{2}$/.test(date)?new Intl.DateTimeFormat('pt-BR',{day:'numeric',month:'long',year:'numeric'}).format(new Date(date+'T12:00:00')):'____ de __________________ de ______';
     html+='<p data-srm-sign-data="left">'+esc(valor(data,'assinaturas.local')||'Cambé')+', '+esc(written)+'.</p>';
-    html+=AssinaturasDocumentos.html([[{nome:valor(data,'assinaturas.regente'),cargo:'Professor(a) regente'},{nome:valor(data,'assinaturas.apoio'),cargo:'Professor(a) de apoio'}],[{nome:valor(data,'assinaturas.coordenador'),cargo:'Coordenador(a) pedagógico(a)'}]]);
+    html+=AssinaturasDocumentos.html([[{nome:valor(data,'assinaturas.regente'),assinatura:data.assinaturas?.imagens?.regente,cargo:'Professor(a) regente'},{nome:valor(data,'assinaturas.apoio'),assinatura:data.assinaturas?.imagens?.apoio,cargo:'Professor(a) de apoio'}],[{nome:valor(data,'assinaturas.coordenador'),assinatura:data.assinaturas?.imagens?.coordenador,cargo:'Coordenador(a) pedagógico(a)'}]]);
     return html;
   }
   if(window.SRMExportacaoWorker){window.PEIFormulario={grupos,criarEstado,conteudo};return;}
@@ -507,7 +516,7 @@
     finally{$('loginBtn').disabled=false;}
   });
   auth.onAuthStateChanged(async current=>{
-    generation++;abortarExportacaoLista?.();abortarExportacaoLista=null;user=current;dirty=false;alunoId=null;estado=null;atual=null;alunos=[];base='';setBusy(false);$('pei-list-status').textContent='';if($('peiNovoDialog').open)$('peiNovoDialog').close();$('peiAlunoNovo').replaceChildren();$('search-input').value='';
+    generation++;window.BibliotecaAssinaturas?.fechar();abortarExportacaoLista?.();abortarExportacaoLista=null;user=current;dirty=false;alunoId=null;estado=null;atual=null;alunos=[];base='';setBusy(false);$('pei-list-status').textContent='';if($('peiNovoDialog').open)$('peiNovoDialog').close();$('peiAlunoNovo').replaceChildren();$('search-input').value='';
     $('form-sections').replaceChildren();$('student-grid').replaceChildren();$('pei-history-list').replaceChildren();$('pei-history-status').textContent='';$('pei-legacy-preview').srcdoc='';$('pei-legacy-preview').hidden=true;
     $('login-screen').hidden=!!current;$('app-shell').hidden=!current;$('pei-editor').hidden=true;$('pei-list').hidden=false;erro();
     if(!current){$('loginPassword').value='';$('topbar-user').textContent='';return;}

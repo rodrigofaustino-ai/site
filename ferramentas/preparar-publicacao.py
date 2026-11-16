@@ -37,7 +37,7 @@ def validar(pasta):
     if faltantes:raise ValueError('Referências locais ausentes: '+repr(faltantes))
 
 def main():
-    p=argparse.ArgumentParser();p.add_argument('destino',type=Path);p.add_argument('zip',type=Path);p.add_argument('--etapa',type=int,default=53);args=p.parse_args()
+    p=argparse.ArgumentParser();p.add_argument('destino',type=Path);p.add_argument('zip',type=Path);p.add_argument('--etapa',type=int,default=54);args=p.parse_args()
     destino=args.destino.resolve();arquivo_zip=args.zip.resolve()
     if destino==ROOT or destino.is_relative_to(ROOT):raise ValueError('Use uma pasta nova fora do repositório de fonte.')
     if destino.exists() and any(destino.iterdir()):raise ValueError('A pasta de destino precisa estar vazia ou não existir.')
@@ -204,6 +204,13 @@ serviços externos de IA ou a configuração remota atual de todos os serviços.
         inicio=texto.index('ATENÇÃO — QUESTIONÁRIO DA FAMÍLIA')
         fim=texto.index('PARA PUBLICAR',inicio)
         texto=texto[:inicio]+'ETAPA 53 — HISTÓRICO ANUAL E FALTAS MANUAIS\nAtendimentos previstos corresponde ao número de registros do histórico exportado.\nConsidera somente o ano vigente, de janeiro até o último atendimento registrado até a emissão.\nFaltas são informadas manualmente na ficha do aluno, no campo Faltas no histórico — ano vigente.\nSalve a ficha para usar o valor em Exportar Documentos. Em branco, sai uma linha para preencher.\nNão usa marcações da Frequência para esses totais. Não altera registros antigos.\nPacote cumulativo. Sem atualização de regras Firebase. Publique no Netlify, aguarde Published e atualize com Ctrl + Shift + R.\n\n'+texto[fim:]
+        guia.write_text(texto)
+    if args.etapa == 54:
+        guia=destino/'LEIA-ME-PUBLICACAO.txt'
+        texto=guia.read_text()
+        inicio=texto.index('ATENÇÃO — QUESTIONÁRIO DA FAMÍLIA')
+        fim=texto.index('PARA PUBLICAR',inicio)
+        texto=texto[:inicio]+'ETAPA 54 — BIBLIOTECA DE ASSINATURAS E PEI\nPrimeira etapa: cadastro privado de imagens e inserção explícita nas três assinaturas do PEI.\nA imagem fica incorporada no documento salvo e nos arquivos DOCX/ODT.\nExcluir da biblioteca não apaga as cópias já inseridas. Remover imagem no PEI mantém espaço para assinatura manual.\nANTES de usar a biblioteca no site publicado, acrescente as regras de producao/assinaturas-biblioteca-acrescimo.rules às regras existentes de salamulti.\nA alteração das regras e a publicação NÃO foram executadas. O usuário optou por acumular melhorias.\nOs demais formulários ainda não têm seletor de imagens nesta etapa.\nPacote cumulativo; publique somente quando desejar, após conferir as permissões pendentes.\n\n'+texto[fim:]
         guia.write_text(texto)
     validar(destino)
     files={str(f.relative_to(destino)):hashlib.sha256(f.read_bytes()).hexdigest() for f in sorted(destino.rglob('*')) if f.is_file()}

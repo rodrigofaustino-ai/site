@@ -50,6 +50,25 @@ service cloud.firestore {
     function donoAluno(alunoId) {
       return request.auth != null && get(/databases/$(database)/documents/alunos/$(alunoId)).data.professorUid == request.auth.uid;
     }
+    // Biblioteca privada: cada conta gerencia somente suas imagens.
+    match /bibliotecaAssinaturas/{uid}/itens/{assinaturaId} {
+      function donoBiblioteca() { return request.auth != null && request.auth.uid == uid; }
+      function assinaturaValida() {
+        let d = request.resource.data;
+        return d.keys().hasOnly(['nome','cargo','imagem','largura','altura','criadoEm'])
+          && d.keys().hasAll(['nome','cargo','imagem','largura','altura','criadoEm'])
+          && d.nome is string && d.nome.size() > 0 && d.nome.size() <= 120
+          && d.cargo is string && d.cargo.size() > 0 && d.cargo.size() <= 100
+          && d.imagem is string && d.imagem.size() <= 80000
+          && d.imagem.matches('^data:image/png;base64,[A-Za-z0-9+/]+={0,2}$')
+          && d.largura is int && d.largura > 0 && d.largura <= 640
+          && d.altura is int && d.altura > 0 && d.altura <= 200
+          && d.criadoEm is string && d.criadoEm.size() <= 30;
+      }
+      allow read, delete: if donoBiblioteca();
+      allow create: if donoBiblioteca() && assinaturaValida();
+      allow update: if false;
+    }
     match /alunos/{alunoId} {
       allow create: if isAdmin() || (request.auth != null && request.resource.data.professorUid == request.auth.uid);
       allow read, delete: if isAdmin() || (request.auth != null && resource.data.professorUid == request.auth.uid);
