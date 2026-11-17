@@ -37,7 +37,7 @@ def validar(pasta):
     if faltantes:raise ValueError('Referências locais ausentes: '+repr(faltantes))
 
 def main():
-    p=argparse.ArgumentParser();p.add_argument('destino',type=Path);p.add_argument('zip',type=Path);p.add_argument('--etapa',type=int,default=63);args=p.parse_args()
+    p=argparse.ArgumentParser();p.add_argument('destino',type=Path);p.add_argument('zip',type=Path);p.add_argument('--etapa',type=int,default=64);args=p.parse_args()
     destino=args.destino.resolve();arquivo_zip=args.zip.resolve()
     if destino==ROOT or destino.is_relative_to(ROOT):raise ValueError('Use uma pasta nova fora do repositório de fonte.')
     if destino.exists() and any(destino.iterdir()):raise ValueError('A pasta de destino precisa estar vazia ou não existir.')
@@ -287,6 +287,14 @@ serviços externos de IA ou a configuração remota atual de todos os serviços.
         texto=texto[:inicio]+'ETAPA 63 — MENU LATERAL DA FICHA\nO menu Nesta ficha oferece atalhos locais para identificação, escola, horários, visão geral, metas, laudo, responsáveis, registro, assinaturas e histórico.\nNo computador acompanha a rolagem; no celular abre e recolhe sem cobrir os campos.\nNavegar pelo menu não salva, troca de aluno nem apaga o rascunho.\nPacote cumulativo: ficha compacta, P/F/FJ, histórico automático das faltas, totais por período e avisos do chat estão incluídos.\nNotificações do navegador continuam exigindo ativação no sino do chat e Diário aberto e conectado.\nSem novas regras de Firebase. Publique a pasta completa com index.html no Netlify, aguarde Published e atualize com Ctrl + Shift + R.\n\n'+texto[fim:]
         guia.write_text(texto)
         (destino/'PERMISSOES-ASSINATURAS-FIRESTORE.txt').write_text('ETAPA 63: nenhuma nova regra de Firebase. Guia apenas para quem ainda não habilitou a biblioteca.\n\n'+(ROOT/'producao'/'GUIA-ASSINATURAS-FIRESTORE.txt').read_text())
+    if args.etapa == 64:
+        guia=destino/'LEIA-ME-PUBLICACAO.txt'
+        texto=guia.read_text()
+        inicio=texto.index('ATENÇÃO — QUESTIONÁRIO DA FAMÍLIA')
+        fim=texto.index('PARA PUBLICAR',inicio)
+        texto=texto[:inicio]+'ETAPA 64 — FREQUÊNCIA ANUAL NO RELATÓRIO\nEm Identificação do Relatório, use Preencher pela Frequência do Diário — ano vigente.\nSe solicitado, entre com a conta do Diário do mesmo e-mail. O vínculo do aluno é conferido pelo identificador.\nPrevistos = P + F + FJ + Sem atendimento pedagógico; realizados = P. Considera as datas de janeiro a dezembro do ano vigente.\nDias sem marcação ficam fora. Marcações antigas sem dia/data válida são informadas à parte. Datas duplicadas iguais não duplicam o total; conflitos exigem correção na Frequência.\nSubstituir números existentes exige confirmação. Depois de consultar, salve o Relatório para manter os totais e exportar.\nNão altera a regra de contagem dos outros documentos. Inclui menu lateral, ficha compacta, P/F/FJ, histórico automático de faltas e avisos do chat.\nNão requer novas regras de Firebase. Publique a pasta completa com index.html no Netlify, aguarde Published e use Ctrl + Shift + R.\n\n'+texto[fim:]
+        guia.write_text(texto)
+        (destino/'PERMISSOES-ASSINATURAS-FIRESTORE.txt').write_text('ETAPA 64: nenhuma nova regra de Firebase. Guia apenas para quem ainda não habilitou a biblioteca.\n\n'+(ROOT/'producao'/'GUIA-ASSINATURAS-FIRESTORE.txt').read_text())
     guia=destino/'LEIA-ME-PUBLICACAO.txt'
     guia.write_text(guia.read_text().replace('até a etapa 33.',f'até a etapa {args.etapa}.'))
     if args.etapa >= 57:

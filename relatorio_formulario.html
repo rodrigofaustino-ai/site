@@ -268,7 +268,7 @@
 <script src="orientacoes-preenchimento.js" defer></script>
 <link rel="stylesheet" href="formularios-visual.css">
 <link rel="stylesheet" href="ia-campos.css">
-<link rel="stylesheet" href="biblioteca-assinaturas.css"><script src="assinaturas-conexao.js"></script><script src="assinaturas-campos.js"></script><script src="assinaturas-adicionais.js"></script><script src="relatorio-assinaturas.js"></script>
+<link rel="stylesheet" href="biblioteca-assinaturas.css"><script src="assinaturas-conexao.js"></script><script src="assinaturas-campos.js"></script><script src="assinaturas-adicionais.js"></script><script src="relatorio-assinaturas.js"></script><script src="relatorio-frequencia.js"></script>
 </head>
 <body data-ia-pagina="relatorio_formulario.html" class="srm-form-visual">
 
@@ -407,7 +407,7 @@ function showScreen(name){
 
 if(firebaseReady){
   auth.onAuthStateChanged(user=>{
-    window.AssinaturasConexao?.fechar();
+    window.AssinaturasConexao?.fechar();window.RelatorioFrequencia?.fechar();
     VinculoAluno.limpar();
     if(user){
       professorUid = user.uid;
@@ -833,6 +833,7 @@ function renderForm(){
 
           <div></div>
         </div>
+        <div id="relatorioFrequenciaAno"></div>
       </div>
     </section>
 
@@ -919,6 +920,7 @@ function renderForm(){
   `;
 
   document.getElementById('form-sections').innerHTML = html;
+  RelatorioFrequencia.montar({root:document.getElementById('relatorioFrequenciaAno'),auth,obterState:()=>state});
   for(const [slot,key]of [['professor','nomeProfessor']]){const input=document.querySelector('[data-bind="assinaturas.'+key+'"]');AssinaturasCampos.montar({input,auth,obter:()=>s.assinaturasImagens?.[slot],gravar:a=>{s.assinaturasImagens||={};if(a)s.assinaturasImagens[slot]=a;else delete s.assinaturasImagens[slot];},vigente:()=>state===s&&input.isConnected&&!!auth?.currentUser});}
   const areaExtras=document.createElement('div'),assinaturasBody=document.querySelector('#sec-sign .card-body');assinaturasBody.insertBefore(areaExtras,assinaturasBody.querySelector('.notice'));AssinaturasAdicionais.montar({container:areaExtras,auth,obter:()=>s.assinaturasAdicionais,gravar:a=>s.assinaturasAdicionais=a,vigente:()=>state===s});
   document.getElementById('form-title').textContent = s.identificacao.nome||(s.id?'Relatório':'Novo Relatório');
@@ -1141,7 +1143,7 @@ function exportDOCX(s, formato='docx'){
     [{label:'Escola regular',value:id.escolaRegular},{label:'Ano',value:id.ano}],
     [{label:'Período',value:id.periodo},{label:'Escola atendimento SRM',value:id.escolaSRM}],
     [{label:'Período SRM',value:id.periodoSRM},{label:'Prof. AEE',value:id.professorSRM}],
-    [{label:'Nº de atendimentos previstos',value:String(id.atendimentosPrevistos||'—')},{label:'Nº de atendimentos realizados',value:String(id.atendimentosRealizados||'—')}],
+    [{label:'Nº de atendimentos previstos',value:String(id.atendimentosPrevistos??'—')},{label:'Nº de atendimentos realizados',value:String(id.atendimentosRealizados??'—')}],
   ]));
 
   // II — Áreas trabalhadas
