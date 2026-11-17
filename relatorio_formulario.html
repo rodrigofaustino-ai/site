@@ -1020,7 +1020,7 @@ function bindNavScroll(){
 }
 
 /* ========================= DOCX EXPORT ========================= */
-function exportDOCX(s, formato='docx'){
+async function exportDOCX(s, formato='docx'){
   let assinantes;try{assinantes=RelatorioAssinaturas.grupos(s);}catch(error){if(window.SRMExportacaoWorker)throw error;showToast(error.message);return;}
   const {
     Document, Packer, Paragraph, TextRun, HeadingLevel, Table, TableRow, TableCell,
@@ -1123,6 +1123,11 @@ function exportDOCX(s, formato='docx'){
   }
 
   const children = [];
+  // Imagem no corpo do documento: aparece uma vez, no topo da primeira página.
+  const logoResponse=await fetch('modelos/pei-cabecalho.png');
+  if(!logoResponse.ok)throw new Error('Não foi possível carregar a logo do município.');
+  const logoBytes=new Uint8Array(await logoResponse.arrayBuffer());
+  children.push(new Paragraph({children:[new docx.ImageRun({type:'png',data:logoBytes,transformation:{width:520,height:86}})],alignment:AlignmentType.CENTER,keepNext:true,spacing:{before:0,after:120}}));
 
   // Cabeçalho
   children.push(new Paragraph({
@@ -1181,7 +1186,7 @@ function exportDOCX(s, formato='docx'){
 
   // Data/local e assinaturas, sem quadro ou divisor de borda.
   // Data e local em parágrafo
-  const dataFmt = assr.data ? new Date(assr.data+'T00:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'}) : '_____________________';
+  const dataFmt = AssinaturasDocumentos.dataExtenso();
   const localStr = (assr.local||'_________')+', '+dataFmt+'.';
   children.push(new Paragraph({
     children:[new TextRun({text:localStr,size:24,italics:true})],
@@ -1219,7 +1224,7 @@ function exportDOCX(s, formato='docx'){
   return Packer.toBlob(doc).then(async blob=>{
     const nome=(s.identificacao.nome||'Relatório')
       .normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9]+/g,'_');
-    await SRMExport.fromDocx(blob, formato, `Relatorio_SRM_${nome}`,{assinaturasHtml:AssinaturasDocumentos.html(assinantes),assinaturasLocalData:localStr});
+    await SRMExport.fromDocx(blob, formato, `Relatorio_SRM_${nome}`,{logoPrimeiraPagina:true,assinaturasHtml:AssinaturasDocumentos.html(assinantes),assinaturasLocalData:localStr});
     showToast(formato.toUpperCase()+' gerado com sucesso.');
   }).catch(err=>{
     if(window.SRMExportacaoWorker)throw err;

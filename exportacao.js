@@ -58,6 +58,7 @@
       if (node.nodeType === 3) return node.textContent.trim() ? `<text:p>${inline(node)}</text:p>` : '';
       if (node.nodeType !== 1) return '';
       const tag = node.tagName.toLowerCase();
+      if(node.hasAttribute('data-srm-logo-primeira'))return '<text:p text:style-name="SrmSignData">'+inline(node)+'</text:p>';
       if(node.hasAttribute('data-srm-sign-data'))return '<text:p text:style-name="'+(node.getAttribute('data-srm-sign-data')==='left'?'SrmSignDataLeft':'SrmSignData')+'">'+inline(node)+'</text:p>';
       if (tag === 'table' && node.hasAttribute('data-srm-assinaturas') && window.AssinaturasDocumentos) return AssinaturasDocumentos.odt(node,imageXml);
       if (tag === 'table') {
@@ -164,6 +165,7 @@
   }
   async function fromHtml(html, format, filename) {
     const root = clean(html);
+    window.AssinaturasDocumentos?.datarHtml(root);
     await Promise.all(Array.from(root.querySelectorAll('img')).map(async img => {
       if (!/^data:image\/(png|jpeg|gif);base64,/i.test(img.getAttribute('src') || '')) {img.replaceWith(document.createTextNode(img.alt || '[Imagem não incorporada]'));return;}
       try {if (img.decode) await img.decode();} catch (_) {}
@@ -183,6 +185,7 @@
     const converter = await load('mammoth');
     const result = await converter.convertToHtml({arrayBuffer:await blob.arrayBuffer()});
     let html=result.value;
+    if(options.logoPrimeiraPagina){const root=clean(html),img=root.querySelector('img');if(!img)throw new Error('Logo não encontrada no documento.');img.closest('p')?.setAttribute('data-srm-logo-primeira','true');html=root.innerHTML;}
     if(options.assinaturasHtml){const root=clean(html),tables=root.querySelectorAll('table'),last=tables[tables.length-1];if(!last)throw new Error('Bloco de assinaturas não encontrado.');const data=last.previousElementSibling;if(data&&data.textContent.trim()===options.assinaturasLocalData)data.setAttribute('data-srm-sign-data','true');last.replaceWith(document.createRange().createContextualFragment(options.assinaturasHtml));html=root.innerHTML;}
     if(options.imagensAssinaturas?.length){const root=clean(html);for(const img of root.querySelectorAll('img')){const a=options.imagensAssinaturas.find(a=>window.AssinaturasDocumentos?.imagemValida(a)&&a.imagem===img.getAttribute('src'));if(a){img.setAttribute('data-srm-sign-imagem','true');img.setAttribute('data-largura',a.largura);img.setAttribute('data-altura',a.altura);}}html=root.innerHTML;}
     return fromHtml(html,format,filename);

@@ -1,6 +1,9 @@
 /* Blocos exclusivos de assinatura: quatro linhas simples, sem bordas de tabela. */
 (() => {
  'use strict';
+ function dataAtual(){const parts=new Intl.DateTimeFormat('en-US',{timeZone:'America/Sao_Paulo',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date());const v=t=>parts.find(p=>p.type===t).value;return v('year')+'-'+v('month')+'-'+v('day');}
+ function dataExtenso(){return new Intl.DateTimeFormat('pt-BR',{timeZone:'UTC',day:'numeric',month:'long',year:'numeric'}).format(new Date(dataAtual()+'T12:00:00Z'));}
+ function datarHtml(root){for(const p of root.querySelectorAll('[data-srm-sign-data]')){const text=p.textContent,comma=text.lastIndexOf(',');if(comma>=0)p.textContent=text.slice(0,comma+1)+' '+dataExtenso()+'.';}}
  const linha='________________________________';
  const esc=s=>String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  function imagemValida(a){return !!a&&typeof a.imagem==='string'&&a.imagem.length<=80000&&/^data:image\/png;base64,[A-Za-z0-9+/]+={0,2}$/.test(a.imagem)&&Number.isInteger(a.largura)&&a.largura>0&&a.largura<=640&&Number.isInteger(a.altura)&&a.altura>0&&a.altura<=200;}
@@ -40,5 +43,5 @@
  }
  const css='[data-srm-assinaturas]{border:0!important;box-shadow:none!important;background:none!important;width:100%!important;table-layout:fixed;margin:0!important}[data-srm-assinaturas] td{border:0!important;background:none!important;min-width:0!important;width:auto!important;padding:0 6px!important;text-align:center!important}[data-srm-assinaturas] p{font:12pt/12pt Arial,sans-serif!important;margin:0!important;text-align:center!important}[data-srm-sign-espaco]{height:12pt!important;line-height:12pt!important}';
  const style=document.createElement('style');style.textContent=css;document.head.append(style);
- window.AssinaturasDocumentos=Object.freeze({html,docx,odt,estilosOdt,gruposDoHtml,normalizarPei,css,imagemValida,paragrafoImagem,paraNome});
+ window.AssinaturasDocumentos=Object.freeze({dataAtual,dataExtenso,datarHtml,html,docx,odt,estilosOdt,gruposDoHtml,normalizarPei,css,imagemValida,paragrafoImagem,paraNome});
 })();

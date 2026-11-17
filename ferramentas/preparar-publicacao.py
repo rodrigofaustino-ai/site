@@ -37,7 +37,7 @@ def validar(pasta):
     if faltantes:raise ValueError('Referências locais ausentes: '+repr(faltantes))
 
 def main():
-    p=argparse.ArgumentParser();p.add_argument('destino',type=Path);p.add_argument('zip',type=Path);p.add_argument('--etapa',type=int,default=64);args=p.parse_args()
+    p=argparse.ArgumentParser();p.add_argument('destino',type=Path);p.add_argument('zip',type=Path);p.add_argument('--etapa',type=int,default=65);args=p.parse_args()
     destino=args.destino.resolve();arquivo_zip=args.zip.resolve()
     if destino==ROOT or destino.is_relative_to(ROOT):raise ValueError('Use uma pasta nova fora do repositório de fonte.')
     if destino.exists() and any(destino.iterdir()):raise ValueError('A pasta de destino precisa estar vazia ou não existir.')
@@ -295,6 +295,14 @@ serviços externos de IA ou a configuração remota atual de todos os serviços.
         texto=texto[:inicio]+'ETAPA 64 — FREQUÊNCIA ANUAL NO RELATÓRIO\nEm Identificação do Relatório, use Preencher pela Frequência do Diário — ano vigente.\nSe solicitado, entre com a conta do Diário do mesmo e-mail. O vínculo do aluno é conferido pelo identificador.\nPrevistos = P + F + FJ + Sem atendimento pedagógico; realizados = P. Considera as datas de janeiro a dezembro do ano vigente.\nDias sem marcação ficam fora. Marcações antigas sem dia/data válida são informadas à parte. Datas duplicadas iguais não duplicam o total; conflitos exigem correção na Frequência.\nSubstituir números existentes exige confirmação. Depois de consultar, salve o Relatório para manter os totais e exportar.\nNão altera a regra de contagem dos outros documentos. Inclui menu lateral, ficha compacta, P/F/FJ, histórico automático de faltas e avisos do chat.\nNão requer novas regras de Firebase. Publique a pasta completa com index.html no Netlify, aguarde Published e use Ctrl + Shift + R.\n\n'+texto[fim:]
         guia.write_text(texto)
         (destino/'PERMISSOES-ASSINATURAS-FIRESTORE.txt').write_text('ETAPA 64: nenhuma nova regra de Firebase. Guia apenas para quem ainda não habilitou a biblioteca.\n\n'+(ROOT/'producao'/'GUIA-ASSINATURAS-FIRESTORE.txt').read_text())
+    if args.etapa == 65:
+        guia=destino/'LEIA-ME-PUBLICACAO.txt'
+        texto=guia.read_text()
+        inicio=texto.index('ATENÇÃO — QUESTIONÁRIO DA FAMÍLIA')
+        fim=texto.index('PARA PUBLICAR',inicio)
+        texto=texto[:inicio]+'ETAPA 65 — DATA ATUAL E LOGO DO RELATÓRIO\nOs campos de data junto às assinaturas do Relatório e PEI saem com a data da exportação, no fuso de Brasília. O Histórico também usa a data atual.\nO local preenchido é preservado. Datas de nascimento, atendimentos e dados salvos não são alterados.\nSomente o Relatório exportado recebe a logo municipal já usada no PEI, centralizada no topo da primeira página, uma única vez.\nDOCX e ODT incluem data e imagem. Inclui o preenchimento anual do Relatório pela Frequência, menu lateral, avisos do chat e todas as melhorias anteriores.\nSem novas regras Firebase. Publique a pasta inteira com index.html no Netlify, aguarde Published e atualize com Ctrl + Shift + R.\n\n'+texto[fim:]
+        guia.write_text(texto)
+        (destino/'PERMISSOES-ASSINATURAS-FIRESTORE.txt').write_text('ETAPA 65: nenhuma nova regra de Firebase. Guia apenas para quem ainda não habilitou a biblioteca.\n\n'+(ROOT/'producao'/'GUIA-ASSINATURAS-FIRESTORE.txt').read_text())
     guia=destino/'LEIA-ME-PUBLICACAO.txt'
     guia.write_text(guia.read_text().replace('até a etapa 33.',f'até a etapa {args.etapa}.'))
     if args.etapa >= 57:

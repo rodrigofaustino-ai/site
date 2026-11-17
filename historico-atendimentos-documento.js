@@ -28,7 +28,7 @@ const faltas=HistoricoAtendimentosFrequencia.faltasManuais(Object.hasOwn(dados,'
   const professor = dados.professor || p.pdfProfessor || '';
   const cargo = dados.cargo || p.pdfCargo || 'Professor(a) da Sala de Recursos Multifuncionais';
   const local = dados.local || p.pdfLocal || '';
-  const hoje = dados.dataExportacao || new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'});
+  const hoje = new Intl.DateTimeFormat('pt-BR',{timeZone:'America/Sao_Paulo',day:'numeric',month:'long',year:'numeric'}).format(new Date());
 
   const MARGIN = 851; // 1,5 cm
   const TABLE_W = 10206; // 18 cm
