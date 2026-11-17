@@ -38,7 +38,7 @@
   function rascunho(){return !!($('entryText')?.value.trim()||$('entryProximoPasso')?.value.trim()||campos.some(([id])=>$('roteiro-'+id)?.value.trim())||$('humorVal')?.value||window.MetasAluno?.selecionadas().length);}
   function bloquear(value){
     busy=value;
-    if(value){disabled=new Map();for(const el of document.querySelectorAll('#entryDate,#entryText,#entryProximoPasso,#registradoPor,#btnHoje,#btnMelhorarIA,#btnAceitarIA,#btnDescartarIA,#btnSalvarRegistro,#registroAssistido textarea,#registroAssistido button')){disabled.set(el,el.disabled);el.disabled=true;}
+    if(value){disabled=new Map();for(const el of document.querySelectorAll('#entryDate,#entryText,#entryProximoPasso,#registradoPor,#btnHoje,#btnMelhorarIA,#btnAceitarIA,#btnDescartarIA,#btnSalvarRegistro,#registroAssistido textarea,#registroAssistido button,[data-registro-falta],#registroRetomarAtendimento')){disabled.set(el,el.disabled);el.disabled=true;}
       document.querySelectorAll('.humor-opt').forEach(el=>el.setAttribute('aria-disabled','true'));
     }else{for(const [el,previous]of disabled)if(el.isConnected)el.disabled=previous;disabled.clear();document.querySelectorAll('.humor-opt').forEach(el=>el.removeAttribute('aria-disabled'));if($('btnMelhorarIA'))$('btnMelhorarIA').disabled=!!window.iaRegistroEmCurso?.();}
     window.MetasAluno?.atualizarVinculos?.();
@@ -46,7 +46,7 @@
   function ativar(options){
     iniciar();const previous=ctx;ctx=options;const next=options?JSON.stringify([options.uid,options.alunoId]):null;if(key===next)return;
     const promover=previous?.uid&&previous.uid===options?.uid&&!previous.alunoId&&options.alunoId;
-    generation++;key=next;bloquear(false);tentativa=null;limparIA();
+    generation++;window.RegistroFalta?.limpar();key=next;bloquear(false);tentativa=null;limparIA();
     if(options?.uid&&options.uid!==lastUid){responsavel='';lastUid=options.uid;}
     if(!promover){resetRoteiro();if($('entryProximoPasso'))$('entryProximoPasso').value='';if($('entryText')){$('entryText').value='';$('charCount').textContent='0 caracteres';}$('humorVal').value='';document.querySelectorAll('.humor-opt').forEach(el=>el.classList.remove('sel'));}
     else invalidarRoteiro();
@@ -55,21 +55,29 @@
     if($('registradoPor'))$('registradoPor').value=responsavel;
     mensagem(options?.alunoId?'Preencha o relato e salve para registrar o atendimento.':'Salve o cadastro do aluno antes de registrar o atendimento.');
   }
-  function assinatura(d){return JSON.stringify({date:d.date,text:d.text,humor:d.humor||'',por:d.por||'',proximoPasso:d.proximoPasso||'',createdAt:d.createdAt,
+  function assinatura(d){return JSON.stringify({date:d.date,text:d.text,humor:d.humor||'',por:d.por||'',tipoRegistro:d.tipoRegistro||'',proximoPasso:d.proximoPasso||'',createdAt:d.createdAt,
     metaIds:Array.isArray(d.metaIds)?d.metaIds:[],metaVinculos:Array.isArray(d.metaVinculos)?d.metaVinculos.map(m=>({id:m.id,objetivo:m.objetivo,revision:m.revision||0})):[]});}
   function preparar(payload){
     const base={...payload,createdAt:''},fingerprint=assinatura(base);
     if(!tentativa||tentativa.fingerprint!==fingerprint)tentativa={id:crypto.randomUUID(),payload:{...payload,createdAt:new Date().toISOString()},fingerprint};
     return {id:tentativa.id,payload:JSON.parse(JSON.stringify(tentativa.payload)),generation};
   }
-  async function salvarBanco({db,alunoId,uid,ticket,vigente}){
+  async function salvarBanco({db,alunoId,uid,ticket,vigente,frequencia=null}){
     const parent=db.collection('alunos').doc(alunoId),ref=parent.collection('registros').doc(ticket.id),date=ticket.payload.date;
     await db.runTransaction(async tx=>{
-      const [student,previous]=await Promise.all([tx.get(parent),tx.get(ref)]);
+      const freqRef=frequencia?db.collection('frequenciaSemanas').doc(frequencia.semanaId):null;
+      const [student,previous,week]=await Promise.all([tx.get(parent),tx.get(ref),freqRef?tx.get(freqRef):null]);
       if(!vigente())throw new Error('O aluno ou a conta mudou. Reabra a ficha antes de salvar.');
       if(!student.exists||student.data().professorUid!==uid)throw new Error('O cadastro não pertence à conta atual.');
       if(previous.exists){if(assinatura(previous.data())!==assinatura(ticket.payload))throw new Error('O registro desta tentativa mudou. Confira o histórico antes de salvar novamente.');}
-      else tx.set(ref,ticket.payload);
+      if(frequencia){
+        const s=week?.exists?week.data():null;
+        if(!s||s.professorUid!==uid||(s.turno&&s.turno!==frequencia.turno)||s.dataInicio!==frequencia.inicio||(s.dataFim||'')!==frequencia.fim||!AgendaFrequencia.corresponde(s,frequencia.data))throw Error('A semana de frequência mudou. Confira a Frequência e tente novamente.');
+        const atual=FrequenciaInterface.estado(s,alunoId,frequencia.dia);
+        if(atual.value!==frequencia.status&&(atual.value!==frequencia.anterior.value||atual.fonte!==frequencia.anterior.fonte))throw Error('A marcação de frequência mudou. Confira e tente novamente.');
+        tx.update(freqRef,{status:{...(s.status||{}),[alunoId+'__'+frequencia.dia]:frequencia.status}});
+      }
+      if(!previous.exists)tx.set(ref,ticket.payload);
       const last=student.data().ultimoRegistro;
       if(!dataValida(last)||last<date)tx.update(parent,{ultimoRegistro:date});
     });
@@ -78,6 +86,6 @@
   function confirmado(){tentativa=null;responsavel=$('registradoPor').value;mensagem('Registro salvo. O relato está disponível no histórico abaixo.');}
   function podeSair(){if(busy){mensagem('Aguarde a confirmação do salvamento antes de sair.');return false;}return !rascunho()||confirm('Há um atendimento ainda não salvo. Deseja sair e descartar esse preenchimento?');}
   window.RegistroAssistido={iniciar,ativar,hoje,dataValida,preparar,salvarBanco,assinatura,valido,bloquear,mensagem,confirmado,limparIA,podeSair,salvando:()=>busy,roteiroPendente:()=>campos.some(([id])=>$('roteiro-'+id)?.value.trim()),
-    limparSessao(){generation++;ctx=null;key=null;lastUid=null;responsavel='';tentativa=null;bloquear(false);window.MetasAluno?.limparSelecao();limparIA();resetRoteiro();if($('entryProximoPasso'))$('entryProximoPasso').value='';if($('entryText')){$('entryText').value='';$('charCount').textContent='0 caracteres';}if($('registradoPor'))$('registradoPor').value='';if($('humorVal'))$('humorVal').value='';document.querySelectorAll('.humor-opt').forEach(el=>el.classList.remove('sel'));mensagem('');}};
+    limparSessao(){window.RegistroFalta?.limpar();generation++;ctx=null;key=null;lastUid=null;responsavel='';tentativa=null;bloquear(false);window.MetasAluno?.limparSelecao();limparIA();resetRoteiro();if($('entryProximoPasso'))$('entryProximoPasso').value='';if($('entryText')){$('entryText').value='';$('charCount').textContent='0 caracteres';}if($('registradoPor'))$('registradoPor').value='';if($('humorVal'))$('humorVal').value='';document.querySelectorAll('.humor-opt').forEach(el=>el.classList.remove('sel'));mensagem('');}};
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',iniciar,{once:true});else iniciar();
 })();

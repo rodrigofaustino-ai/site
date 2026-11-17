@@ -511,7 +511,7 @@ hr.sep{border:none;border-top:2px dashed rgba(0,0,0,.06);margin:.2rem 0;}
 <script src="acompanhamento-periodo.js"></script>
 <script src="metas-aluno.js"></script>
 <link rel="stylesheet" href="frequencia-interface.css">
-<script src="frequencia-interface.js"></script>
+<script src="frequencia-interface.js"></script><script src="aluno-totais.js"></script><script src="registro-falta.js"></script><link rel="stylesheet" href="aluno-totais.css">
 <script src="resumo-frequencia.js"></script>
 <link rel="stylesheet" href="resumo-periodo.css">
 <link rel="stylesheet" href="registro-assistido.css">
@@ -880,7 +880,7 @@ hr.sep{border:none;border-top:2px dashed rgba(0,0,0,.06);margin:.2rem 0;}
             </div>
             <div class="field"><label for="turma">Turma / Série</label><input type="text" id="turma" placeholder="Ex: 3º ano A"></div>
           </div>
-          <div class="field full">
+          <div class="turno-resumo-linha"><div class="field full">
             <label>🌓 Turno do atendimento na SRM</label>
             <div style="display:flex;gap:.6rem;margin-top:.3rem;" id="turnoAlunoGroup">
               <button type="button" class="turno-aluno-btn" data-turno="Matutino" onclick="selecionarTurnoAluno('Matutino')">🌅 Matutino</button>
@@ -888,7 +888,7 @@ hr.sep{border:none;border-top:2px dashed rgba(0,0,0,.06);margin:.2rem 0;}
               <button type="button" class="turno-aluno-btn" data-turno="" onclick="selecionarTurnoAluno('')" title="Visível para ambos os turnos">👥 Ambos</button>
             </div>
             <span id="turnoAlunoMsg" style="font-size:12px;color:var(--muted);margin-top:4px;display:block;">Sem turno definido: aparece para Matutino e Vespertino.</span>
-          </div>
+          </div><aside id="alunoTotais" class="aluno-totais" aria-label="Totais do aluno"></aside></div>
         </div>
       </div>
       <hr class="sep">
@@ -978,7 +978,7 @@ hr.sep{border:none;border-top:2px dashed rgba(0,0,0,.06);margin:.2rem 0;}
       <div id="metasVinculoAtendimento"></div>
       <div id="registroAssistido"></div>
       <div class="field">
-        <label for="entryText">🗒️ Relato do atendimento</label>
+        <div class="registro-falta-acoes"><label for="entryText">🗒️ Relato do atendimento</label><button type="button" data-registro-falta="falta" aria-pressed="false">Falta</button><button type="button" data-registro-falta="justificado" aria-pressed="false">Falta justificada</button><button type="button" id="registroRetomarAtendimento">Atendimento</button></div><small id="registroFaltaEstado" role="status"></small>
         <details class="registro-orientacao"><summary>Orientação de preenchimento do relato</summary><p>Descreva as atividades realizadas, os apoios utilizados, as respostas observadas e os encaminhamentos, conforme o que aconteceu no atendimento. A análise dos avanços e dificuldades cabe ao profissional, com base nos registros.</p></details>
         <textarea class="entry-text" id="entryText"></textarea>
         <div class="char-count" id="charCount">0 caracteres</div>
@@ -1212,6 +1212,7 @@ function showScreen(name){
 ════════════════════════════════════════ */
 auth.onAuthStateChanged(async user => {
   window.ExportarDocumentos.fechar();
+  window.AlunoTotais?.limpar();
   limparArquivamentoAlunos();
   window.MeuDia.limpar();
   window.Estatisticas.limpar();
@@ -3685,6 +3686,7 @@ function montarAssinaturaHistorico(){
 }
 const FIELDS={nomeAluno:'nome',dataNasc:'dataNasc',turma:'turma',escola:'escola',municipio:'municipio',periodo:'periodo',laudo:'laudo',cid:'cid',cid11:'cid11',dataLaudo:'dataLaudo',obsClinicas:'obsClinicas'};
 function clearForm(){
+  window.AlunoTotais?.limpar();window.RegistroFalta?.limpar();
   assinaturaHistorico=null;assinaturasHistoricoAdicionais=[];montarAssinaturaHistorico();
   $('perfilArquivoAviso').hidden=true;
   Object.keys(FIELDS).forEach(f=>$(f).value='');
@@ -3786,14 +3788,26 @@ async function saveEntry(){
   if(!text){registro.mensagem('Escreva o relato antes de salvar.',true);return;}
   const metaVinculos=window.MetasAluno.vinculosSelecionados(),metaIds=metaVinculos.map(meta=>meta.id);
   let continuidade;try{continuidade=ProximoPasso.compor(text,val('entryProximoPasso'));}catch(e){registro.mensagem(e.message,true);return;}
-  const ticket=registro.preparar({date,...continuidade,humor:val('humorVal'),por:val('registradoPor'),...(metaIds.length?{metaIds,metaVinculos}:{})});
+  const tipoRegistro=RegistroFalta.tipo();
+  let frequencia=null;
+  if(tipoRegistro){
+    const c={db,uid:ownerUid,turno:turnoAtual,vigente:()=>currentStudentId===studentId&&professorUid===ownerUid&&auth.currentUser?.uid===ownerUid};
+    registro.bloquear(true);
+    try{const sessao=await AgendaFrequencia.carregar(c,date);if(!c.vigente())return;
+      const estado=FrequenciaInterface.estado(sessao.semana,studentId,sessao.dia),status=tipoRegistro;
+      if(estado.value!=null&&estado.value!==status&&!confirm('A Frequência já tem uma marcação nesta data. Substituir por '+(status==='falta'?'Falta (F)':'Justificada (J)')+' ao salvar o relato?'))return;
+      frequencia={semanaId:sessao.semana.id,data:date,dia:sessao.dia,status,anterior:estado,turno:c.turno,inicio:sessao.semana.dataInicio,fim:sessao.semana.dataFim||''};
+    }catch(e){registro.mensagem(e.message,true);return;}finally{registro.bloquear(false);}
+  }
+  const ticket=registro.preparar({date,...continuidade,...(tipoRegistro?{tipoRegistro}:{}),humor:val('humorVal'),por:val('registradoPor'),...(metaIds.length?{metaIds,metaVinculos}:{})});
   registro.bloquear(true);registro.limparIA();registro.mensagem('Salvando atendimento…');setBadge('syncing','Salvando...');
   try{
-    await registro.salvarBanco({db,alunoId:studentId,uid:ownerUid,ticket,vigente:()=>registro.valido(ticket)&&currentStudentId===studentId&&professorUid===ownerUid});
+    await registro.salvarBanco({db,alunoId:studentId,uid:ownerUid,ticket,frequencia,vigente:()=>registro.valido(ticket)&&currentStudentId===studentId&&professorUid===ownerUid});
     if(!registro.valido(ticket))return;
     $('entryText').value='';$('entryProximoPasso').value='';$('charCount').textContent='0 caracteres';
     document.querySelectorAll('.humor-opt').forEach(o=>o.classList.remove('sel'));$('humorVal').value='';
     $('entryDate').value=registro.hoje();window.MetasAluno.limparSelecao();
+    RegistroFalta.limpar();window.AlunoTotais.limpar();window.AlunoTotais.render({db,uid:ownerUid,alunoId:studentId,registros:currentEntries,status:centralRegistrosStatus,vigente:()=>currentStudentId===studentId&&professorUid===ownerUid&&auth.currentUser?.uid===ownerUid});
     registro.confirmado();setBadge('online','Nuvem conectada');showToast('✓ Registro salvo na nuvem!');
   }catch(e){if(registro.valido(ticket)){
     setBadge('offline','Erro');registro.mensagem('Não foi possível confirmar o salvamento. Seu texto foi mantido. Confira o histórico antes de alterar os campos; tentar novamente sem alterar o preenchimento não duplica esta tentativa.',true);console.error(e);
@@ -3853,6 +3867,8 @@ function abrirQuestionarioFamilia(aluno){
 }
 
 function renderCentralAluno(){
+  const totaisId=currentStudentId,totaisUid=professorUid;
+  window.AlunoTotais.render({db,uid:totaisUid,alunoId:totaisId,registros:currentEntries,status:centralRegistrosStatus,vigente:()=>currentStudentId===totaisId&&professorUid===totaisUid&&auth.currentUser?.uid===totaisUid});
   const entryStudent=currentStudentId,entryUid=professorUid;
   window.RegistroAssistido.ativar(entryUid?{alunoId:entryStudent,uid:entryUid,vigente:()=>currentStudentId===entryStudent&&professorUid===entryUid}:null);
   const shareId=currentStudentId,shareUid=professorUid;
