@@ -37,7 +37,7 @@ def validar(pasta):
     if faltantes:raise ValueError('Referências locais ausentes: '+repr(faltantes))
 
 def main():
-    p=argparse.ArgumentParser();p.add_argument('destino',type=Path);p.add_argument('zip',type=Path);p.add_argument('--etapa',type=int,default=67);args=p.parse_args()
+    p=argparse.ArgumentParser();p.add_argument('destino',type=Path);p.add_argument('zip',type=Path);p.add_argument('--etapa',type=int,default=68);args=p.parse_args()
     destino=args.destino.resolve();arquivo_zip=args.zip.resolve()
     if destino==ROOT or destino.is_relative_to(ROOT):raise ValueError('Use uma pasta nova fora do repositório de fonte.')
     if destino.exists() and any(destino.iterdir()):raise ValueError('A pasta de destino precisa estar vazia ou não existir.')
@@ -319,6 +319,14 @@ serviços externos de IA ou a configuração remota atual de todos os serviços.
         texto=texto[:inicio]+'ETAPA 67 — CORREÇÃO DA LOGO EM EXPORTAÇÕES ANTIGAS\nO passo final da exportação HTML incorpora a logo municipal local mesmo se o conteúdo salvo não a possui.\nCorrige especialmente o PEI antigo/importado, pela ficha e por Exportar Documentos. Logos municipais reconhecidas são substituídas pela cópia local, evitando duplicação ou URL externa quebrada.\nPAEE, Diagnóstica, Histórico, Questionário da família, relatório de Frequência e Relatório mantêm os geradores com logo incorporada.\nDOCX e ODT: logo centralizada no início do corpo, sem cabeçalho repetido. A correção não regrava documentos no banco.\nPacote cumulativo, com data final de emissão, menu lateral e avisos do chat. Sem novas regras Firebase.\nPublique a pasta completa com index.html no Netlify, aguarde Published e use Ctrl + Shift + R antes de exportar um arquivo novo. Arquivos baixados anteriormente não mudam.\n\n'+texto[fim:]
         guia.write_text(texto)
         (destino/'PERMISSOES-ASSINATURAS-FIRESTORE.txt').write_text('ETAPA 67: nenhuma nova regra de Firebase. Guia apenas para quem ainda não habilitou a biblioteca.\n\n'+(ROOT/'producao'/'GUIA-ASSINATURAS-FIRESTORE.txt').read_text())
+    if args.etapa == 68:
+        guia=destino/'LEIA-ME-PUBLICACAO.txt'
+        texto=guia.read_text()
+        inicio=texto.index('ATENÇÃO — QUESTIONÁRIO DA FAMÍLIA')
+        fim=texto.index('PARA PUBLICAR',inicio)
+        texto=texto[:inicio]+'ETAPA 68 — VOLTAR ALUNOS NO MENU\nNovo botão Voltar Alunos abaixo dos atalhos de Nesta ficha, mantendo o botão Voltar superior.\nUsa a mesma ação original e preserva a confirmação de rascunho não salvo. No celular fica dentro do menu recolhível.\nPacote cumulativo: correção das logos, data de emissão, frequência anual, menu lateral e avisos do chat estão incluídos.\nSem novas regras Firebase. Publique a pasta com index.html no Netlify, aguarde Published e atualize com Ctrl + Shift + R.\n\n'+texto[fim:]
+        guia.write_text(texto)
+        (destino/'PERMISSOES-ASSINATURAS-FIRESTORE.txt').write_text('ETAPA 68: nenhuma nova regra de Firebase. Guia apenas para quem ainda não habilitou a biblioteca.\n\n'+(ROOT/'producao'/'GUIA-ASSINATURAS-FIRESTORE.txt').read_text())
     guia=destino/'LEIA-ME-PUBLICACAO.txt'
     guia.write_text(guia.read_text().replace('até a etapa 33.',f'até a etapa {args.etapa}.'))
     if args.etapa >= 57:
