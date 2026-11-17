@@ -36,6 +36,7 @@
   let respostaSelecionada=null,referenciaVersao=0,referenciaPendente=false;
   let apagando=new Set(),antigasGrupos=[],antigasObservadas=new Set(),mensagemDestacada=null;
   let notificacaoTimer=null,notificacaoVersao=0,notificacaoPronta=false,notificacaoLimite=0,notificacaoConhecidas=new Set(),notificacaoPendentes=new Set();
+  const avisosNavegador=ChatNotificacoesNavegador.criar({auth,cabecalho:widget.querySelector('.chat-cabecalho'),abrirChat:()=>{limparNotificacao();toggle(true);}});
   function limparNotificacao(){notificacaoVersao++;clearTimeout(notificacaoTimer);notificacaoTimer=null;notificacaoPendentes.clear();notificacao.hidden=true;el('chatNotificacaoTitulo').textContent='';el('chatNotificacaoAutor').textContent='';el('chatNotificacaoTexto').textContent='';}
   function preencherNotificacao(){const validas=[...notificacaoPendentes].map(id=>messages.get(id)).filter(m=>m&&!m.apagada&&!m._indisponivel&&m.autorUid!==user?.uid).sort((a,b)=>millis(b)-millis(a)||b.id.localeCompare(a.id));notificacaoPendentes=new Set(validas.map(m=>m.id));if(!validas.length){limparNotificacao();return;}const message=validas[0];el('chatNotificacaoTitulo').textContent=validas.length>1?validas.length+' novas mensagens no chat':'Nova mensagem no chat';el('chatNotificacaoAutor').textContent=Array.from(String(message.autorNome||message.autorEmail||'Equipe')).slice(0,120).join('');el('chatNotificacaoTexto').textContent=Array.from(String(textoMensagem(message)).replace(/\s+/g,' ').trim()).slice(0,140).join('');}
   function avisarNovasMensagens(snapshot,recebidas){
@@ -43,7 +44,9 @@
     if(snapshot.metadata?.fromCache||snapshot.metadata?.hasPendingWrites)return;
     if(!notificacaoPronta){notificacaoPronta=true;notificacaoLimite=Math.max(0,...recebidas.map(millis));recebidas.forEach(m=>notificacaoConhecidas.add(m.id));return;}
     const novas=recebidas.filter(m=>!notificacaoConhecidas.has(m.id)&&!m.apagada&&!m._indisponivel&&m.autorUid!==user?.uid&&millis(m)>notificacaoLimite);recebidas.forEach(m=>notificacaoConhecidas.add(m.id));
-    if(!novas.length||!user||auth.currentUser?.uid!==user.uid||document.visibilityState!=='visible'||(opened&&pertoDoFim()))return;
+    if(!novas.length||!user||auth.currentUser?.uid!==user.uid)return;
+    if(document.visibilityState!=='visible'||!document.hasFocus()){avisosNavegador.avisar(novas);return;}
+    if(opened&&pertoDoFim())return;
     novas.forEach(m=>notificacaoPendentes.add(m.id));preencherNotificacao();notificacao.hidden=false;clearTimeout(notificacaoTimer);const current=epoch,versao=++notificacaoVersao;notificacaoTimer=setTimeout(()=>{if(current===epoch&&versao===notificacaoVersao)limparNotificacao();},3000);
   }
   el('chatNotificacaoFechar').addEventListener('click',limparNotificacao);
@@ -226,7 +229,7 @@
     el('chatLeituras').hidden = true; el('chatLeiturasLista').replaceChildren(); el('chatLeiturasStatus').textContent = '';
   }
   async function recordRead(message, current) {
-    if (!user || emojiPicker.open || message.apagada || message._indisponivel || current !== epoch || !opened || document.visibilityState !== 'visible' || !millis(message)) return;
+    if (!user || emojiPicker.open || message.apagada || message._indisponivel || current !== epoch || !opened || document.visibilityState !== 'visible' || !document.hasFocus() || !millis(message)) return;
     lastRead = Math.max(lastRead,millis(message));
     try { localStorage.setItem(key(),String(lastRead)); } catch (_) {}
     unread();
@@ -246,7 +249,7 @@
   }
   function markRead() {
     stopReadTracking();
-    if (!user || !opened || emojiPicker.open || document.visibilityState !== 'visible') return;
+    if (!user || !opened || emojiPicker.open || document.visibilityState !== 'visible' || !document.hasFocus()) return;
     const current = epoch;
     observer = new IntersectionObserver(entries => {
       entries.forEach(entry => {
@@ -341,6 +344,7 @@
   el('chatMensagens').addEventListener('scroll',()=>{if(pertoDoFim()){novasPendentes.clear();atualizarNovas();}clearTimeout(readScanTimer);readScanTimer=setTimeout(markRead,80);},{passive:true});
   widget.addEventListener('keydown', event => { if(event.key==='Escape'&&emojiPicker.open){event.preventDefault();emojiPicker.open=false;el('chatTexto').focus();return;} if (event.key === 'Escape' && opened) { toggle(false); el('chatAbrir').focus(); } });
   document.addEventListener('visibilitychange', markRead);
+  window.addEventListener('blur',stopReadTracking);window.addEventListener('focus',markRead);
   el('chatHistorico').addEventListener('click', async () => {
     if (!user || !cursor || loading || !more) return;
     const current = epoch;
@@ -378,7 +382,7 @@
     finally { if (current === epoch) { sending = false;anexos.bloqueado(false);atualizarResposta();atualizarEmojis();el('chatEnviar').disabled = false;el('chatTexto').disabled = false;render(); } }
   });
   auth.onAuthStateChanged(next => {
-    epoch++;limparNotificacao();notificacaoPronta=false;notificacaoLimite=0;notificacaoConhecidas=new Set();anexos.limpar();pararAntigas();apagando=new Set();mensagemDestacada=null;emojiPicker.open=false;respostaSelecionada=null;referenciaVersao++;referenciaPendente=false;novasPendentes.clear();recebeuSnapshot=false;widget.classList.remove('chat-ampliado');el('chatAmpliar').textContent='Ampliar';el('chatAmpliar').setAttribute('aria-label','Ampliar painel do chat');el('chatAmpliar').setAttribute('aria-pressed','false');el('chatNovas').hidden=true;stopReadTracking(); closeReceipts(); acknowledged=new Set(); el('chatOnlineLista').replaceChildren(); el('chatOnlineTotal').textContent='';el('chatOnlineTotal').hidden=true;el('chatOnlineRotulo').textContent='Presença indisponível';el('chatPresencaStatus').textContent='Não é possível confirmar quem está online agora.'; if (unsubscribe) unsubscribe(); unsubscribe = null;
+    epoch++;avisosNavegador.definirUsuario(next);limparNotificacao();notificacaoPronta=false;notificacaoLimite=0;notificacaoConhecidas=new Set();anexos.limpar();pararAntigas();apagando=new Set();mensagemDestacada=null;emojiPicker.open=false;respostaSelecionada=null;referenciaVersao++;referenciaPendente=false;novasPendentes.clear();recebeuSnapshot=false;widget.classList.remove('chat-ampliado');el('chatAmpliar').textContent='Ampliar';el('chatAmpliar').setAttribute('aria-label','Ampliar painel do chat');el('chatAmpliar').setAttribute('aria-pressed','false');el('chatNovas').hidden=true;stopReadTracking(); closeReceipts(); acknowledged=new Set(); el('chatOnlineLista').replaceChildren(); el('chatOnlineTotal').textContent='';el('chatOnlineTotal').hidden=true;el('chatOnlineRotulo').textContent='Presença indisponível';el('chatPresencaStatus').textContent='Não é possível confirmar quem está online agora.'; if (unsubscribe) unsubscribe(); unsubscribe = null;
     user = next; messages = new Map(); latest = []; cursor = null; more = false; historyLoaded = false; opened = false; sending = false; loading = false; pendingSend = null;
     el('chatMensagens').replaceChildren();atualizarResposta();atualizarEmojis();limparBusca(true); el('chatTexto').value = ''; el('chatTexto').disabled = false; el('chatEnviar').disabled = false; el('chatHistorico').disabled = false; el('chatNaoLidas').hidden = true; el('chatPainel').hidden = true; el('chatAbrir').setAttribute('aria-expanded','false'); status(''); widget.hidden = !next;
     if (user) { try { lastRead = Number(localStorage.getItem(key())) || 0; } catch (_) { lastRead = 0; } unread(); listen(); }

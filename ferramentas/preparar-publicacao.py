@@ -37,7 +37,7 @@ def validar(pasta):
     if faltantes:raise ValueError('Referências locais ausentes: '+repr(faltantes))
 
 def main():
-    p=argparse.ArgumentParser();p.add_argument('destino',type=Path);p.add_argument('zip',type=Path);p.add_argument('--etapa',type=int,default=58);args=p.parse_args()
+    p=argparse.ArgumentParser();p.add_argument('destino',type=Path);p.add_argument('zip',type=Path);p.add_argument('--etapa',type=int,default=59);args=p.parse_args()
     destino=args.destino.resolve();arquivo_zip=args.zip.resolve()
     if destino==ROOT or destino.is_relative_to(ROOT):raise ValueError('Use uma pasta nova fora do repositório de fonte.')
     if destino.exists() and any(destino.iterdir()):raise ValueError('A pasta de destino precisa estar vazia ou não existir.')
@@ -247,6 +247,14 @@ serviços externos de IA ou a configuração remota atual de todos os serviços.
         guia.write_text(texto)
         nota='ETAPA 58: não há nova alteração de Firebase. Quem já publicou as permissões das assinaturas não precisa repeti-las. O guia abaixo é apenas para quem ainda não habilitou a biblioteca.\n\n'
         (destino/'PERMISSOES-ASSINATURAS-FIRESTORE.txt').write_text(nota+(ROOT/'producao'/'GUIA-ASSINATURAS-FIRESTORE.txt').read_text().replace('etapa 55.','etapa 58.'))
+    if args.etapa == 59:
+        guia=destino/'LEIA-ME-PUBLICACAO.txt'
+        texto=guia.read_text()
+        inicio=texto.index('ATENÇÃO — QUESTIONÁRIO DA FAMÍLIA')
+        fim=texto.index('PARA PUBLICAR',inicio)
+        texto=texto[:inicio]+'ETAPA 59 — NOTIFICAÇÕES DO NAVEGADOR\nNo chat, clique em 🔔 → Ativar notificações → Permitir. Cada professor ativa para sua conta e navegador.\nAvisa novas mensagens em outra aba ou programa enquanto o Diário permanecer aberto, conectado e com sessão ativa.\nNão envia notificações com o site ou navegador fechado. A duração do aviso é controlada pelo navegador e sistema.\nO aviso externo não mostra nomes nem texto da conversa; clicar abre o chat. No site, permanece o aviso de 3 segundos.\nNão requer novas regras de Firebase. Pacote cumulativo com todas as melhorias anteriores.\nPublique a pasta completa no Netlify, aguarde Published e use Ctrl + Shift + R.\n\n'+texto[fim:]
+        guia.write_text(texto)
+        (destino/'PERMISSOES-ASSINATURAS-FIRESTORE.txt').write_text('ETAPA 59: nenhuma nova regra de Firebase. Guia apenas para quem ainda não habilitou a biblioteca.\n\n'+(ROOT/'producao'/'GUIA-ASSINATURAS-FIRESTORE.txt').read_text())
     guia=destino/'LEIA-ME-PUBLICACAO.txt'
     guia.write_text(guia.read_text().replace('até a etapa 33.',f'até a etapa {args.etapa}.'))
     if args.etapa >= 57:
