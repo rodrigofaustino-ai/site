@@ -32,7 +32,7 @@ const mock=source.slice(source.indexOf('function mock(){'),source.indexOf('\n(as
  await page.evaluate(()=>{__test.deny=false;__test.store['frequenciaSemanas/s1'].status['aluno-a__Segunda']='justificado';});
  await p.click();await page.waitForFunction(()=>document.querySelector('#agendaFrequenciaStatus').textContent.includes('outra aba'));
  check(await page.evaluate(()=>__test.store['frequenciaSemanas/s1'].status['aluno-a__Segunda']),'justificado');
- await p.click();await page.waitForFunction(()=>document.querySelector('#agendaFrequenciaStatus').textContent.startsWith('Frequência salva'));
+ page.once('dialog',d=>d.accept());await p.click();await page.waitForFunction(()=>document.querySelector('#agendaFrequenciaStatus').textContent.startsWith('Frequência salva'));
  check(await page.evaluate(()=>__test.store['frequenciaSemanas/s1'].status['aluno-a__Segunda']),'presente');
  await page.evaluate(async()=>{await renderFrequencia();});
  check(await page.locator('.freq-week-label').first().inputValue(),'26/10\na\n30/10');
@@ -43,9 +43,9 @@ const mock=source.slice(source.indexOf('function mock(){'),source.indexOf('\n(as
  await page.locator('#agendaData').fill('2026-11-02');await page.waitForFunction(()=>document.querySelector('#agendaFrequenciaStatus').textContent.includes('Não há semana'));check(await p.isDisabled(),true);
  await page.evaluate(()=>{delete __test.store['frequenciaSemanas/s2'];});await page.locator('#agendaData').fill('2026-10-26');await page.waitForFunction(()=>!document.querySelector('.agenda-marca.presente').disabled);
 
- for(const [label,value]of [['Falta','falta'],['Justificado','justificado']]){await page.getByRole('button',{name:label+' · Bruno fictício',exact:true}).click();await page.waitForFunction(()=>document.querySelector('#agendaFrequenciaStatus').textContent.startsWith('Frequência salva'));check(await page.evaluate(()=>__test.store['frequenciaSemanas/s1'].status['aluno-b__Segunda']),value);}
+ for(const [label,value]of [['Falta','falta'],['Falta justificada','justificado']]){if(value==='justificado')page.once('dialog',d=>d.accept());await page.getByRole('button',{name:label+' · Bruno fictício',exact:true}).click();await page.waitForFunction(()=>document.querySelector('#agendaFrequenciaStatus').textContent.startsWith('Frequência e histórico salvos'));check(await page.evaluate(()=>__test.store['frequenciaSemanas/s1'].status['aluno-b__Segunda']),value);}
  await page.evaluate(()=>{__test.store['alunos/aluno-b'].professorUid='outra';});
- await page.getByRole('button',{name:'Sem atendimento pedagógico · 1º Horário',exact:true}).click();await page.waitForFunction(()=>document.querySelector('#agendaFrequenciaStatus').textContent.includes('cadastro'));
+ page.once('dialog',d=>d.accept());await page.getByRole('button',{name:'Sem atendimento pedagógico · 1º Horário',exact:true}).click();await page.waitForFunction(()=>document.querySelector('#agendaFrequenciaStatus').textContent.includes('cadastro'));
  check(await page.evaluate(()=>__test.store['frequenciaSemanas/s1'].status['aluno-a__Segunda']),'presente');check(await page.evaluate(()=>__test.store['frequenciaSemanas/s1'].status['aluno-b__Segunda']),'justificado');
  await page.evaluate(()=>{__test.store['alunos/aluno-b'].professorUid='a';});
  for(const width of [1440,390,320]){await page.setViewportSize({width,height:1000});check(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);await page.locator('#agendaDia').screenshot({path:'/tmp/site-results/agenda-frequencia-'+width+'.png'});}

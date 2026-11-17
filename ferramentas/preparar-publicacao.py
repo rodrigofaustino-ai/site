@@ -37,7 +37,7 @@ def validar(pasta):
     if faltantes:raise ValueError('Referências locais ausentes: '+repr(faltantes))
 
 def main():
-    p=argparse.ArgumentParser();p.add_argument('destino',type=Path);p.add_argument('zip',type=Path);p.add_argument('--etapa',type=int,default=60);args=p.parse_args()
+    p=argparse.ArgumentParser();p.add_argument('destino',type=Path);p.add_argument('zip',type=Path);p.add_argument('--etapa',type=int,default=61);args=p.parse_args()
     destino=args.destino.resolve();arquivo_zip=args.zip.resolve()
     if destino==ROOT or destino.is_relative_to(ROOT):raise ValueError('Use uma pasta nova fora do repositório de fonte.')
     if destino.exists() and any(destino.iterdir()):raise ValueError('A pasta de destino precisa estar vazia ou não existir.')
@@ -263,6 +263,14 @@ serviços externos de IA ou a configuração remota atual de todos os serviços.
         texto=texto[:inicio]+'ETAPA 60 — TOTAIS DO ALUNO E ATALHOS DE FALTA\nNa identificação, ao lado do turno, consulte Atendimentos previstos/ofertados, Faltas (F) e Justificadas (J).\nO total ofertado corresponde aos relatos salvos, inclusive faltas e justificadas. F/J são contados por data na Frequência, em todos os turnos.\nUse Selecionar período para aplicar duas datas ou voltar a Todo o histórico. Atualizar faltas refaz a consulta.\nAo lado do título do relato, Falta e Falta justificada preenchem o texto, sem salvar automaticamente. Atendimento desmarca o tipo sem apagar o texto.\nAo salvar F/J, o relato e a Frequência são gravados juntos. Semana ausente, sobreposta ou alterada exige conferência antes de salvar.\nTexto existente e marcação diferente pedem confirmação para substituir. Não altera relatos antigos nem a regra das exportações.\nInclui notificações do navegador: Chat → sino → Ativar notificações → Permitir. O Diário precisa permanecer aberto e conectado.\nNão requer novas regras de Firebase. Pacote cumulativo com todas as melhorias anteriores.\nPublique a pasta completa no Netlify, aguarde Published e use Ctrl + Shift + R.\n\n'+texto[fim:]
         guia.write_text(texto)
         (destino/'PERMISSOES-ASSINATURAS-FIRESTORE.txt').write_text('ETAPA 60: nenhuma nova regra de Firebase. Guia apenas para quem ainda não habilitou a biblioteca.\n\n'+(ROOT/'producao'/'GUIA-ASSINATURAS-FIRESTORE.txt').read_text())
+    if args.etapa == 61:
+        guia=destino/'LEIA-ME-PUBLICACAO.txt'
+        texto=guia.read_text()
+        inicio=texto.index('ATENÇÃO — QUESTIONÁRIO DA FAMÍLIA')
+        fim=texto.index('PARA PUBLICAR',inicio)
+        texto=texto[:inicio]+'ETAPA 61 — FJ E HISTÓRICO AUTOMÁTICO NA AGENDA\nAlunos do Dia e Frequência usam P = Presente, F = Falta e FJ = Falta justificada. Sem atendimento pedagógico permanece.\nFJ substitui visualmente o antigo J; os dados existentes são preservados.\nNa agenda, F/FJ gravam a Frequência e um relato de ausência na data selecionada, em uma única transação.\nCliques repetidos e dois horários no mesmo dia não duplicam o registro automático. A ficha usa o mesmo registro de ausência.\nCorrigir F para FJ atualiza esse registro; P/SAP podem removê-lo após confirmação. Relatos com texto próprio são protegidos.\nMantém os totais previstos/ofertados com faltas incluídas, o filtro por período, assinaturas e notificações do navegador.\nNão requer novas regras de Firebase. Pacote cumulativo com todas as melhorias anteriores.\nExtraia o ZIP, publique a pasta que contém index.html no Netlify, aguarde Published e use Ctrl + Shift + R.\n\n'+texto[fim:]
+        guia.write_text(texto)
+        (destino/'PERMISSOES-ASSINATURAS-FIRESTORE.txt').write_text('ETAPA 61: nenhuma nova regra de Firebase. Guia apenas para quem ainda não habilitou a biblioteca.\n\n'+(ROOT/'producao'/'GUIA-ASSINATURAS-FIRESTORE.txt').read_text())
     guia=destino/'LEIA-ME-PUBLICACAO.txt'
     guia.write_text(guia.read_text().replace('até a etapa 33.',f'até a etapa {args.etapa}.'))
     if args.etapa >= 57:

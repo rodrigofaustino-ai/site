@@ -58,8 +58,9 @@
   function assinatura(d){return JSON.stringify({date:d.date,text:d.text,humor:d.humor||'',por:d.por||'',tipoRegistro:d.tipoRegistro||'',proximoPasso:d.proximoPasso||'',createdAt:d.createdAt,
     metaIds:Array.isArray(d.metaIds)?d.metaIds:[],metaVinculos:Array.isArray(d.metaVinculos)?d.metaVinculos.map(m=>({id:m.id,objetivo:m.objetivo,revision:m.revision||0})):[]});}
   function preparar(payload){
+    if(window.RegistroAusencia?.tipo(payload.tipoRegistro))payload={...payload,origem:'registro_ausencia'};
     const base={...payload,createdAt:''},fingerprint=assinatura(base);
-    if(!tentativa||tentativa.fingerprint!==fingerprint)tentativa={id:crypto.randomUUID(),payload:{...payload,createdAt:new Date().toISOString()},fingerprint};
+    if(!tentativa||tentativa.fingerprint!==fingerprint)tentativa={id:window.RegistroAusencia?.tipo(payload.tipoRegistro)?RegistroAusencia.id(payload.date):crypto.randomUUID(),payload:{...payload,createdAt:new Date().toISOString()},fingerprint};
     return {id:tentativa.id,payload:JSON.parse(JSON.stringify(tentativa.payload)),generation};
   }
   async function salvarBanco({db,alunoId,uid,ticket,vigente,frequencia=null}){
@@ -69,7 +70,7 @@
       const [student,previous,week]=await Promise.all([tx.get(parent),tx.get(ref),freqRef?tx.get(freqRef):null]);
       if(!vigente())throw new Error('O aluno ou a conta mudou. Reabra a ficha antes de salvar.');
       if(!student.exists||student.data().professorUid!==uid)throw new Error('O cadastro não pertence à conta atual.');
-      if(previous.exists){if(assinatura(previous.data())!==assinatura(ticket.payload))throw new Error('O registro desta tentativa mudou. Confira o histórico antes de salvar novamente.');}
+      if(previous.exists){if(assinatura(previous.data())!==assinatura(ticket.payload)&&!(window.RegistroAusencia?.automatico(previous.data())&&ticket.payload.origem==='registro_ausencia'))throw new Error('O registro desta tentativa mudou. Confira o histórico antes de salvar novamente.');}
       if(frequencia){
         const s=week?.exists?week.data():null;
         if(!s||s.professorUid!==uid||(s.turno&&s.turno!==frequencia.turno)||s.dataInicio!==frequencia.inicio||(s.dataFim||'')!==frequencia.fim||!AgendaFrequencia.corresponde(s,frequencia.data))throw Error('A semana de frequência mudou. Confira a Frequência e tente novamente.');
@@ -77,7 +78,7 @@
         if(atual.value!==frequencia.status&&(atual.value!==frequencia.anterior.value||atual.fonte!==frequencia.anterior.fonte))throw Error('A marcação de frequência mudou. Confira e tente novamente.');
         tx.update(freqRef,{status:{...(s.status||{}),[alunoId+'__'+frequencia.dia]:frequencia.status}});
       }
-      if(!previous.exists)tx.set(ref,ticket.payload);
+      if(!previous.exists||ticket.payload.origem==='registro_ausencia')tx.set(ref,ticket.payload);
       const last=student.data().ultimoRegistro;
       if(!dataValida(last)||last<date)tx.update(parent,{ultimoRegistro:date});
     });

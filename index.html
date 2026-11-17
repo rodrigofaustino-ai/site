@@ -511,7 +511,7 @@ hr.sep{border:none;border-top:2px dashed rgba(0,0,0,.06);margin:.2rem 0;}
 <script src="acompanhamento-periodo.js"></script>
 <script src="metas-aluno.js"></script>
 <link rel="stylesheet" href="frequencia-interface.css">
-<script src="frequencia-interface.js"></script><script src="aluno-totais.js"></script><script src="registro-falta.js"></script><link rel="stylesheet" href="aluno-totais.css">
+<script src="frequencia-interface.js"></script><script src="aluno-totais.js"></script><script src="registro-ausencia.js"></script><script src="registro-falta.js"></script><link rel="stylesheet" href="aluno-totais.css">
 <script src="resumo-frequencia.js"></script>
 <link rel="stylesheet" href="resumo-periodo.css">
 <link rel="stylesheet" href="registro-assistido.css">
@@ -674,11 +674,11 @@ hr.sep{border:none;border-top:2px dashed rgba(0,0,0,.06);margin:.2rem 0;}
         <div class="section-head"><div class="section-badge" style="background:var(--teal-l)">✅</div>Controle de Frequência</div>
         <div class="freq-toolbar">
           <div>
-            <span class="ai-hint">Clique numa célula para marcar Presente, Falta, Justificado ou Sem Atend. Pedagógico</span>
+            <span class="ai-hint">Clique numa célula para marcar Presente, Falta, Falta justificada ou Sem Atend. Pedagógico</span>
             <div class="freq-legenda">
               <span><span class="freq-badge presente">✅ P</span> Presente</span>
               <span><span class="freq-badge falta">❌ F</span> Falta</span>
-              <span><span class="freq-badge justificado">📄 J</span> Justificado</span>
+              <span><span class="freq-badge justificado">📄 FJ</span> Falta justificada</span>
               <span><span class="freq-badge sem_atend">⛔ SAP</span> Sem Atend. Pedagógico</span>
             </div>
           </div>
@@ -1977,7 +1977,7 @@ async function renderGrade(){
 const FREQ_STATUS={
   presente:{label:'Presente', abbr:'P', emoji:'✅'},
   falta:{label:'Falta', abbr:'F', emoji:'❌'},
-  justificado:{label:'Justificado', abbr:'J', emoji:'📄'},
+  justificado:{label:'Falta justificada', abbr:'FJ', emoji:'📄'},
   sem_atend:{label:'Sem Atend. Pedagógico', abbr:'SAP', emoji:'⛔'}
 };
 function limparFrequencia(){
@@ -2187,7 +2187,7 @@ function abrirModalRelatorioFreq(){
       <div class="field"><label for="freqRelDe">De</label><input type="date" id="freqRelDe" value="${de}"></div>
       <div class="field"><label for="freqRelAte">Até</label><input type="date" id="freqRelAte" value="${hoje}"></div>
     </div>
-    <p class="ai-hint">O resumo diário separa registros semanais antigos. Percentual: P ÷ (P + F + J), como no cálculo anterior; SAP e campos sem lançamento ficam fora do denominador.</p>
+    <p class="ai-hint">O resumo diário separa registros semanais antigos. Percentual: P ÷ (P + F + FJ), como no cálculo anterior; SAP e campos sem lançamento ficam fora do denominador.</p>
     <div style="display:flex;gap:.6rem;justify-content:flex-end;flex-wrap:wrap;margin-top:.3rem">
       <button class="back-btn" onclick="hideModal()">Cancelar</button>
       <button class="save-btn coral" style="background:linear-gradient(135deg,var(--orange),#e07a00);box-shadow:0 4px 14px rgba(255,154,60,.35)" onclick="gerarRelatorioFrequencia('docx')">📄 Gerar DOCX</button>
@@ -2256,12 +2256,12 @@ async function gerarRelatorioFrequencia(formato='docx'){
     function statusStyle(v){
       if(v==='P') return {text:'P',fill:'D4EDDA',color:'155724',bold:true};
       if(v==='F') return {text:'F',fill:'F8D7DA',color:'721C24',bold:true};
-      if(v==='J') return {text:'J',fill:'FFF3CD',color:'856404',bold:true};
+      if(v==='FJ') return {text:'FJ',fill:'FFF3CD',color:'856404',bold:true};
       if(v==='S') return {text:'S',fill:'E2E3E5',color:'383D41',bold:false};
       return {text:'—',fill:'FFFFFF',color:'AAAAAA',bold:false};
     }
 
-    const statusAbrev={presente:'P',falta:'F',justificado:'J',sem_atend:'S'};
+    const statusAbrev={presente:'P',falta:'F',justificado:'FJ',sem_atend:'S'};
 
     // Larguras: coluna Aluno fixa em ~6cm, semanas dividem o restante uniformemente
     const cm=n=>Math.round(n*566.93);
@@ -2377,7 +2377,7 @@ async function gerarRelatorioFrequencia(formato='docx'){
     children.push(new Paragraph({
       children:[
         new TextRun({text:'Legenda: ',bold:true,size:20,color:'586257'}),
-        new TextRun({text:'P = Presente   F = Falta   J = Justificado   S = Sem Atendimento Pedagógico   — = sem lançamento   ? = marcação não reconhecida',size:20,color:'586257',italics:true}),
+        new TextRun({text:'P = Presente   F = Falta   FJ = Falta justificada   S = Sem Atendimento Pedagógico   — = sem lançamento   ? = marcação não reconhecida',size:20,color:'586257',italics:true}),
       ],
       spacing:{before:60,after:40},
     }));
@@ -2477,13 +2477,13 @@ async function gerarRelatorioFrequencia(formato='docx'){
       layout:TableLayoutType.FIXED,
     }));
 
-    children.push(bp('Totais diários por aluno/dia/semana, sem duplicar horários no mesmo dia. Percentual diário = P / (P + F + J) × 100. Justificadas permanecem no denominador, como antes; SAP, campos sem lançamento e marcações não reconhecidas ficam fora. Registros semanais antigos e registros sem dia identificado não entram neste percentual.'));
+    children.push(bp('Totais diários por aluno/dia/semana, sem duplicar horários no mesmo dia. Percentual diário = P / (P + F + FJ) × 100. Justificadas permanecem no denominador, como antes; SAP, campos sem lançamento e marcações não reconhecidas ficam fora. Registros semanais antigos e registros sem dia identificado não entram neste percentual.'));
     children.push(bp('Período selecionado pela data de início das semanas cadastradas. Não são inferidas datas individuais de atendimento. Semanas sem data válida ficam fora da seleção.'));
     for(const a of alunos){
       const dados=apuracoes.get(a.id);
       for(const [key,title]of [['antigos','Registros semanais antigos (sem dia informado)'],['semDia','Registros sem dia identificado']]){
         const c=dados[key];if(!Object.values(c).some(Boolean))continue;
-        children.push(bp((a.nome||'Aluno')+' — '+title+': P '+c.presente+', F '+c.falta+', J '+c.justificado+', SAP '+c.sem_atend+', sem lançamento '+c.vazio+', não reconhecidos '+c.desconhecido+'. Não somados aos totais diários.'));
+        children.push(bp((a.nome||'Aluno')+' — '+title+': P '+c.presente+', F '+c.falta+', FJ '+c.justificado+', SAP '+c.sem_atend+', sem lançamento '+c.vazio+', não reconhecidos '+c.desconhecido+'. Não somados aos totais diários.'));
       }
       if(dados.diarios.desconhecido)children.push(bp((a.nome||'Aluno')+' — '+dados.diarios.desconhecido+' marcação(ões) diária(s) não reconhecida(s); confira os dados antes de usar os totais.'));
     }
@@ -3795,7 +3795,7 @@ async function saveEntry(){
     registro.bloquear(true);
     try{const sessao=await AgendaFrequencia.carregar(c,date);if(!c.vigente())return;
       const estado=FrequenciaInterface.estado(sessao.semana,studentId,sessao.dia),status=tipoRegistro;
-      if(estado.value!=null&&estado.value!==status&&!confirm('A Frequência já tem uma marcação nesta data. Substituir por '+(status==='falta'?'Falta (F)':'Justificada (J)')+' ao salvar o relato?'))return;
+      if(estado.value!=null&&estado.value!==status&&!confirm('A Frequência já tem uma marcação nesta data. Substituir por '+(status==='falta'?'Falta (F)':'Justificada (FJ)')+' ao salvar o relato?'))return;
       frequencia={semanaId:sessao.semana.id,data:date,dia:sessao.dia,status,anterior:estado,turno:c.turno,inicio:sessao.semana.dataInicio,fim:sessao.semana.dataFim||''};
     }catch(e){registro.mensagem(e.message,true);return;}finally{registro.bloquear(false);}
   }

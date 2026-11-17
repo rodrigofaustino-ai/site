@@ -2,7 +2,7 @@
 (() => {
   'use strict';
   const dias=['Segunda','Terça','Quinta','Sexta','Sem dia'];
-  const labels={presente:'Presente',falta:'Falta',justificado:'Justificado',sem_atend:'Sem atendimento pedagógico'};
+  const labels={presente:'Presente',falta:'Falta',justificado:'Falta justificada',sem_atend:'Sem atendimento pedagógico'};
   const inicial=()=>({busca:'',dia:'',modo:'todas',semanas:new Set(),ocultarVazios:true});
   let key=null,filtro=inicial();
   const n=(tag,text)=>{const el=document.createElement(tag);if(text!=null)el.textContent=text;return el;};

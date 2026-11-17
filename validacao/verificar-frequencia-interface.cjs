@@ -106,7 +106,7 @@ async function main(){
       const download=await promise;fs.mkdirSync('/tmp/site-results',{recursive:true});
       const file='/tmp/site-results/frequencia-revisada.'+formato;await download.saveAs(file);
       const zip=await JSZip.loadAsync(fs.readFileSync(file)),xml=await zip.file(formato==='docx'?'word/document.xml':'content.xml').async('string');
-      check(xml.includes('Segunda: P'),true);check(xml.includes('Quinta: J'),true);
+      check(xml.includes('Segunda: P'),true);check(xml.includes('Quinta: FJ'),true);
       check(xml.includes('Semanal antigo: P'),true);check(xml.includes('Bruno fictício'),false);
       check(xml.includes('SEMANA INVÁLIDA'),false);check(xml.includes('50%'),true);
       if(formato==='docx'){

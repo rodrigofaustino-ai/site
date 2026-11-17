@@ -1,7 +1,7 @@
 /* Frequência do aluno no resumo por período. Consulta explícita, sem gravações. */
 (() => {
   'use strict';
-  const labels={presente:'Presente',falta:'Falta',justificado:'Justificado',sem_atend:'Sem atendimento pedagógico',vazio:'Sem marcação (grade atual)',desconhecido:'Situação não reconhecida'};
+  const labels={presente:'Presente',falta:'Falta',justificado:'Falta justificada',sem_atend:'Sem atendimento pedagógico',vazio:'Sem marcação (grade atual)',desconhecido:'Situação não reconhecida'};
   let key=null,config=null,root=null,periodo=null,semanas=null,busy=false,falha=false,consultado='',generation=0;
   const n=(tag,text)=>{const el=document.createElement(tag);if(text!=null)el.textContent=text;return el;};
   function limpar(){generation++;key=null;config=null;root=null;periodo=null;semanas=null;busy=false;falha=false;consultado='';}
