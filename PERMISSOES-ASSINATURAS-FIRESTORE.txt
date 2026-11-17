@@ -1,3 +1,5 @@
+ETAPA 68: nenhuma nova regra de Firebase. Guia apenas para quem ainda não habilitou a biblioteca.
+
 ASSINATURAS — ATUALIZAÇÃO ÚNICA DAS PERMISSÕES
 
 Este pacote reúne todas as melhorias até a etapa 55. Nada foi aplicado pelo assistente.
