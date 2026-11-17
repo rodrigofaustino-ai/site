@@ -37,7 +37,7 @@ def validar(pasta):
     if faltantes:raise ValueError('Referências locais ausentes: '+repr(faltantes))
 
 def main():
-    p=argparse.ArgumentParser();p.add_argument('destino',type=Path);p.add_argument('zip',type=Path);p.add_argument('--etapa',type=int,default=66);args=p.parse_args()
+    p=argparse.ArgumentParser();p.add_argument('destino',type=Path);p.add_argument('zip',type=Path);p.add_argument('--etapa',type=int,default=67);args=p.parse_args()
     destino=args.destino.resolve();arquivo_zip=args.zip.resolve()
     if destino==ROOT or destino.is_relative_to(ROOT):raise ValueError('Use uma pasta nova fora do repositório de fonte.')
     if destino.exists() and any(destino.iterdir()):raise ValueError('A pasta de destino precisa estar vazia ou não existir.')
@@ -311,6 +311,14 @@ serviços externos de IA ou a configuração remota atual de todos os serviços.
         texto=texto[:inicio]+'ETAPA 66 — LOGO NOS DOCUMENTOS\nPAEE, Diagnóstica, Histórico de atendimentos, Questionário da família e relatório de Frequência recebem a logo municipal centralizada no início, somente na primeira página.\nPEI e Relatório mantêm a logo, sem duplicação. DOCX e ODT incorporam a imagem no próprio arquivo.\nA logo não altera o formulário, os dados salvos ou as assinaturas. Mantém a data final de emissão atual, preservando todas as demais datas.\nPacote cumulativo com menu lateral, ficha compacta, frequência anual no Relatório e avisos do chat.\nSem novas regras Firebase. Extraia o ZIP e publique a pasta inteira com index.html no Netlify, aguarde Published e use Ctrl + Shift + R.\n\n'+texto[fim:]
         guia.write_text(texto)
         (destino/'PERMISSOES-ASSINATURAS-FIRESTORE.txt').write_text('ETAPA 66: nenhuma nova regra de Firebase. Guia apenas para quem ainda não habilitou a biblioteca.\n\n'+(ROOT/'producao'/'GUIA-ASSINATURAS-FIRESTORE.txt').read_text())
+    if args.etapa == 67:
+        guia=destino/'LEIA-ME-PUBLICACAO.txt'
+        texto=guia.read_text()
+        inicio=texto.index('ATENÇÃO — QUESTIONÁRIO DA FAMÍLIA')
+        fim=texto.index('PARA PUBLICAR',inicio)
+        texto=texto[:inicio]+'ETAPA 67 — CORREÇÃO DA LOGO EM EXPORTAÇÕES ANTIGAS\nO passo final da exportação HTML incorpora a logo municipal local mesmo se o conteúdo salvo não a possui.\nCorrige especialmente o PEI antigo/importado, pela ficha e por Exportar Documentos. Logos municipais reconhecidas são substituídas pela cópia local, evitando duplicação ou URL externa quebrada.\nPAEE, Diagnóstica, Histórico, Questionário da família, relatório de Frequência e Relatório mantêm os geradores com logo incorporada.\nDOCX e ODT: logo centralizada no início do corpo, sem cabeçalho repetido. A correção não regrava documentos no banco.\nPacote cumulativo, com data final de emissão, menu lateral e avisos do chat. Sem novas regras Firebase.\nPublique a pasta completa com index.html no Netlify, aguarde Published e use Ctrl + Shift + R antes de exportar um arquivo novo. Arquivos baixados anteriormente não mudam.\n\n'+texto[fim:]
+        guia.write_text(texto)
+        (destino/'PERMISSOES-ASSINATURAS-FIRESTORE.txt').write_text('ETAPA 67: nenhuma nova regra de Firebase. Guia apenas para quem ainda não habilitou a biblioteca.\n\n'+(ROOT/'producao'/'GUIA-ASSINATURAS-FIRESTORE.txt').read_text())
     guia=destino/'LEIA-ME-PUBLICACAO.txt'
     guia.write_text(guia.read_text().replace('até a etapa 33.',f'até a etapa {args.etapa}.'))
     if args.etapa >= 57:

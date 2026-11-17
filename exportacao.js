@@ -170,6 +170,16 @@
   }
   async function fromHtml(html, format, filename) {
     const root = clean(html);
+    if (!root.textContent.trim() && !root.querySelector('img')) throw new Error('O documento está vazio.');
+    // PEIs antigos e importados podem não conter imagem ou apontar para uma URL externa.
+    // A cópia exportada sempre recebe o recurso local, independentemente do HTML salvo.
+    const cabecalho=clean(await cabecalhoHtml()),logo=cabecalho.querySelector('img').getAttribute('src');
+    for(const img of [...root.querySelectorAll('img')]){
+      if(img.getAttribute('src')===logo||/prefeitura municipal/i.test(img.alt||'')||img.closest('[data-srm-logo-primeira]')){
+        const p=img.closest('p');img.remove();if(p&&!p.textContent.trim()&&!p.querySelector('img,table'))p.remove();
+      }
+    }
+    root.prepend(cabecalho.firstElementChild);
     window.AssinaturasDocumentos?.datarHtml(root);
     for(const img of root.querySelectorAll('img[alt*="Prefeitura Municipal"]')){if(!img.closest('p')){const p=document.createElement('p');img.replaceWith(p);p.append(img);}img.closest('p').setAttribute('data-srm-logo-primeira','true');}
     await Promise.all(Array.from(root.querySelectorAll('img')).map(async img => {
