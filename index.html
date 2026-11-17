@@ -551,6 +551,7 @@ hr.sep{border:none;border-top:2px dashed rgba(0,0,0,.06);margin:.2rem 0;}
 <script src="estatisticas-modelo.js"></script>
 <script src="estatisticas.js"></script>
 <link rel="stylesheet" href="ia-campos.css">
+<link rel="stylesheet" href="perfil-compacto.css">
 </head>
 <body data-ia-pagina="index.html">
 <nav class="colaboracao-entrada" aria-label="Compartilhamento"><a class="central-btn" href="colaboracao.html">Conteúdos compartilhados comigo</a></nav>
@@ -851,14 +852,10 @@ hr.sep{border:none;border-top:2px dashed rgba(0,0,0,.06);margin:.2rem 0;}
     </div>
     <div class="topbar" style="background:linear-gradient(135deg,var(--coral),#c0392b)">
       <div class="topbar-icon">⭐</div>
-      <div><h1 id="profileTitle">Informações do Aluno</h1><p>Visão geral, documentos e acompanhamento do aluno</p><p id="perfilArquivoAviso" class="aluno-arquivado-badge" hidden>Cadastro arquivado. O histórico e os documentos permanecem disponíveis. Para voltar à programação atual, reative pela lista de alunos.</p></div>
+      <div><h1 id="profileTitle">Informações do Aluno</h1><p>Visão geral, documentos e acompanhamento do aluno</p></div>
     </div>
 
-    <section class="central-aluno" id="centralAluno"></section>
-    <section id="metasAluno" class="card metas-aluno"></section>
-    <section id="compartilharAluno" class="card colaboracao-box" hidden></section>
-
-    <div class="card">
+    <div class="card perfil-unificado" id="perfilCadastro">
       <div class="color-strip" style="background:linear-gradient(90deg,var(--coral),var(--orange),var(--yellow))"></div>
       <div class="section-head"><div class="section-badge" style="background:var(--coral-l)">📋</div>Identificação do Aluno</div>
       <div class="photo-row">
@@ -905,7 +902,11 @@ hr.sep{border:none;border-top:2px dashed rgba(0,0,0,.06);margin:.2rem 0;}
         <div class="contacts-area" id="atendimentosArea"></div>
         <button type="button" class="add-btn" id="btnAddAtendimento">＋ Adicionar dia</button>
       </div>
-      <hr class="sep">
+      <section class="central-aluno" id="centralAluno"></section>
+    </div>
+    <section id="metasAluno" class="card metas-aluno"></section>
+    <section id="compartilharAluno" class="card colaboracao-box" hidden></section>
+    <div class="card">
       <div class="section-head" style="font-size:14px"><div class="section-badge" style="background:var(--purple-l);width:28px;height:28px;font-size:14px">📄</div>Laudo / Diagnóstico</div>
       <div class="fg">
         <div class="field full"><label for="laudo">Laudo(s) que o aluno possui</label><input type="text" id="laudo" placeholder="Ex: TEA, TDAH, Dislexia..."></div>
@@ -963,6 +964,7 @@ hr.sep{border:none;border-top:2px dashed rgba(0,0,0,.06);margin:.2rem 0;}
       <button class="add-btn" id="btnAddContato">＋ Adicionar responsável</button>
       <button class="save-btn" id="btnSalvarPerfil">💾 Salvar informações</button>
     </div>
+
 
     <div class="card">
       <div class="color-strip" style="background:linear-gradient(90deg,var(--teal),var(--blue),var(--green))"></div>
@@ -2768,7 +2770,7 @@ async function openStudent(id){
     if (versao !== perfilLoadVersion || professorUid !== ownerUid) return;
     if (!snap.exists) throw new Error('Aluno não encontrado');
     currentProfile=snap.data();fillForm(currentProfile);
-    $('perfilArquivoAviso').hidden=!ArquivamentoAlunos.arquivado(currentProfile);
+
   }catch(e){
     if (versao !== perfilLoadVersion || professorUid !== ownerUid) return;
     console.error(e); currentStudentId=null; currentProfile={};
@@ -3688,7 +3690,7 @@ const FIELDS={nomeAluno:'nome',dataNasc:'dataNasc',turma:'turma',escola:'escola'
 function clearForm(){
   window.AlunoTotais?.limpar();window.RegistroFalta?.limpar();
   assinaturaHistorico=null;assinaturasHistoricoAdicionais=[];montarAssinaturaHistorico();
-  $('perfilArquivoAviso').hidden=true;
+
   Object.keys(FIELDS).forEach(f=>$(f).value='');
   ['pdfLocal','pdfProfessor','pdfCargo','pdfFaltas','entryText','registradoPor'].forEach(f=>$(f).value='');
   $('charCount').textContent='0 caracteres';
