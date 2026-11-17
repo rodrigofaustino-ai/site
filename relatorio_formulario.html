@@ -1124,10 +1124,7 @@ async function exportDOCX(s, formato='docx'){
 
   const children = [];
   // Imagem no corpo do documento: aparece uma vez, no topo da primeira página.
-  const logoResponse=await fetch('modelos/pei-cabecalho.png');
-  if(!logoResponse.ok)throw new Error('Não foi possível carregar a logo do município.');
-  const logoBytes=new Uint8Array(await logoResponse.arrayBuffer());
-  children.push(new Paragraph({children:[new docx.ImageRun({type:'png',data:logoBytes,transformation:{width:520,height:86}})],alignment:AlignmentType.CENTER,keepNext:true,spacing:{before:0,after:120}}));
+  children.push(await SRMExport.cabecalhoDocx());
 
   // Cabeçalho
   children.push(new Paragraph({

@@ -124,7 +124,7 @@ const faltas=HistoricoAtendimentosFrequencia.faltasManuais(Object.hasOwn(dados,'
   }
 
   // ---- Montar children ----
-  const children = [];
+  const children = [await SRMExport.cabecalhoDocx()];
 
   // Cabeçalho
   children.push(new Paragraph({

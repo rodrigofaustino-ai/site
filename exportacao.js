@@ -5,6 +5,10 @@
     mammoth: 'vendor/mammoth.browser.min.js',
     JSZip: 'vendor/jszip.min.js'
   };
+  let logoPromise=null;
+  async function logoMunicipal(){if(!logoPromise)logoPromise=fetch('modelos/pei-cabecalho.png').then(async r=>{if(!r.ok)throw Error('Logo municipal indisponível.');return new Uint8Array(await r.arrayBuffer());}).catch(e=>{logoPromise=null;throw e;});return logoPromise;}
+  async function cabecalhoDocx(){const {Paragraph,ImageRun,AlignmentType}=window.docx;return new Paragraph({children:[new ImageRun({type:'png',data:await logoMunicipal(),transformation:{width:520,height:86}})],alignment:AlignmentType.CENTER,keepNext:true,spacing:{before:0,after:120}});}
+  async function cabecalhoHtml(){const bytes=await logoMunicipal();let binary='';for(const byte of bytes)binary+=String.fromCharCode(byte);return '<p data-srm-logo-primeira="true"><img src="data:image/png;base64,'+btoa(binary)+'" width="520" height="86" alt="Prefeitura Municipal de Cambé — Secretaria de Educação e Cultura"></p>';}
   const pending = {};
   async function load(name) {
     if (window[name]) return window[name];
@@ -58,7 +62,7 @@
       if (node.nodeType === 3) return node.textContent.trim() ? `<text:p>${inline(node)}</text:p>` : '';
       if (node.nodeType !== 1) return '';
       const tag = node.tagName.toLowerCase();
-      if(node.hasAttribute('data-srm-logo-primeira'))return '<text:p text:style-name="SrmSignData">'+inline(node)+'</text:p>';
+      if(node.hasAttribute('data-srm-logo-primeira'))return '<text:p text:style-name="SrmLogo">'+inline(node)+'</text:p>';
       if(node.hasAttribute('data-srm-sign-data'))return '<text:p text:style-name="'+(node.getAttribute('data-srm-sign-data')==='left'?'SrmSignDataLeft':'SrmSignData')+'">'+inline(node)+'</text:p>';
       if (tag === 'table' && node.hasAttribute('data-srm-assinaturas') && window.AssinaturasDocumentos) return AssinaturasDocumentos.odt(node,imageXml);
       if (tag === 'table') {
@@ -84,7 +88,7 @@
     }).join('');
     const ns = 'xmlns:draw="urn:oasis:names:tc:opendocument:xmlns:drawing:1.0" xmlns:svg="urn:oasis:names:tc:opendocument:xmlns:svg-compatible:1.0" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0" xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0" xmlns:table="urn:oasis:names:tc:opendocument:xmlns:table:1.0" xmlns:style="urn:oasis:names:tc:opendocument:xmlns:style:1.0" xmlns:fo="urn:oasis:names:tc:opendocument:xmlns:xsl-fo-compatible:1.0"';
     zip.file('mimetype', 'application/vnd.oasis.opendocument.text', {compression:'STORE'});
-    zip.file('content.xml', `<?xml version="1.0" encoding="UTF-8"?><office:document-content ${ns} office:version="1.2"><office:automatic-styles>${window.AssinaturasDocumentos?AssinaturasDocumentos.estilosOdt:''}<style:style style:name="Bold" style:family="text"><style:text-properties fo:font-weight="bold"/></style:style><style:style style:name="Italic" style:family="text"><style:text-properties fo:font-style="italic"/></style:style><style:style style:name="Underline" style:family="text"><style:text-properties style:text-underline-style="solid"/></style:style></office:automatic-styles><office:body><office:text>${blocks(root)}</office:text></office:body></office:document-content>`);
+    zip.file('content.xml', `<?xml version="1.0" encoding="UTF-8"?><office:document-content ${ns} office:version="1.2"><office:automatic-styles><style:style style:name="SrmLogo" style:family="paragraph"><style:paragraph-properties fo:text-align="center" fo:keep-with-next="always" fo:margin-bottom="0.2cm"/></style:style>${window.AssinaturasDocumentos?AssinaturasDocumentos.estilosOdt:''}<style:style style:name="Bold" style:family="text"><style:text-properties fo:font-weight="bold"/></style:style><style:style style:name="Italic" style:family="text"><style:text-properties fo:font-style="italic"/></style:style><style:style style:name="Underline" style:family="text"><style:text-properties style:text-underline-style="solid"/></style:style></office:automatic-styles><office:body><office:text>${blocks(root)}</office:text></office:body></office:document-content>`);
     zip.file('META-INF/manifest.xml', '<?xml version="1.0"?><manifest:manifest xmlns:manifest="urn:oasis:names:tc:opendocument:xmlns:manifest:1.0" manifest:version="1.2"><manifest:file-entry manifest:full-path="/" manifest:media-type="application/vnd.oasis.opendocument.text"/><manifest:file-entry manifest:full-path="content.xml" manifest:media-type="text/xml"/>' + imageEntries.map(i => `<manifest:file-entry manifest:full-path="${i.path}" manifest:media-type="${i.type}"/>`).join('') + '</manifest:manifest>');
     return zip.generateAsync({type:'blob',mimeType:'application/vnd.oasis.opendocument.text',compression:'DEFLATE'});
   }
@@ -145,6 +149,7 @@
       return Array.from(container.childNodes).flatMap(node => {
         if (node.nodeType === 3) return node.textContent.trim() ? [new Paragraph({children:runs(node,container.tagName==='TH'?{bold:true}:{}),spacing:{before:40,after:40},alignment:AlignmentType.JUSTIFIED})] : [];
         if (node.nodeType !== 1) return [];
+        if(node.hasAttribute('data-srm-logo-primeira'))return [new Paragraph({children:runs(node),alignment:AlignmentType.CENTER,keepNext:true,spacing:{before:0,after:120}})];
         if(node.hasAttribute('data-srm-sign-data'))return [new Paragraph({children:runs(node),alignment:node.getAttribute('data-srm-sign-data')==='left'?AlignmentType.LEFT:AlignmentType.CENTER,keepNext:true,spacing:{before:40,after:40}})];
         if (node.tagName === 'TABLE') return [node.hasAttribute('data-srm-assinaturas')&&window.AssinaturasDocumentos?AssinaturasDocumentos.docx(AssinaturasDocumentos.gruposDoHtml(node)):table(node)];
         if (/^(DIV|SECTION|ARTICLE|UL|OL|LI)$/.test(node.tagName)) return blocks(node);
@@ -166,6 +171,7 @@
   async function fromHtml(html, format, filename) {
     const root = clean(html);
     window.AssinaturasDocumentos?.datarHtml(root);
+    for(const img of root.querySelectorAll('img[alt*="Prefeitura Municipal"]')){if(!img.closest('p')){const p=document.createElement('p');img.replaceWith(p);p.append(img);}img.closest('p').setAttribute('data-srm-logo-primeira','true');}
     await Promise.all(Array.from(root.querySelectorAll('img')).map(async img => {
       if (!/^data:image\/(png|jpeg|gif);base64,/i.test(img.getAttribute('src') || '')) {img.replaceWith(document.createTextNode(img.alt || '[Imagem não incorporada]'));return;}
       try {if (img.decode) await img.decode();} catch (_) {}
@@ -190,7 +196,7 @@
     if(options.imagensAssinaturas?.length){const root=clean(html);for(const img of root.querySelectorAll('img')){const a=options.imagensAssinaturas.find(a=>window.AssinaturasDocumentos?.imagemValida(a)&&a.imagem===img.getAttribute('src'));if(a){img.setAttribute('data-srm-sign-imagem','true');img.setAttribute('data-largura',a.largura);img.setAttribute('data-altura',a.altura);}}html=root.innerHTML;}
     return fromHtml(html,format,filename);
   }
-  window.SRMExport = {fromDocx,fromHtml,prepararPei:preparePei};
+  window.SRMExport = {cabecalhoDocx,cabecalhoHtml,fromDocx,fromHtml,prepararPei:preparePei};
   function preparePei(html) {
     const root=clean(html);
     // Ler cada célula na ordem das linhas, preservando os parágrafos e imagens.

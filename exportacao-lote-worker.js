@@ -24,7 +24,7 @@
     else window.SRMExportacaoCapturar(await HistoricoAtendimentosOdt.converter(blob),'Historico_de_atendimentos.odt');
    }else if(m.tipo==='familia'){
     if(!location.pathname.endsWith('/questionario-familia-exportar.html'))throw Error('Gerador incompatível.');
-    await SRMExport.fromHtml(QuestionarioFamiliaDocumento.html(m.dados),m.formato,'Questionario_da_familia');
+    await SRMExport.fromHtml((await SRMExport.cabecalhoHtml())+QuestionarioFamiliaDocumento.html(m.dados),m.formato,'Questionario_da_familia');
    }else{
     const paginas={paee:'paee_formulario_02.html',diagnostica:'diagnostica_formulario.html',relatorio:'relatorio_formulario.html'};
     if(!paginas[m.tipo]||!location.pathname.endsWith('/'+paginas[m.tipo]))throw Error('Gerador incompatível.');

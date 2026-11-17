@@ -1455,7 +1455,7 @@ function bindNavScroll(){
 
 /* ========================= DOCX EXPORT ========================= */
 
-function exportDOCX(s, formato='docx'){
+async function exportDOCX(s, formato='docx'){
   let adicionaisParaExportar;try{adicionaisParaExportar=AssinaturasAdicionais.grupos(s.assinaturasAdicionais);}catch(error){if(window.SRMExportacaoWorker)throw error;showToast(error.message);return;}
   const {
     Document, Packer, Paragraph, TextRun, HeadingLevel, Table, TableRow, TableCell,
@@ -1625,7 +1625,7 @@ function exportDOCX(s, formato='docx'){
   }
 
   // ---- Montar documento ----
-  const children = [];
+  const children = [await SRMExport.cabecalhoDocx()];
 
   // Cabeçalho
   children.push(new Paragraph({
@@ -1799,7 +1799,7 @@ function exportDOCX(s, formato='docx'){
   return Packer.toBlob(doc).then(async blob=>{
     const nome = (s.identificacao.nome||'PAEE')
       .normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9]+/g,'_');
-    await SRMExport.fromDocx(blob, formato, `PAEE_${nome}`,{...(temAssinantesPAEE?{assinaturasHtml:AssinaturasDocumentos.html(assinantesPAEE)}:{}),imagensAssinaturas:Object.values(s.assinaturasInstrumentos||{}).map(a=>a.imagem).filter(Boolean)});
+    await SRMExport.fromDocx(blob, formato, `PAEE_${nome}`,{logoPrimeiraPagina:true,...(temAssinantesPAEE?{assinaturasHtml:AssinaturasDocumentos.html(assinantesPAEE)}:{}),imagensAssinaturas:Object.values(s.assinaturasInstrumentos||{}).map(a=>a.imagem).filter(Boolean)});
     showToast(formato.toUpperCase()+' gerado com sucesso.');
   }).catch(err=>{
     if(window.SRMExportacaoWorker)throw err;

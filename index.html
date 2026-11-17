@@ -2281,7 +2281,7 @@ async function gerarRelatorioFrequencia(formato='docx'){
     const COL_SEM=COL_SEM_BASE;
     const COL_SEM_LAST=colSemWidths[nSem-1];
 
-    const children=[];
+    const children=[await SRMExport.cabecalhoDocx()];
 
     // Título
     children.push(new Paragraph({
@@ -2512,7 +2512,7 @@ async function gerarRelatorioFrequencia(formato='docx'){
 
     Packer.toBlob(docxDoc).then(async blob=>{
       if(!sessaoRelatorio())return;
-      await SRMExport.fromDocx(blob, formato, `Relatorio_Frequencia_${de}_a_${ate}`);
+      await SRMExport.fromDocx(blob, formato, `Relatorio_Frequencia_${de}_a_${ate}`,{logoPrimeiraPagina:true});
       showToast('✓ Relatório de frequência '+formato.toUpperCase()+' gerado com sucesso!');
     }).catch(err=>{
       console.error(err);
