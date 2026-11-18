@@ -1,3 +1,5 @@
+ETAPA 69: a biblioteca de assinaturas não exige nova atualização. Para Doc. Modelos, leia GUIA-DOC-MODELOS-FIREBASE.txt.
+
 ASSINATURAS — ATUALIZAÇÃO ÚNICA DAS PERMISSÕES
 
 Este pacote reúne todas as melhorias até a etapa 55. Nada foi aplicado pelo assistente.
