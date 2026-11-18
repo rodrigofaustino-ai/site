@@ -6,7 +6,7 @@ function classificar(c,pagina=document.body.dataset.iaPagina||location.pathname)
  if(c.readOnly||c.closest('.ia-revisao,.pei-ai-preview'))return 'consulta';
  const id=c.id||'',bind=c.dataset.bind||'',field=c.dataset.field||'';
  if(pagina==='index.html'){
-  if(['entryText','obsClinicas','entryProximoPasso','planoDescricao','recursoDescricao','chatTexto','comunicadosTitulo','comunicadosTexto','meta-objetivo','meta-situacaoInicial','meta-criterio','meta-estrategias','meta-apoios'].includes(id))return 'redacao';
+  if(['entryText','obsClinicas','entryProximoPasso','planoDescricao','modeloDescricao','recursoDescricao','chatTexto','comunicadosTitulo','comunicadosTexto','meta-objetivo','meta-situacaoInicial','meta-criterio','meta-estrategias','meta-apoios'].includes(id))return 'redacao';
   if(c.matches('textarea')&&(id.startsWith('roteiro-')||c.closest('#plannerGrid,#notasGrid')))return 'redacao';
   return 'identificacao-ou-controle';
  }

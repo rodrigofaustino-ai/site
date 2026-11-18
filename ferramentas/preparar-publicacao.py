@@ -37,7 +37,7 @@ def validar(pasta):
     if faltantes:raise ValueError('Referências locais ausentes: '+repr(faltantes))
 
 def main():
-    p=argparse.ArgumentParser();p.add_argument('destino',type=Path);p.add_argument('zip',type=Path);p.add_argument('--etapa',type=int,default=68);args=p.parse_args()
+    p=argparse.ArgumentParser();p.add_argument('destino',type=Path);p.add_argument('zip',type=Path);p.add_argument('--etapa',type=int,default=69);args=p.parse_args()
     destino=args.destino.resolve();arquivo_zip=args.zip.resolve()
     if destino==ROOT or destino.is_relative_to(ROOT):raise ValueError('Use uma pasta nova fora do repositório de fonte.')
     if destino.exists() and any(destino.iterdir()):raise ValueError('A pasta de destino precisa estar vazia ou não existir.')
@@ -327,6 +327,16 @@ serviços externos de IA ou a configuração remota atual de todos os serviços.
         texto=texto[:inicio]+'ETAPA 68 — VOLTAR ALUNOS NO MENU\nNovo botão Voltar Alunos abaixo dos atalhos de Nesta ficha, mantendo o botão Voltar superior.\nUsa a mesma ação original e preserva a confirmação de rascunho não salvo. No celular fica dentro do menu recolhível.\nPacote cumulativo: correção das logos, data de emissão, frequência anual, menu lateral e avisos do chat estão incluídos.\nSem novas regras Firebase. Publique a pasta com index.html no Netlify, aguarde Published e atualize com Ctrl + Shift + R.\n\n'+texto[fim:]
         guia.write_text(texto)
         (destino/'PERMISSOES-ASSINATURAS-FIRESTORE.txt').write_text('ETAPA 68: nenhuma nova regra de Firebase. Guia apenas para quem ainda não habilitou a biblioteca.\n\n'+(ROOT/'producao'/'GUIA-ASSINATURAS-FIRESTORE.txt').read_text())
+    if args.etapa == 69:
+        guia=destino/'LEIA-ME-PUBLICACAO.txt'
+        texto=guia.read_text()
+        inicio=texto.index('ATENÇÃO — QUESTIONÁRIO DA FAMÍLIA')
+        fim=texto.index('PARA PUBLICAR',inicio)
+        texto=texto[:inicio]+'ETAPA 69 — DOC. MODELOS\nNova aba antes de Exportar Documentos. Todos os professores podem cadastrar DOCX/PDF de até 10 MB e baixar modelos.\nCada autor exclui os próprios modelos; a conta administrativa pode excluir qualquer modelo. Arquivos mantêm o conteúdo original.\nANTES DE USAR: acrescente as permissões de Firestore E Storage de salamulti conforme GUIA-DOC-MODELOS-FIREBASE.txt.\nOs dois arquivos PERMISSOES-DOC-MODELOS são blocos de acréscimo: não substituem suas regras inteiras. Não altere Realtime Database nem paee-3fea6.\nO assistente não aplicou regras nem publicou o site. Depois das permissões, publique a pasta completa no Netlify, aguarde Published e use Ctrl + Shift + R.\nPacote cumulativo com todas as melhorias anteriores, correção das logos e avisos do chat.\n\n'+texto[fim:]
+        guia.write_text(texto)
+        for fonte,alvo in [('GUIA-DOCUMENTOS-MODELOS-FIREBASE.txt','GUIA-DOC-MODELOS-FIREBASE.txt'),('documentos-modelos-firestore-acrescimo.rules','PERMISSOES-DOC-MODELOS-FIRESTORE.txt'),('documentos-modelos-storage-acrescimo.rules','PERMISSOES-DOC-MODELOS-STORAGE.txt')]:
+            (destino/alvo).write_text((ROOT/'producao'/fonte).read_text())
+        (destino/'PERMISSOES-ASSINATURAS-FIRESTORE.txt').write_text('ETAPA 69: a biblioteca de assinaturas não exige nova atualização. Para Doc. Modelos, leia GUIA-DOC-MODELOS-FIREBASE.txt.\n\n'+(ROOT/'producao'/'GUIA-ASSINATURAS-FIRESTORE.txt').read_text())
     guia=destino/'LEIA-ME-PUBLICACAO.txt'
     guia.write_text(guia.read_text().replace('até a etapa 33.',f'até a etapa {args.etapa}.'))
     if args.etapa >= 57:

@@ -639,9 +639,11 @@ hr.sep{border:none;border-top:2px dashed rgba(0,0,0,.06);margin:.2rem 0;}
       <button class="tab-btn" id="tabBtnPlanos" onclick="switchTab('planos')">📚 Planos de Aula</button>
       <button class="tab-btn" id="tabBtnRecursos" onclick="switchTab('recursos')">🔗 Recursos Didáticos</button>
       <button class="tab-btn" id="tabBtnEstatisticas" onclick="switchTab('estatisticas')">📈 Estatísticas</button>
+      <button class="tab-btn" id="tabBtnModelos" onclick="switchTab('modelos')">📁 Doc. Modelos</button>
       <button class="tab-btn" id="btnExportarDocumentos" aria-haspopup="dialog" aria-controls="exportarDocumentosDialog" onclick="abrirExportacaoDocumentos()">📤 Exportar Documentos</button>
     </nav>
 
+    <div class="tab-panel" id="tabModelos"><section class="card"><div class="section-head">📁 Doc. Modelos</div><p class="modelos-intro">Modelos compartilhados de relatórios, termos e outros documentos. Cadastre um arquivo para a equipe baixar e preencher.</p><form id="modelosForm"><label>Título do modelo<input id="modeloTitulo" maxlength="120" required placeholder="Ex.: Termo de desistência"></label><label>Descrição (opcional)<textarea id="modeloDescricao" maxlength="1000" placeholder="Informe quando e como utilizar o modelo."></textarea></label><label>Arquivo DOCX ou PDF — até 10 MB<input id="modeloArquivo" type="file" accept=".docx,.pdf" required></label><button type="submit">Enviar modelo</button><button type="button" id="modeloCancelarPendente" hidden>Descartar envio pendente</button></form><div class="modelos-filtros"><label>Buscar modelos<input id="modelosBusca" type="search" placeholder="Título, descrição ou autor"></label><button type="button" id="modelosAtualizar">Atualizar lista</button></div><p id="modelosStatus" role="status" aria-live="polite"></p><div id="modelosLista"></div></section></div>
     <div class="tab-panel" id="tabEstatisticas"><section id="estatisticasRaiz" class="card" aria-label="Estatísticas do meu trabalho"></section></div>
 
     <!-- ABA ALUNOS -->
@@ -1394,12 +1396,13 @@ function abrirEstatisticas(){
   window.Estatisticas.ativar({uid,turno,db,vigente:()=>professorUid===uid&&auth.currentUser?.uid===uid&&turnoAtual===turno});
 }
 function switchTab(name){
-  ['alunos','grade','frequencia','paee','pei','relatorio','diagnostica','planner','notas','planos','recursos','estatisticas'].forEach(t=>{
+  ['alunos','grade','frequencia','paee','pei','relatorio','diagnostica','planner','notas','planos','recursos','estatisticas','modelos'].forEach(t=>{
     const botao=$('tabBtn'+t.charAt(0).toUpperCase()+t.slice(1));
     botao.classList.toggle('active',t===name);
     if(t===name)botao.setAttribute('aria-current','true');else botao.removeAttribute('aria-current');
     $('tab'+t.charAt(0).toUpperCase()+t.slice(1)).classList.toggle('active',t===name);
   });
+  if(name==='modelos') window.DocumentosModelos.activate();
   if(name==='estatisticas') abrirEstatisticas();
   if(name==='planos') window.PlanosAula.activate();
   if(name==='recursos') window.RecursosDidaticos.activate();
@@ -4100,6 +4103,7 @@ async function exportPDF(){
 </script>
 <script src="historico-atendimentos-frequencia.js"></script>
 <script src="historico-atendimentos-documento.js"></script><script src="biblioteca-assinaturas.js"></script><script src="assinaturas-campos.js"></script><script src="assinaturas-adicionais.js"></script><link rel="stylesheet" href="biblioteca-assinaturas.css">
+<link rel="stylesheet" href="documentos-modelos.css"><script src="documentos-modelos.js"></script>
 <script src="planos-aula.js"></script>
 <script src="recursos-didaticos.js"></script>
 <script src="chat-anexos-modelo.js"></script>
