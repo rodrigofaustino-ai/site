@@ -261,7 +261,7 @@
 </style>
 <script src="assinaturas-documentos.js"></script>
 <script src="exportacao.js"></script>
-<script src="vinculo-aluno.js"></script>
+<script src="vinculo-aluno.js"></script><script src="cadastro-diario-modelo.js"></script><script src="cadastro-diario.js"></script><link rel="stylesheet" href="cadastro-diario.css">
 <link rel="stylesheet" href="vinculo-aluno.css">
 <script src="firebase-producao.js"></script>
 <link rel="stylesheet" href="orientacoes-preenchimento.css">
@@ -407,7 +407,7 @@ function showScreen(name){
 
 if(firebaseReady){
   auth.onAuthStateChanged(user=>{
-    window.AssinaturasConexao?.fechar();window.RelatorioFrequencia?.fechar();
+    window.AssinaturasConexao?.fechar();window.CadastroDiario?.fechar();window.RelatorioFrequencia?.fechar();
     VinculoAluno.limpar();
     if(user){
       professorUid = user.uid;
@@ -920,6 +920,7 @@ function renderForm(){
   `;
 
   document.getElementById('form-sections').innerHTML = html;
+  CadastroDiario.montar({root:document.querySelector('#sec-id .card-body'),tipo:'relatorio',state:s,auth,vigente:()=>state===s&&auth.currentUser?.uid===professorUid,render:renderForm});
   RelatorioFrequencia.montar({root:document.getElementById('relatorioFrequenciaAno'),auth,obterState:()=>state});
   for(const [slot,key]of [['professor','nomeProfessor']]){const input=document.querySelector('[data-bind="assinaturas.'+key+'"]');AssinaturasCampos.montar({input,auth,obter:()=>s.assinaturasImagens?.[slot],gravar:a=>{s.assinaturasImagens||={};if(a)s.assinaturasImagens[slot]=a;else delete s.assinaturasImagens[slot];},vigente:()=>state===s&&input.isConnected&&!!auth?.currentUser});}
   const areaExtras=document.createElement('div'),assinaturasBody=document.querySelector('#sec-sign .card-body');assinaturasBody.insertBefore(areaExtras,assinaturasBody.querySelector('.notice'));AssinaturasAdicionais.montar({container:areaExtras,auth,obter:()=>s.assinaturasAdicionais,gravar:a=>s.assinaturasAdicionais=a,vigente:()=>state===s});
@@ -1147,6 +1148,8 @@ async function exportDOCX(s, formato='docx'){
     [{label:'Período SRM',value:id.periodoSRM},{label:'Prof. AEE',value:id.professorSRM}],
     [{label:'Nº de atendimentos previstos',value:String(id.atendimentosPrevistos??'—')},{label:'Nº de atendimentos realizados',value:String(id.atendimentosRealizados??'—')}],
   ]));
+
+  children.push(...CadastroDiarioModelo.docx(s));
 
   // II — Áreas trabalhadas
   children.push(sectionTitle('II – REGISTRO DAS ÁREAS TRABALHADAS'));

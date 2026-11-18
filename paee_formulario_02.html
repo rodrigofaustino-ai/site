@@ -310,7 +310,7 @@
 
 </style>
 <script src="exportacao.js"></script>
-<script src="vinculo-aluno.js"></script>
+<script src="vinculo-aluno.js"></script><script src="cadastro-diario-modelo.js"></script><script src="cadastro-diario.js"></script><link rel="stylesheet" href="cadastro-diario.css">
 <link rel="stylesheet" href="vinculo-aluno.css">
 <script src="firebase-producao.js"></script>
 <link rel="stylesheet" href="orientacoes-preenchimento.css">
@@ -474,7 +474,7 @@ function showScreen(name){
 
 if(firebaseReady){
   auth.onAuthStateChanged(user=>{
-    window.AssinaturasConexao?.fechar();
+    window.AssinaturasConexao?.fechar();window.CadastroDiario?.fechar();
     VinculoAluno.limpar();
     if(user){
       professorUid = user.uid;
@@ -1257,6 +1257,7 @@ function renderForm(){
     </section>
   `;
   document.getElementById('form-sections').innerHTML = html;
+  CadastroDiario.montar({root:document.querySelector('#sec-id .card-body'),tipo:'paee',state:s,auth,vigente:()=>state===s&&auth.currentUser?.uid===professorUid,render:renderForm});
   for(const slot of ['aee','coordenacao','responsavel','gestao']){const input=document.querySelector('[data-bind="assinaturasNomes.'+slot+'"]');AssinaturasCampos.montar({input,auth,obter:()=>s.assinaturasImagens?.[slot],gravar:a=>{s.assinaturasImagens||={};if(a)s.assinaturasImagens[slot]=a;else delete s.assinaturasImagens[slot];},vigente:()=>state===s&&input.isConnected&&!!auth?.currentUser});}
   const areaExtras=document.createElement('div'),assinaturasBody=document.querySelector('#sec-sign .card-body');assinaturasBody.insertBefore(areaExtras,assinaturasBody.querySelector('.notice'));AssinaturasAdicionais.montar({container:areaExtras,auth,obter:()=>s.assinaturasAdicionais,gravar:a=>s.assinaturasAdicionais=a,vigente:()=>state===s});
   document.getElementById('form-title').textContent = s.identificacao.nome || (s.id ? 'PAEE' : 'Novo PAEE');
@@ -1655,6 +1656,7 @@ async function exportDOCX(s, formato='docx'){
   children.push(labeledPara('Período', id.periodo));
   children.push(labeledPara('Professor(a) SRM', id.professorSRM));
   children.push(labeledPara('Necessidades Educacionais Especiais', id.necessidades));
+  children.push(...CadastroDiarioModelo.docx(s));
 
   // Censo Escolar — Deficiências/Transtornos e Recursos
   const censo = id.censo||[];

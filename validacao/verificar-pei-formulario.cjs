@@ -73,8 +73,8 @@ let total=0;function check(a,b){assert.deepEqual(a,b);total++;}
   check(await field('identificacao.escola').inputValue(),'Escola Horizonte');
   check(await field('identificacao.anoEscolar').inputValue(),'3º A');
   check(await field('identificacao.turno').inputValue(),'Matutino');
-  check(await page.locator('[data-path]').count(),23);
-  check(await page.locator('textarea[data-path]').count(),10);
+  check(await page.locator('[data-path]').count(),30);
+  check(await page.locator('textarea[data-path]').count(),11);
   check(await page.evaluate(()=>mockWrites.length),0);
   check(await page.locator('#legacy-note').isVisible(),true);
   // Orientações originais estão disponíveis sem virar respostas fictícias.

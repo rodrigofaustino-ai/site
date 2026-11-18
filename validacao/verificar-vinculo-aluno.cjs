@@ -45,7 +45,7 @@ const check = (value, expected) => {assert.deepEqual(value, expected); checks++;
         window.alertas = []; window.confirmacoes = []; window.aceitar = true; window.gravacoes = [];
         window.alert = message => alertas.push(message);
         window.confirm = message => {confirmacoes.push(message); return aceitar;};
-        professorUid = 'professor-ficticio';auth={currentUser:{uid:professorUid,email:'a@example.test'}};if(typeof authDiario!=='undefined')authDiario={currentUser:{uid:'diario-ficticio',email:'a@example.test'}};
+        professorUid = 'professor-ficticio';auth={currentUser:{uid:professorUid,email:'a@example.test'},onAuthStateChanged(){return ()=>{};}};if(typeof authDiario!=='undefined')authDiario={currentUser:{uid:'diario-ficticio',email:'a@example.test'}};
         planosRef = () => ({get: async () => {
           if (window.falhar) throw new Error('Falha de consulta simulada');
           return {docs: window.documentos.map(d => ({id: d.id, data: () => d.dados}))};

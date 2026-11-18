@@ -209,7 +209,7 @@
   .freq-assin-divider{grid-column:1/-1;border:none;border-top:1.5px dashed var(--border-soft);margin:4px 0;}
 </style>
 <script src="exportacao.js"></script>
-<script src="vinculo-aluno.js"></script>
+<script src="vinculo-aluno.js"></script><script src="cadastro-diario-modelo.js"></script><script src="cadastro-diario.js"></script><link rel="stylesheet" href="cadastro-diario.css">
 <link rel="stylesheet" href="questionario-familia.css">
 <script src="questionario-familia-modelo.js"></script>
 <script src="questionario-familia-professor.js"></script>
@@ -565,7 +565,7 @@ function showScreen(name){
 
 if(firebaseReady){
   auth.onAuthStateChanged(user=>{
-    window.AssinaturasConexao?.fechar();
+    window.AssinaturasConexao?.fechar();window.CadastroDiario?.fechar();
     VinculoAluno.limpar();
     if(user){
       professorUid=user.uid;
@@ -918,6 +918,7 @@ function renderForm(){
 
   html+=`</div></div>`;
   document.getElementById('form-sections').innerHTML=html;
+  CadastroDiario.montar({root:document.querySelector('#form-sections .card .card-body'),tipo:'diagnostica',state:s,auth,vigente:()=>state===s&&auth.currentUser?.uid===professorUid,render:renderForm});
 
   for(const slot of ['s1','s2']){const input=document.querySelector('[data-freq="'+slot+'AssinResp"]');AssinaturasCampos.montar({input,auth,obter:()=>s.assinaturasImagens?.[slot],gravar:a=>{s.assinaturasImagens||={};if(a)s.assinaturasImagens[slot]=a;else delete s.assinaturasImagens[slot];},vigente:()=>state===s&&input.isConnected&&!!auth?.currentUser});}
   const areaExtras=document.createElement('div');document.getElementById('form-sections').append(areaExtras);AssinaturasAdicionais.montar({container:areaExtras,auth,obter:()=>s.assinaturasAdicionais,gravar:a=>s.assinaturasAdicionais=a,vigente:()=>state===s});
@@ -1206,6 +1207,7 @@ async function exportDOCX(s, formato='docx'){
     ],spacing:{before:30,after:30},
   }));
   children.push(labeledP('Atendimento',id.atendimento));
+  children.push(...CadastroDiarioModelo.docx(s));
   children.push(new Paragraph({spacing:{before:60,after:60}}));
 
   // Tabela diagnóstica (uma única tabela com linhas de título de categoria)
@@ -1449,7 +1451,7 @@ async function preencherDoPerfilDiario(nomeAluno, apenasVazios){
     let cur = state;
     for(let i=0;i<partes.length-1;i++) cur=cur[partes[i]];
     const key = partes[partes.length-1];
-    if(apenasVazios && cur[key]) return;
+    if(cur[key]) return;
     cur[key] = val;
     algum = true;
   });

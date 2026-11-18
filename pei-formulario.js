@@ -11,7 +11,8 @@
       ['identificacao.turno','Turno','text'],
       ['identificacao.professorRegente','Professor regente','text'],
       ['identificacao.professorApoio','Professor de apoio','text'],
-      ['identificacao.nee','Necessidade educacional especial','text']
+      ['identificacao.nee','Necessidade educacional especial','text'],
+      ...CadastroDiarioModelo.extras.map(([key,label,type])=>['identificacao.'+key,label,type||'text'])
     ]},
     {id:'sec-escolar', titulo:'II. Características do aluno no contexto escolar', campos:[
       ['contextoEscolar.socioafetivos','Aspectos socioafetivos','textarea','ASPECTOS SOCIOAFETIVOS:'],
@@ -61,6 +62,7 @@
     }
     data.assinaturas.imagens={};for(const slot of ['regente','apoio','coordenador']){const image=saved?.assinaturas?.imagens?.[slot];if(AssinaturasDocumentos.imagemValida(image))data.assinaturas.imagens[slot]=JSON.parse(JSON.stringify(image));}
     data.assinaturas.adicionais=AssinaturasAdicionais.normalizar(saved?.assinaturas?.adicionais);
+    CadastroDiarioModelo.aplicar(data,profile,'pei');
     return data;
   }
   function erro(message='') {$('peiError').textContent=message;}

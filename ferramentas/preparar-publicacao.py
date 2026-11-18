@@ -37,7 +37,7 @@ def validar(pasta):
     if faltantes:raise ValueError('Referências locais ausentes: '+repr(faltantes))
 
 def main():
-    p=argparse.ArgumentParser();p.add_argument('destino',type=Path);p.add_argument('zip',type=Path);p.add_argument('--etapa',type=int,default=69);args=p.parse_args()
+    p=argparse.ArgumentParser();p.add_argument('destino',type=Path);p.add_argument('zip',type=Path);p.add_argument('--etapa',type=int,default=70);args=p.parse_args()
     destino=args.destino.resolve();arquivo_zip=args.zip.resolve()
     if destino==ROOT or destino.is_relative_to(ROOT):raise ValueError('Use uma pasta nova fora do repositório de fonte.')
     if destino.exists() and any(destino.iterdir()):raise ValueError('A pasta de destino precisa estar vazia ou não existir.')
@@ -337,6 +337,16 @@ serviços externos de IA ou a configuração remota atual de todos os serviços.
         for fonte,alvo in [('GUIA-DOCUMENTOS-MODELOS-FIREBASE.txt','GUIA-DOC-MODELOS-FIREBASE.txt'),('documentos-modelos-firestore-acrescimo.rules','PERMISSOES-DOC-MODELOS-FIRESTORE.txt'),('documentos-modelos-storage-acrescimo.rules','PERMISSOES-DOC-MODELOS-STORAGE.txt')]:
             (destino/alvo).write_text((ROOT/'producao'/fonte).read_text())
         (destino/'PERMISSOES-ASSINATURAS-FIRESTORE.txt').write_text('ETAPA 69: a biblioteca de assinaturas não exige nova atualização. Para Doc. Modelos, leia GUIA-DOC-MODELOS-FIREBASE.txt.\n\n'+(ROOT/'producao'/'GUIA-ASSINATURAS-FIRESTORE.txt').read_text())
+    if args.etapa == 70:
+        guia=destino/'LEIA-ME-PUBLICACAO.txt'
+        texto=guia.read_text()
+        inicio=texto.index('ATENÇÃO — QUESTIONÁRIO DA FAMÍLIA')
+        fim=texto.index('PARA PUBLICAR',inicio)
+        texto=texto[:inicio]+'ETAPA 70 — AUTOPREENCHIMENTO DOS QUATRO FORMULÁRIOS\nAbra PAEE, PEI, Relatório ou Diagnóstica pelo aluno no Diário. Dados compatíveis do cadastro completam somente campos vazios.\nNos formulários de documentos, mantenha o Diário conectado com o mesmo e-mail; se necessário, use Conectar ao Diário.\nNome, nascimento, escola, turma, período, laudo/NEE, município, CIDs, dias/horários e responsáveis/contatos são aproveitados quando disponíveis e compatíveis.\nPais e contatos ficam em campos próprios de identificação, também exportados; não entram na tabela de responsáveis por recursos do PAEE.\nConfira os dados e salve normalmente. A consulta não grava automaticamente nem substitui campos editados, pareceres ou avaliações.\nNão há novas regras Firebase. As permissões de Doc. Modelos da etapa 69 já aplicadas continuam suficientes. Os guias dessa biblioteca permanecem no pacote para quem ainda não a habilitou.\nPacote cumulativo com logos, data final de emissão, menu lateral, modelos e avisos do chat. Publique a pasta inteira com index.html, aguarde Published e use Ctrl + Shift + R.\n\n'+texto[fim:]
+        guia.write_text(texto)
+        for fonte,alvo in [('GUIA-DOCUMENTOS-MODELOS-FIREBASE.txt','GUIA-DOC-MODELOS-FIREBASE.txt'),('documentos-modelos-firestore-acrescimo.rules','PERMISSOES-DOC-MODELOS-FIRESTORE.txt'),('documentos-modelos-storage-acrescimo.rules','PERMISSOES-DOC-MODELOS-STORAGE.txt')]:
+            (destino/alvo).write_text('ETAPA 70: não repita permissões já aplicadas na etapa 69.\n\n'+(ROOT/'producao'/fonte).read_text())
+        (destino/'PERMISSOES-ASSINATURAS-FIRESTORE.txt').write_text('ETAPA 70: nenhuma nova regra. A biblioteca de assinaturas já habilitada permanece suficiente.\n\n'+(ROOT/'producao'/'GUIA-ASSINATURAS-FIRESTORE.txt').read_text())
     guia=destino/'LEIA-ME-PUBLICACAO.txt'
     guia.write_text(guia.read_text().replace('até a etapa 33.',f'até a etapa {args.etapa}.'))
     if args.etapa >= 57:
