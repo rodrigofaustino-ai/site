@@ -1,0 +1,50 @@
+PACOTE DO SITE OFICIAL — saladerecursos.netlify.app
+
+Inclui as melhorias acumuladas até a etapa 70.
+Conexões: salamulti (Diário/PEI) e paee-3fea6 (PAEE/Diagnóstica/Relatório).
+Não é uma cópia isolada de teste.
+ETAPA 70 — AUTOPREENCHIMENTO DOS QUATRO FORMULÁRIOS
+Abra PAEE, PEI, Relatório ou Diagnóstica pelo aluno no Diário. Dados compatíveis do cadastro completam somente campos vazios.
+Nos formulários de documentos, mantenha o Diário conectado com o mesmo e-mail; se necessário, use Conectar ao Diário.
+Nome, nascimento, escola, turma, período, laudo/NEE, município, CIDs, dias/horários e responsáveis/contatos são aproveitados quando disponíveis e compatíveis.
+Pais e contatos ficam em campos próprios de identificação, também exportados; não entram na tabela de responsáveis por recursos do PAEE.
+Confira os dados e salve normalmente. A consulta não grava automaticamente nem substitui campos editados, pareceres ou avaliações.
+Não há novas regras Firebase. As permissões de Doc. Modelos da etapa 69 já aplicadas continuam suficientes. Os guias dessa biblioteca permanecem no pacote para quem ainda não a habilitou.
+Pacote cumulativo com logos, data final de emissão, menu lateral, modelos e avisos do chat. Publique a pasta inteira com index.html, aguarde Published e use Ctrl + Shift + R.
+
+PARA PUBLICAR
+1. Guarde o endereço/identificador do deploy oficial atual para eventual retorno.
+2. Extraia o ZIP inteiro. Abra a pasta que contém index.html, vendor e modelos.
+3. No Netlify, abra o site saladerecursos, endereço saladerecursos.netlify.app.
+4. Em Deploys, arraste essa pasta inteira. Não arraste somente index.html.
+5. Aguarde Published e atualize o site com Ctrl + Shift + R.
+6. Confira com sua conta e outra conta de professor: alunos, documentos antigos,
+   atendimentos, frequência, arquivamento/reativação, Meu dia e exportação.
+7. Em uma ficha de aluno fictício, abra Questionário da família, gere e copie um
+   link. Abra-o em janela anônima/celular, responda e envie. Retorne ao professor e
+   clique em Atualizar respostas para conferir o relato e os itens correspondentes.
+   Confira também a desativação do link. Não use dados reais nesse teste.
+8. Confira o aviso no primeiro Continuar com perguntas em branco e a confirmação
+   no segundo clique. Ao enviar, os campos pulados ficam como Sem resposta.
+9. No botão Exportar Documentos, selecione Questionário da família e confira um
+   DOCX/ODT com as respostas salvas. Se houver várias, escolha a versão desejada.
+10. Na aba Alunos, mude a data do encontro e confira o quadro Agenda do Dia, no turno
+    escolhido. A edição do conteúdo continua na aba Planner.
+11. No chat, use 📎 com um arquivo fictício de até 10 MB e clique em Enviar.
+    Confira prévia/download com outra conta e Apagar pelo autor.
+
+DOCUMENTOS DOS PROFESSORES
+Exportar Documentos oferece DOCX/ODT individuais por padrão. ZIP é opcional.
+A associação de documentos antigos únicos pelo nome ocorre na primeira abertura:
+ela grava apenas alunoId, sem exigir Salvar e sem alterar o texto do documento.
+
+ASSINATURAS
+Use Adicionar pessoa para assinar nos cinco documentos. No Relatório, coordenação e demais responsáveis ficam na lista de pessoas, sem campo fixo separado na Identificação. Nomes e imagens antigos são preservados ao abrir; salve para confirmar.
+
+OBSERVAÇÕES
+Os backups de dados e arquivos devem ser guardados separadamente. Este ZIP contém
+somente o código do site e seus recursos estáticos; não contém registros do banco.
+A transferência administrativa permanece temporariamente bloqueada.
+Uma reversão de deploy retorna o código, mas não desfaz gravações feitas no banco.
+Os testes foram locais, com dados fictícios; não validam credenciais reais, índices,
+serviços externos de IA ou a configuração remota atual de todos os serviços.
