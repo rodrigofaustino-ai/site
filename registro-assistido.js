@@ -82,6 +82,7 @@
       const last=student.data().ultimoRegistro;
       if(!dataValida(last)||last<date)tx.update(parent,{ultimoRegistro:date});
     });
+    if(frequencia&&vigente())document.dispatchEvent(new Event('frequencia-atualizada'));
   }
   function valido(ticket){return ticket.generation===generation&&ctx?.vigente()&&firebase.auth().currentUser?.uid===ctx.uid;}
   function confirmado(){tentativa=null;responsavel=$('registradoPor').value;mensagem('Registro salvo. O relato está disponível no histórico abaixo.');}

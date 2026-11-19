@@ -7,7 +7,7 @@ function classificar(c,pagina=document.body.dataset.iaPagina||location.pathname)
  const id=c.id||'',bind=c.dataset.bind||'',field=c.dataset.field||'';
  if(c.dataset.cadastroExtra||c.dataset.path?.startsWith('identificacao.'))return 'identificacao-ou-controle';
  if(pagina==='index.html'){
-  if(c.matches('textarea[data-agenda-relato],textarea[data-termo-redacao]'))return 'redacao';
+  if(c.matches('textarea[data-agenda-relato],textarea[data-termo-redacao],textarea[data-encaminhamento-redacao]'))return 'redacao';
   if(['entryText','obsClinicas','entryProximoPasso','planoDescricao','modeloDescricao','recursoDescricao','chatTexto','comunicadosTitulo','comunicadosTexto','meta-objetivo','meta-situacaoInicial','meta-criterio','meta-estrategias','meta-apoios'].includes(id))return 'redacao';
   if(c.matches('textarea')&&(id.startsWith('roteiro-')||c.closest('#plannerGrid,#notasGrid')))return 'redacao';
   return 'identificacao-ou-controle';

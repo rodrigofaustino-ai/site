@@ -1,4 +1,4 @@
-ETAPA 73: nenhuma regra nova; não repita permissões já aplicadas.
+ETAPA 74: estas permissões antigas não precisam ser repetidas. O NOVO bloco dos alertas está em PERMISSOES-ALERTAS-FREQUENCIA-FIRESTORE.txt.
 
     // Acrescentar DENTRO de match /b/{bucket}/o, sem remover regras existentes.
     match /documentosModelos/{autorUid}/{modeloId}/arquivo {

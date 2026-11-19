@@ -1,16 +1,20 @@
 PACOTE DO SITE OFICIAL — saladerecursos.netlify.app
 
-Inclui as melhorias acumuladas até a etapa 73.
+Inclui as melhorias acumuladas até a etapa 74.
 Conexões: salamulti (Diário/PEI) e paee-3fea6 (PAEE/Diagnóstica/Relatório).
 Não é uma cópia isolada de teste.
-ETAPA 73 — DADOS DO DIÁRIO E TOTAIS DO ANO VIGENTE
+ETAPA 74 — ALERTAS DE FREQUÊNCIA E TEXTOS JUSTIFICADOS
 Na aba Doc. Modelos, use Preencher documentos online ou Preencher online nos sete modelos reconhecidos. O formulário usa os modelos enviados; não converte automaticamente qualquer arquivo cadastrado pela equipe.
 Selecione o aluno, confira os dados compatíveis, complete os campos e escolha as assinaturas da biblioteca. Nome e cargo são editáveis, com imagem opcional e espaço para assinatura manual.
 Salvar documento na ficha cria uma versão privada em Documentos salvos deste aluno. O preenchimento não altera o cadastro nem a Frequência. Nos termos com contagens, Faltas vem de F e dias de atendimento de P + F + FJ, de 01/01 do ano vigente até hoje. Sem atendimento pedagógico não entra nessas contagens. Datas repetidas em turnos distintos contam uma vez. As quantidades continuam editáveis. Use Atualizar dados do Diário para consultar novamente; versões salvas só mudam mediante atualização explícita. Professor vem do cadastro/nome da conta; o responsável pode ser escolhido entre os contatos do aluno.
 Com a opção de cópia marcada, cada página vira uma imagem em Imagens do laudo (fotos ou digitalizações), com nome, data e página. PDF e imagens usam a mesma paginação; o DOCX é editável e pode paginar diferente no Word.
 O PDF original de uso de imagem também está disponível como DOCX editável. Os modelos originais da biblioteca continuam disponíveis para baixar.
-Não exige novas regras Firebase: utiliza as subcoleções privadas já existentes sob alunos e a biblioteca de assinaturas já liberada. Não repita permissões já aplicadas.
+ATENÇÃO: antes de publicar esta etapa, acrescente as permissões dos critérios de alertas no Firestore de salamulti. Siga GUIA-ALERTAS-FREQUENCIA-FIREBASE.txt e PERMISSOES-ALERTAS-FREQUENCIA-FIRESTORE.txt. Preserve todas as regras atuais.
 Pacote cumulativo, incluindo registro rápido, formulários compactos, autopreenchimento, logos e avisos do chat. Publique a pasta completa, aguarde Published e use Ctrl + Shift + R.
+
+ALERTAS DE FREQUÊNCIA
+Na aba Frequência, configure o período móvel (60 dias), F seguidas (3) ou F acumuladas (7). FJ e SAP não somam nem quebram a sequência; P quebra. Nomes destacados indicam pendência até registrar a providência. Encaminhamentos têm histórico, assinaturas, impressão, DOCX/PDF e cópias opcionais das páginas na ficha. Imprimir/exportar não encerra o alerta. Nenhuma mensagem é enviada automaticamente.
+Textos dos parágrafos também são justificados nas páginas PDF/imagem dos modelos online; títulos e assinaturas mantêm alinhamento próprio.
 
 PARA PUBLICAR
 1. Guarde o endereço/identificador do deploy oficial atual para eventual retorno.
