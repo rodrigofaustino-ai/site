@@ -37,7 +37,7 @@ def validar(pasta):
     if faltantes:raise ValueError('Referências locais ausentes: '+repr(faltantes))
 
 def main():
-    p=argparse.ArgumentParser();p.add_argument('destino',type=Path);p.add_argument('zip',type=Path);p.add_argument('--etapa',type=int,default=70);args=p.parse_args()
+    p=argparse.ArgumentParser();p.add_argument('destino',type=Path);p.add_argument('zip',type=Path);p.add_argument('--etapa',type=int,default=72);args=p.parse_args()
     destino=args.destino.resolve();arquivo_zip=args.zip.resolve()
     if destino==ROOT or destino.is_relative_to(ROOT):raise ValueError('Use uma pasta nova fora do repositório de fonte.')
     if destino.exists() and any(destino.iterdir()):raise ValueError('A pasta de destino precisa estar vazia ou não existir.')
@@ -357,6 +357,24 @@ serviços externos de IA ou a configuração remota atual de todos os serviços.
         for fonte,alvo in [('GUIA-DOCUMENTOS-MODELOS-FIREBASE.txt','GUIA-DOC-MODELOS-FIREBASE.txt'),('documentos-modelos-firestore-acrescimo.rules','PERMISSOES-DOC-MODELOS-FIRESTORE.txt'),('documentos-modelos-storage-acrescimo.rules','PERMISSOES-DOC-MODELOS-STORAGE.txt')]:
             (destino/alvo).write_text('ETAPA 71: não repita permissões já aplicadas na etapa 69.\n\n'+(ROOT/'producao'/fonte).read_text())
         (destino/'PERMISSOES-ASSINATURAS-FIRESTORE.txt').write_text('ETAPA 71: nenhuma nova regra.\n\n'+(ROOT/'producao'/'GUIA-ASSINATURAS-FIRESTORE.txt').read_text())
+    if args.etapa == 72:
+        guia=destino/'LEIA-ME-PUBLICACAO.txt'
+        texto=guia.read_text()
+        inicio=texto.index('ATENÇÃO — QUESTIONÁRIO DA FAMÍLIA')
+        fim=texto.index('PARA PUBLICAR',inicio)
+        texto=texto[:inicio]+'''ETAPA 72 — DOCUMENTOS PREENCHIDOS ONLINE
+Na aba Doc. Modelos, use Preencher documentos online ou Preencher online nos sete modelos reconhecidos. O formulário usa os modelos enviados; não converte automaticamente qualquer arquivo cadastrado pela equipe.
+Selecione o aluno, confira os dados compatíveis, complete os campos e escolha as assinaturas da biblioteca. Nome e cargo são editáveis, com imagem opcional e espaço para assinatura manual.
+Salvar documento na ficha cria uma versão privada em Documentos salvos deste aluno. O preenchimento não altera o cadastro nem a Frequência. As quantidades de faltas são manuais.
+Com a opção de cópia marcada, cada página vira uma imagem em Imagens do laudo (fotos ou digitalizações), com nome, data e página. PDF e imagens usam a mesma paginação; o DOCX é editável e pode paginar diferente no Word.
+O PDF original de uso de imagem também está disponível como DOCX editável. Os modelos originais da biblioteca continuam disponíveis para baixar.
+Não exige novas regras Firebase: utiliza as subcoleções privadas já existentes sob alunos e a biblioteca de assinaturas já liberada. Não repita permissões já aplicadas.
+Pacote cumulativo, incluindo registro rápido, formulários compactos, autopreenchimento, logos e avisos do chat. Publique a pasta completa, aguarde Published e use Ctrl + Shift + R.
+
+'''+texto[fim:]
+        guia.write_text(texto)
+        for fonte,alvo in [('GUIA-DOCUMENTOS-MODELOS-FIREBASE.txt','GUIA-DOC-MODELOS-FIREBASE.txt'),('documentos-modelos-firestore-acrescimo.rules','PERMISSOES-DOC-MODELOS-FIRESTORE.txt'),('documentos-modelos-storage-acrescimo.rules','PERMISSOES-DOC-MODELOS-STORAGE.txt'),('GUIA-ASSINATURAS-FIRESTORE.txt','PERMISSOES-ASSINATURAS-FIRESTORE.txt')]:
+            (destino/alvo).write_text('ETAPA 72: nenhuma regra nova; não repita permissões já aplicadas.\n\n'+(ROOT/'producao'/fonte).read_text())
     guia=destino/'LEIA-ME-PUBLICACAO.txt'
     guia.write_text(guia.read_text().replace('até a etapa 33.',f'até a etapa {args.etapa}.'))
     if args.etapa >= 57:

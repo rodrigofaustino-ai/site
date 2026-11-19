@@ -1,0 +1,23 @@
+# Etapa 72 — modelos online, assinaturas e cópias na ficha
+
+Integra a prévia aprovada à aba Doc. Modelos. O botão Preencher documentos online abre sete formulários baseados nos arquivos enviados. Os cartões de biblioteca com título/nome exato reconhecido também oferecem Preencher online; o arquivo original permanece disponível. A identificação usa uma lista fechada de nomes normalizados, sem converter arquivos arbitrários nem alterar metadados da biblioteca. O catálogo explica que o formulário é o modelo padrão enviado anteriormente. O PDF digitalizado de uso de imagem foi transcrito em DOCX editável e está incluído em modelos/.
+
+O preenchimento consulta somente alunos pertencentes à conta conectada, por Firestore com confirmação do servidor. Equivalências cadastrais são explícitas, sem inferir nacionalidade, CPF, medicação, restrições, contagens de faltas ou responsável legal a partir do nome da mãe/pai. Trocar de aluno com alterações exige descartar o preenchimento para não misturar informações. Documentos manuais podem ser exportados, mas salvar exige escolher e confirmar um aluno da própria conta. O cadastro do Diário e a Frequência não são alterados.
+
+Cada pessoa usa o componente existente de nome, cargo/função, Inserir/Trocar assinatura e Remover imagem, com a biblioteca privada já liberada. Nomes e imagens são incorporados à versão salva. Sem imagem, o renderizador compartilhado conserva o espaço para assinatura manual. Pessoas podem ser incluídas e removidas. O campo de motivos da desistência recebe a revisão de IA já utilizada no site; campos de identificação e textos fixos dos termos não são enviados automaticamente.
+
+Salvar documento na ficha cria uma versão em alunos/{alunoId}/documentosOnline/{uuid}. Com a opção de cópia marcada (padrão), cada página é um JPEG em alunos/{alunoId}/laudoImagens/{uuid}-pagina-N. O título atual do campo permanece **Imagens do laudo (fotos ou digitalizações)**. Nome da imagem contém documento, data e página; a interface existente permite ver, baixar e excluir a imagem. O documento estruturado e todas as páginas são gravados na mesma transação, após conferir a existência/propriedade do cadastro. Documento-pai não é atualizado. Limites: 21 pessoas, 5.000 caracteres por campo, até 20 páginas e limites de tamanho abaixo de 1 MB por documento Firestore.
+
+Uma tentativa pendente mantém identificador e hash. Repetir após perda da confirmação reconhece a versão já salva e não duplica imagens. Alterar o conteúdo enquanto há uma tentativa pendente exige recuperar o preenchimento original para conferir a gravação. Sucesso conserva o formulário e evita repetição do mesmo conteúdo; novas alterações e novo salvamento criam uma versão adicional. O histórico mostra as últimas 50 versões do aluno e permite reabrir valores e assinaturas. Ao reexportar, a data final de emissão usa o dia atual; a versão salva anterior permanece preservada. Troca/saída da conta fecha a janela e limpa o estado em memória.
+
+Texto dos termos, dados, títulos e pessoas são a fonte comum de DOCX e imagens. A prévia paginada usa canvas, logo local somente na primeira página, texto com quebra, tabela de checklist e assinaturas com/sem imagem. PDF contém exatamente essas páginas e as cópias JPEG são essas mesmas imagens. DOCX usa o renderizador compartilhado, com texto editável, logo e assinaturas; sua paginação pode variar no Word. A janela informa essa diferença. O original PDF digitalizado não foi sobrescrito nem considerado assinado por preenchimento online.
+
+Permissões: **nenhuma regra nova**, pois a regra vigente de alunos já permite as subcoleções somente ao proprietário/admin, e a biblioteca privada foi habilitada anteriormente. O assistente não executou alterações no Firebase nem publicou o site.
+
+Validação local sem dados reais:
+- verificar-termos-online.cjs: interface real, autopreenchimento, seleção da biblioteca, DOCX/PDF, sete modelos e continuação legal, tabela, imagens no campo da ficha, opt-out de cópias, versões salvas, falha antes de gravar, confirmação perdida, recuperação da tentativa, não duplicação, propriedade/saída da conta e celular.
+- verificar-documentos-modelos.cjs: 20 verificações do download original, envio, pesquisa, exclusão e autoria.
+- verificar-ia-campos.cjs: 63 verificações de cobertura, exclusões e aplicação explícita.
+- verificar-firebase-producao.cjs: carregamento/configuração/sintaxe, com pedidos externos bloqueados.
+
+Pacote cumulativo da etapa 72: todas as funcionalidades da etapa 71 permanecem, incluindo registro rápido, telas ampliadas, autopreenchimento, logos e notificações do chat. Publicação manual pelo usuário no Netlify.

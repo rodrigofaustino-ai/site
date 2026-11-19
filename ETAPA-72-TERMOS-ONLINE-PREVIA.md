@@ -1,3 +1,5 @@
+> Histórico da prévia inicial. A integração aprovada está concluída; veja ETAPA-72-TERMOS-ONLINE.md.
+
 # Prévia de preenchimento online dos sete modelos
 
 Prévia em `previas/etapa-72/preenchimento-online.html`, servida a partir da raiz do repositório. Não está ligada à aba oficial e não entra no pacote Netlify da etapa 71.
