@@ -1,0 +1,13 @@
+# Etapa 80 — CGM no cadastro e importação conferida
+
+Campo Número CGM na Identificação do aluno, junto a nascimento/turma. Lê e grava a propriedade textual cgm no cadastro, preserva zeros iniciais e usa a máscara XXX.XXX.XXX-X quando houver 10 dígitos. Campos vazios são permitidos e dados legados numéricos podem ser mantidos no preenchimento individual. O compartilhamento cadastral existente já lê cgm; esta etapa não substitui documentos já salvos.
+
+Em Alunos, Preencher CGMs dos meus alunos abre uma conferência por CSV/TXT local ou texto de duas colunas. A janela mostra a conta conectada. Consulta somente alunos de professorUid igual ao UID atual, mesmo para administrador. Nomes são comparados integralmente após normalização de acentos, caixa, ponto de abreviação e espaços; não usa correspondência aproximada ou expansão de iniciais. Ambiguidades, nomes ausentes, dados repetidos e CGM já atribuído a outro cadastro da conta ficam bloqueados.
+
+A prévia não grava. Campos vazios válidos ficam selecionados; CGMs iguais são ignorados. CGMs diferentes exigem autorização explícita de substituição e seleção individual. Antes da gravação, consulta novamente os próprios cadastros; a transação relê os selecionados e verifica UID, nome completo e CGM anterior. Atualiza somente cgm, em uma operação atômica, sem criar alunos ou alterar demais informações. Mesma tentativa após perda da confirmação é segura, pois números iguais não geram novas informações. Falha mantém a tabela; sessão/troca de conta fecha a janela. Até 500 linhas para conferir e 100 selecionadas por gravação.
+
+A lista pessoal fornecida na imagem foi transcrita para um arquivo privado fora deste repositório e do pacote de publicação. Não há nomes/CGMs reais embutidos no código, nos testes, nas imagens de prévia ou no ZIP. A importação real deve ser executada pelo usuário autenticado, após conferir as correspondências. Nenhum dado real foi gravado pelo assistente.
+
+Validação: 13 verificações do modelo (texto/zeros, CSV, nomes exatos, repetidos e conflitos); navegador com conta própria, proteção de outra conta, prévia sem gravação, alteração somente do campo, falha e confirmação perdida, substituição explícita, campo manual/mascaramento/persistência, celular e saída. Prévia usa números e nomes fictícios. Arquivo privado conferido com 14 linhas únicas, sem os números nos arquivos públicos. Configuração/sintaxe da pasta final conferida com pedidos externos bloqueados.
+
+Pacote cumulativo 80, publicação manual no Netlify, sem permissões novas. Os dados pessoais não fazem parte do ZIP público e precisam ser lidos do arquivo privado na própria conta do professor.

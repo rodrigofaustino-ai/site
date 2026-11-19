@@ -654,7 +654,7 @@ hr.sep{border:none;border-top:2px dashed rgba(0,0,0,.06);margin:.2rem 0;}
         <div class="color-strip"></div>
         <div class="section-head"><div class="section-badge" style="background:var(--teal-l)">🧒</div><span id="alunosListaTitulo">Alunos em atendimento</span></div>
         <div class="alunos-arquivo-filtros"><label for="alunosSituacao">Mostrar alunos <select id="alunosSituacao"><option value="ativos">Em atendimento</option><option value="arquivados">Arquivados</option><option value="todos">Todos</option></select></label></div>
-        <p id="arquivoAlunosStatus" role="status" aria-live="polite">Arquivar mantém os documentos e o histórico. Use Arquivados para consultar ou reativar um cadastro.</p>
+        <button type="button" id="btnImportarCgm" onclick="CgmAlunos.abrir()">Preencher CGMs dos meus alunos</button><p id="arquivoAlunosStatus" role="status" aria-live="polite">Arquivar mantém os documentos e o histórico. Use Arquivados para consultar ou reativar um cadastro.</p>
         <div class="students-grid" id="studentsList">
           <div class="empty-list"><div class="spinner" style="margin:0 auto 8px"></div>Carregando...</div>
         </div>
@@ -874,13 +874,13 @@ hr.sep{border:none;border-top:2px dashed rgba(0,0,0,.06);margin:.2rem 0;}
         </div>
         <div class="flds">
           <div class="field"><label for="nomeAluno">Nome completo do aluno</label><input type="text" id="nomeAluno" placeholder="Nome completo"></div>
-          <div class="fg">
+          <div class="fg cgm-identificacao">
             <div class="field">
               <label for="dataNasc">Data de nascimento</label>
               <input type="date" id="dataNasc">
               <span id="idadeDisplay" style="font-size:12px;font-weight:700;color:var(--teal);margin-top:4px;display:none;">🎂 <span id="idadeTexto"></span></span>
             </div>
-            <div class="field"><label for="turma">Turma / Série</label><input type="text" id="turma" placeholder="Ex: 3º ano A"></div>
+            <div class="field"><label for="turma">Turma / Série</label><input type="text" id="turma" placeholder="Ex: 3º ano A"></div><div class="field"><label for="cgmAluno">Número CGM</label><input type="text" id="cgmAluno" inputmode="numeric" maxlength="20" placeholder="Ex.: 100.000.001-0"></div>
           </div>
           <div class="turno-resumo-linha"><div class="field full">
             <label>🌓 Turno do atendimento na SRM</label>
@@ -3693,7 +3693,7 @@ function montarAssinaturaHistorico(){
  let area=$('assinaturasHistoricoExtras');if(!area){area=document.createElement('div');area.id='assinaturasHistoricoExtras';input.closest('.pdf-fields').append(area);}
  AssinaturasAdicionais.montar({container:area,auth,obter:()=>assinaturasHistoricoAdicionais,gravar:a=>assinaturasHistoricoAdicionais=a,vigente,abrir:vigenteLinha=>BibliotecaAssinaturas.abrir({db,auth,uid,vigente:vigenteLinha})});
 }
-const FIELDS={nomeAluno:'nome',dataNasc:'dataNasc',turma:'turma',escola:'escola',municipio:'municipio',periodo:'periodo',laudo:'laudo',cid:'cid',cid11:'cid11',dataLaudo:'dataLaudo',obsClinicas:'obsClinicas'};
+const FIELDS={nomeAluno:'nome',dataNasc:'dataNasc',turma:'turma',cgmAluno:'cgm',escola:'escola',municipio:'municipio',periodo:'periodo',laudo:'laudo',cid:'cid',cid11:'cid11',dataLaudo:'dataLaudo',obsClinicas:'obsClinicas'};
 function clearForm(){
   window.AlunoTotais?.limpar();window.RegistroFalta?.limpar();
   assinaturaHistorico=null;assinaturasHistoricoAdicionais=[];montarAssinaturaHistorico();
@@ -3749,11 +3749,12 @@ function selecionarTurnoAluno(turno){
 }
 
 async function saveProfile(){
+  let cgm;try{cgm=CgmAlunosModelo.cgm(val('cgmAluno'),false);}catch(e){showToast(e.message);$('cgmAluno').focus();return;}
   let faltas;try{faltas=HistoricoAtendimentosFrequencia.faltasManuais(val('pdfFaltas'));AssinaturasAdicionais.grupos(assinaturasHistoricoAdicionais);}catch(error){showToast(error.message);$('pdfFaltas').focus();return;}
   const eraNovo = !currentStudentId;
   setBadge('syncing','Salvando...');$('btnSalvarPerfil').disabled=true;showLoad('Salvando...');
   const data={
-    nome:val('nomeAluno'),dataNasc:val('dataNasc'),turma:val('turma'),escola:val('escola'),
+    nome:val('nomeAluno'),dataNasc:val('dataNasc'),turma:val('turma'),cgm,escola:val('escola'),
     municipio:val('municipio'),periodo:val('periodo'),laudo:val('laudo'),cid:val('cid'),
     dataLaudo:val('dataLaudo'),obsClinicas:val('obsClinicas'),contacts:[...contacts],
     atendimentos:atendimentos.filter(r=>r.dia&&r.horario),
@@ -4107,7 +4108,7 @@ async function exportPDF(){
 </script>
 <script src="historico-atendimentos-frequencia.js"></script>
 <script src="historico-atendimentos-documento.js"></script><script src="biblioteca-assinaturas.js"></script><script src="assinaturas-campos.js"></script><script src="assinaturas-adicionais.js"></script><link rel="stylesheet" href="biblioteca-assinaturas.css">
-<link rel="stylesheet" href="documentos-modelos.css"><link rel="stylesheet" href="termos-online.css"><script src="frequencia-anual.js"></script><script src="termos-online-dados.js"></script><script src="termos-online-modelo.js"></script><script src="termos-online-documento.js"></script><script src="termos-online-salvar.js"></script><script src="termos-online.js"></script><script src="documentos-modelos.js"></script><link rel="stylesheet" href="alertas-frequencia.css"><script src="alertas-frequencia-modelo.js"></script><script src="alertas-frequencia-dados.js"></script><script src="alertas-frequencia-servico.js"></script><script src="alertas-frequencia-documento.js"></script><script src="alertas-frequencia.js"></script>
+<link rel="stylesheet" href="documentos-modelos.css"><link rel="stylesheet" href="termos-online.css"><script src="frequencia-anual.js"></script><script src="termos-online-dados.js"></script><script src="termos-online-modelo.js"></script><script src="termos-online-documento.js"></script><script src="termos-online-salvar.js"></script><script src="termos-online.js"></script><script src="documentos-modelos.js"></script><link rel="stylesheet" href="cgm-alunos.css"><script src="cgm-alunos-modelo.js"></script><script src="cgm-alunos.js"></script><link rel="stylesheet" href="alertas-frequencia.css"><script src="alertas-frequencia-modelo.js"></script><script src="alertas-frequencia-dados.js"></script><script src="alertas-frequencia-servico.js"></script><script src="alertas-frequencia-documento.js"></script><script src="alertas-frequencia.js"></script>
 <script src="planos-aula.js"></script>
 <script src="recursos-didaticos.js"></script>
 <script src="chat-anexos-modelo.js"></script>
@@ -4119,6 +4120,6 @@ async function exportPDF(){
 <script src="comunicados-equipe.js"></script>
 <script src="ia-campos-modelo.js"></script>
 <script src="ia-campos.js"></script>
-<script>document.addEventListener("termos-online-salvo",e=>{if(currentStudentId===e.detail.alunoId)carregarLaudoImagens(currentStudentId);});</script>
+<script>document.addEventListener("cgm-importado",()=>{if(auth.currentUser&&professorUid===auth.currentUser.uid)renderStudentList();});document.addEventListener("termos-online-salvo",e=>{if(currentStudentId===e.detail.alunoId)carregarLaudoImagens(currentStudentId);});</script>
 </body>
 </html>
