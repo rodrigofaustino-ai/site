@@ -1,12 +1,12 @@
 PACOTE DO SITE OFICIAL — saladerecursos.netlify.app
 
-Inclui as melhorias acumuladas até a etapa 72.
+Inclui as melhorias acumuladas até a etapa 73.
 Conexões: salamulti (Diário/PEI) e paee-3fea6 (PAEE/Diagnóstica/Relatório).
 Não é uma cópia isolada de teste.
-ETAPA 72 — DOCUMENTOS PREENCHIDOS ONLINE
+ETAPA 73 — DADOS DO DIÁRIO E TOTAIS DO ANO VIGENTE
 Na aba Doc. Modelos, use Preencher documentos online ou Preencher online nos sete modelos reconhecidos. O formulário usa os modelos enviados; não converte automaticamente qualquer arquivo cadastrado pela equipe.
 Selecione o aluno, confira os dados compatíveis, complete os campos e escolha as assinaturas da biblioteca. Nome e cargo são editáveis, com imagem opcional e espaço para assinatura manual.
-Salvar documento na ficha cria uma versão privada em Documentos salvos deste aluno. O preenchimento não altera o cadastro nem a Frequência. As quantidades de faltas são manuais.
+Salvar documento na ficha cria uma versão privada em Documentos salvos deste aluno. O preenchimento não altera o cadastro nem a Frequência. Nos termos com contagens, Faltas vem de F e dias de atendimento de P + F + FJ, de 01/01 do ano vigente até hoje. Sem atendimento pedagógico não entra nessas contagens. Datas repetidas em turnos distintos contam uma vez. As quantidades continuam editáveis. Use Atualizar dados do Diário para consultar novamente; versões salvas só mudam mediante atualização explícita. Professor vem do cadastro/nome da conta; o responsável pode ser escolhido entre os contatos do aluno.
 Com a opção de cópia marcada, cada página vira uma imagem em Imagens do laudo (fotos ou digitalizações), com nome, data e página. PDF e imagens usam a mesma paginação; o DOCX é editável e pode paginar diferente no Word.
 O PDF original de uso de imagem também está disponível como DOCX editável. Os modelos originais da biblioteca continuam disponíveis para baixar.
 Não exige novas regras Firebase: utiliza as subcoleções privadas já existentes sob alunos e a biblioteca de assinaturas já liberada. Não repita permissões já aplicadas.
