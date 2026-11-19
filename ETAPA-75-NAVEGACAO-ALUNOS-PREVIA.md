@@ -10,4 +10,4 @@ Implementação: alunos-navegacao.js/css e inclusão no index.html. Novos elemen
 
 Validação: verificar-alunos-navegacao.cjs em Chromium, com 12 nomes fictícios, conta/turno/filtro, nomes de uma/duas/várias partes e acentos, pesquisa, rolagem/foco sem abrir/salvar ficha (zero transações), troca de aba, celular e logout. Verificação geral de configuração/sintaxe: 131 verificações, pedidos externos bloqueados. Prévias em previas/etapa-75/.
 
-Estado: implementado para revisão visual, sem gerar novo pacote. O pacote 74 entregue anteriormente não contém este menu.
+Estado: prévia aprovada pelo usuário. Pacote cumulativo 75 preparado para publicação manual; sem regras novas além das já fornecidas na etapa 74.
