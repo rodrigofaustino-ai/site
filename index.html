@@ -1484,7 +1484,7 @@ async function renderPaeeList(){
       return`<div class="student-item" data-id="${s.id}" data-nome="${esc(s.nome||'')}" title="Abrir PAEE de ${esc(s.nome||'')}">
         <div class="student-num">${num}</div>
         <div class="student-avatar ${avColor(s.nome)}">${av}</div>
-        <div class="student-info"><strong data-af-nome="${esc(s.id)}">${esc(s.nome||'Sem nome')}</strong>
+        <div class="student-info"><strong data-af-nome="${esc(s.id)}" data-nome-completo="${esc(s.nome||'Sem nome')}" title="${esc(s.nome||'Sem nome')}" aria-label="${esc(s.nome||'Sem nome')}">${esc(window.AlunosNavegacao?.abreviar(s.nome||'Sem nome')||s.nome||'Sem nome')}</strong>
         <span>${esc(s.turma||'')}</span></div>
         <div class="student-actions" data-af-holder="${esc(s.id)}">
           <button class="icon-btn open" data-open-paee="${esc(s.nome||'')}" data-id="${s.id}" title="Abrir PAEE">📘</button>
@@ -1528,7 +1528,7 @@ async function renderRelatorioList(){
       return`<div class="student-item" data-id="${s.id}" data-nome="${esc(s.nome||'')}" title="Abrir Relatório de ${esc(s.nome||'')}">
         <div class="student-num">${num}</div>
         <div class="student-avatar ${avColor(s.nome)}">${av}</div>
-        <div class="student-info"><strong data-af-nome="${esc(s.id)}">${esc(s.nome||'Sem nome')}</strong>
+        <div class="student-info"><strong data-af-nome="${esc(s.id)}" data-nome-completo="${esc(s.nome||'Sem nome')}" title="${esc(s.nome||'Sem nome')}" aria-label="${esc(s.nome||'Sem nome')}">${esc(window.AlunosNavegacao?.abreviar(s.nome||'Sem nome')||s.nome||'Sem nome')}</strong>
         <span>${esc(s.turma||'')}</span></div>
         <div class="student-actions" data-af-holder="${esc(s.id)}">
           <button class="icon-btn open" data-open-rel="${esc(s.nome||'')}" data-id="${s.id}" title="Abrir Relatório">📋</button>
@@ -1572,7 +1572,7 @@ async function renderDiagnosticaList(){
       return`<div class="student-item" data-id="${s.id}" data-nome="${esc(s.nome||'')}" title="Abrir Diagnóstica de ${esc(s.nome||'')}">
         <div class="student-num">${num}</div>
         <div class="student-avatar ${avColor(s.nome)}">${av}</div>
-        <div class="student-info"><strong data-af-nome="${esc(s.id)}">${esc(s.nome||'Sem nome')}</strong>
+        <div class="student-info"><strong data-af-nome="${esc(s.id)}" data-nome-completo="${esc(s.nome||'Sem nome')}" title="${esc(s.nome||'Sem nome')}" aria-label="${esc(s.nome||'Sem nome')}">${esc(window.AlunosNavegacao?.abreviar(s.nome||'Sem nome')||s.nome||'Sem nome')}</strong>
         <span>${esc(s.turma||'')}</span></div>
         <div class="student-actions">
           <button type="button" class="central-btn" data-familia="${esc(s.id)}" aria-label="Questionário da família de ${esc(s.nome||'Aluno')}">Família</button>
@@ -2688,12 +2688,12 @@ async function renderStudentList(){
     if(!list.length){c.innerHTML=`<div class="empty-list"><span class="emoji">🌟</span>Nenhum aluno neste filtro.<br>Você pode trocar o filtro ou cadastrar um novo aluno.</div>`;return;}
     c.innerHTML=list.map((s,i)=>{
       const av=s.photoB64?`<img src="${s.photoB64}" style="width:100%;height:100%;object-fit:cover;border-radius:50%" alt="">`:`<span>${initials(s.nome)}</span>`;
-      const lt=s.laudo?`<span class="laudo-tag">${esc(s.laudo.split(',')[0].trim())}</span>`:'';
+      const lt=s.laudo?`<span class="laudo-tag" title="${esc(s.laudo)}">${esc(s.laudo.split(',')[0].trim())}</span>`:'';
       const num=String(i+1).padStart(2,'0');
       return`<div class="student-item" data-id="${s.id}">
         <div class="student-num">${num}</div>
         <div class="student-avatar ${avColor(s.nome)}">${av}</div>
-        <div class="student-info"><strong data-af-nome="${esc(s.id)}">${esc(s.nome||'Sem nome')}</strong>
+        <div class="student-info"><strong data-af-nome="${esc(s.id)}" data-nome-completo="${esc(s.nome||'Sem nome')}" title="${esc(s.nome||'Sem nome')}" aria-label="${esc(s.nome||'Sem nome')}">${esc(window.AlunosNavegacao?.abreviar(s.nome||'Sem nome')||s.nome||'Sem nome')}</strong>
         <span>${esc(s.turma||'')}${s.turma?' · ':''}Último atendimento: ${s.ultimoRegistro?fmtShort(s.ultimoRegistro):'Sem registros'}</span>${lt}${ArquivamentoAlunos.arquivado(s)?'<span class="aluno-arquivado-badge">Arquivado</span>':''}</div>
         <div class="student-actions" data-af-holder="${esc(s.id)}">
           <button class="icon-btn open" data-open="${esc(s.id)}" aria-label="Abrir ficha de ${esc(s.nome||'aluno')}" title="Abrir">🗂️</button>
