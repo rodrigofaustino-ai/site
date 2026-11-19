@@ -37,7 +37,7 @@ def validar(pasta):
     if faltantes:raise ValueError('Referências locais ausentes: '+repr(faltantes))
 
 def main():
-    p=argparse.ArgumentParser();p.add_argument('destino',type=Path);p.add_argument('zip',type=Path);p.add_argument('--etapa',type=int,default=72);args=p.parse_args()
+    p=argparse.ArgumentParser();p.add_argument('destino',type=Path);p.add_argument('zip',type=Path);p.add_argument('--etapa',type=int,default=73);args=p.parse_args()
     destino=args.destino.resolve();arquivo_zip=args.zip.resolve()
     if destino==ROOT or destino.is_relative_to(ROOT):raise ValueError('Use uma pasta nova fora do repositório de fonte.')
     if destino.exists() and any(destino.iterdir()):raise ValueError('A pasta de destino precisa estar vazia ou não existir.')
@@ -357,7 +357,7 @@ serviços externos de IA ou a configuração remota atual de todos os serviços.
         for fonte,alvo in [('GUIA-DOCUMENTOS-MODELOS-FIREBASE.txt','GUIA-DOC-MODELOS-FIREBASE.txt'),('documentos-modelos-firestore-acrescimo.rules','PERMISSOES-DOC-MODELOS-FIRESTORE.txt'),('documentos-modelos-storage-acrescimo.rules','PERMISSOES-DOC-MODELOS-STORAGE.txt')]:
             (destino/alvo).write_text('ETAPA 71: não repita permissões já aplicadas na etapa 69.\n\n'+(ROOT/'producao'/fonte).read_text())
         (destino/'PERMISSOES-ASSINATURAS-FIRESTORE.txt').write_text('ETAPA 71: nenhuma nova regra.\n\n'+(ROOT/'producao'/'GUIA-ASSINATURAS-FIRESTORE.txt').read_text())
-    if args.etapa == 72:
+    if args.etapa in (72,73):
         guia=destino/'LEIA-ME-PUBLICACAO.txt'
         texto=guia.read_text()
         inicio=texto.index('ATENÇÃO — QUESTIONÁRIO DA FAMÍLIA')
@@ -375,6 +375,12 @@ Pacote cumulativo, incluindo registro rápido, formulários compactos, autopreen
         guia.write_text(texto)
         for fonte,alvo in [('GUIA-DOCUMENTOS-MODELOS-FIREBASE.txt','GUIA-DOC-MODELOS-FIREBASE.txt'),('documentos-modelos-firestore-acrescimo.rules','PERMISSOES-DOC-MODELOS-FIRESTORE.txt'),('documentos-modelos-storage-acrescimo.rules','PERMISSOES-DOC-MODELOS-STORAGE.txt'),('GUIA-ASSINATURAS-FIRESTORE.txt','PERMISSOES-ASSINATURAS-FIRESTORE.txt')]:
             (destino/alvo).write_text('ETAPA 72: nenhuma regra nova; não repita permissões já aplicadas.\n\n'+(ROOT/'producao'/fonte).read_text())
+    if args.etapa == 73:
+        guia=destino/'LEIA-ME-PUBLICACAO.txt'
+        guia.write_text(guia.read_text().replace('ETAPA 72 — DOCUMENTOS PREENCHIDOS ONLINE','ETAPA 73 — DADOS DO DIÁRIO E TOTAIS DO ANO VIGENTE').replace('As quantidades de faltas são manuais.','Nos termos com contagens, Faltas vem de F e dias de atendimento de P + F + FJ, de 01/01 do ano vigente até hoje. Sem atendimento pedagógico não entra nessas contagens. Datas repetidas em turnos distintos contam uma vez. As quantidades continuam editáveis. Use Atualizar dados do Diário para consultar novamente; versões salvas só mudam mediante atualização explícita. Professor vem do cadastro/nome da conta; o responsável pode ser escolhido entre os contatos do aluno.'))
+        for alvo in ('GUIA-DOC-MODELOS-FIREBASE.txt','PERMISSOES-DOC-MODELOS-FIRESTORE.txt','PERMISSOES-DOC-MODELOS-STORAGE.txt','PERMISSOES-ASSINATURAS-FIRESTORE.txt'):
+            arq=destino/alvo
+            arq.write_text(arq.read_text().replace('ETAPA 72:','ETAPA 73:'))
     guia=destino/'LEIA-ME-PUBLICACAO.txt'
     guia.write_text(guia.read_text().replace('até a etapa 33.',f'até a etapa {args.etapa}.'))
     if args.etapa >= 57:
