@@ -1,1 +1,3 @@
 #perfilCadastro .cgm-nome-linha{display:grid;grid-template-columns:minmax(0,2fr) minmax(160px,1fr);gap:12px;align-items:start}#perfilCadastro .cgm-nome-linha>.field{min-width:0}#perfilCadastro .cgm-nome-linha input{width:100%;box-sizing:border-box}@media(max-width:600px){#perfilCadastro .cgm-nome-linha{grid-template-columns:minmax(0,1fr);gap:10px}}
+
+#perfilCadastro .perfil-identificacao-head{flex-wrap:wrap}#btnSalvarPerfilGeral{margin-left:auto;width:auto;min-height:40px;font-size:13px;padding:10px 16px;white-space:nowrap}@media(max-width:600px){#btnSalvarPerfilGeral{margin-left:0;width:100%;white-space:normal}}

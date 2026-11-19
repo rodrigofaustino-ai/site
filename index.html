@@ -862,7 +862,7 @@ hr.sep{border:none;border-top:2px dashed rgba(0,0,0,.06);margin:.2rem 0;}
     <section id="perfilAlertasFrequencia" class="af-perfil" hidden></section>
     <div class="card perfil-unificado" id="perfilCadastro">
       <div class="color-strip" style="background:linear-gradient(90deg,var(--coral),var(--orange),var(--yellow))"></div>
-      <div class="section-head"><div class="section-badge" style="background:var(--coral-l)">📋</div>Identificação do Aluno</div>
+      <div class="section-head perfil-identificacao-head"><div class="section-badge" style="background:var(--coral-l)">📋</div>Identificação do Aluno<button type="button" class="save-btn" id="btnSalvarPerfilGeral">💾 Salvar Alterações Geral</button></div>
       <div class="photo-row">
         <div class="photo-area">
           <div class="photo-circle" id="photoCircle">
@@ -1354,6 +1354,8 @@ document.addEventListener('DOMContentLoaded', () => {
   $('btnAddAtendimento').addEventListener('click', ()=>addAtendimento());
   $('btnAddNota').addEventListener('click', addNota);
   $('btnSalvarPerfil').addEventListener('click', saveProfile);
+  $('btnSalvarPerfilGeral').addEventListener('click',()=>{if(!$('btnSalvarPerfil').disabled)$('btnSalvarPerfil').click();});
+  new MutationObserver(()=>{$('btnSalvarPerfilGeral').disabled=$('btnSalvarPerfil').disabled;}).observe($('btnSalvarPerfil'),{attributes:true,attributeFilter:['disabled']});
   $('btnSalvarRegistro').addEventListener('click', saveEntry);
   $('btnHoje').addEventListener('click', ()=>{$('entryDate').value=RegistroAssistido.hoje();});
   $('btnExportPDF').addEventListener('click', exportPDF);
