@@ -1,9 +1,9 @@
 PACOTE DO SITE OFICIAL — saladerecursos.netlify.app
 
-Inclui as melhorias acumuladas até a etapa 75.
+Inclui as melhorias acumuladas até a etapa 76.
 Conexões: salamulti (Diário/PEI) e paee-3fea6 (PAEE/Diagnóstica/Relatório).
 Não é uma cópia isolada de teste.
-ETAPA 75 — MENU LATERAL DE ALUNOS
+ETAPA 76 — MENU DE ALUNOS COMPACTO
 Na aba Doc. Modelos, use Preencher documentos online ou Preencher online nos sete modelos reconhecidos. O formulário usa os modelos enviados; não converte automaticamente qualquer arquivo cadastrado pela equipe.
 Selecione o aluno, confira os dados compatíveis, complete os campos e escolha as assinaturas da biblioteca. Nome e cargo são editáveis, com imagem opcional e espaço para assinatura manual.
 Salvar documento na ficha cria uma versão privada em Documentos salvos deste aluno. O preenchimento não altera o cadastro nem a Frequência. Nos termos com contagens, Faltas vem de F e dias de atendimento de P + F + FJ, de 01/01 do ano vigente até hoje. Sem atendimento pedagógico não entra nessas contagens. Datas repetidas em turnos distintos contam uma vez. As quantidades continuam editáveis. Use Atualizar dados do Diário para consultar novamente; versões salvas só mudam mediante atualização explícita. Professor vem do cadastro/nome da conta; o responsável pode ser escolhido entre os contatos do aluno.
@@ -17,6 +17,7 @@ Na aba Frequência, configure o período móvel (60 dias), F seguidas (3) ou F a
 Textos dos parágrafos também são justificados nas páginas PDF/imagem dos modelos online; títulos e assinaturas mantêm alinhamento próprio.
 
 MENU LATERAL DE ALUNOS
+Fonte menor e menos espaço entre nomes, título e busca; caixa mais baixa e rolagem interna quando necessária. Sem novas permissões em relação à etapa 74.
 Na aba Alunos, use o menu lateral para localizar o cartão de cada aluno. Os nomes intermediários aparecem abreviados; a busca considera o nome completo. O menu acompanha conta, turno e filtro de alunos e é recolhível no celular. Não abre nem salva a ficha automaticamente.
 Não há regra nova nesta etapa. Se já publicou as regras completas dos alertas da etapa 74, não precisa repetir. Se ainda não publicou, siga o GUIA-ALERTAS-FREQUENCIA-FIREBASE.txt antes de usar os alertas.
 
