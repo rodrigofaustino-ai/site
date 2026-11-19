@@ -347,6 +347,16 @@ serviços externos de IA ou a configuração remota atual de todos os serviços.
         for fonte,alvo in [('GUIA-DOCUMENTOS-MODELOS-FIREBASE.txt','GUIA-DOC-MODELOS-FIREBASE.txt'),('documentos-modelos-firestore-acrescimo.rules','PERMISSOES-DOC-MODELOS-FIRESTORE.txt'),('documentos-modelos-storage-acrescimo.rules','PERMISSOES-DOC-MODELOS-STORAGE.txt')]:
             (destino/alvo).write_text('ETAPA 70: não repita permissões já aplicadas na etapa 69.\n\n'+(ROOT/'producao'/fonte).read_text())
         (destino/'PERMISSOES-ASSINATURAS-FIRESTORE.txt').write_text('ETAPA 70: nenhuma nova regra. A biblioteca de assinaturas já habilitada permanece suficiente.\n\n'+(ROOT/'producao'/'GUIA-ASSINATURAS-FIRESTORE.txt').read_text())
+    if args.etapa == 71:
+        guia=destino/'LEIA-ME-PUBLICACAO.txt'
+        texto=guia.read_text()
+        inicio=texto.index('ATENÇÃO — QUESTIONÁRIO DA FAMÍLIA')
+        fim=texto.index('PARA PUBLICAR',inicio)
+        texto=texto[:inicio]+'ETAPA 71 — REGISTRO RÁPIDO E MELHOR USO DA TELA\nEm Alunos do Dia, Registrar atendimento abre/recolhe relato, IA, humor e Salvar no histórico abaixo de cada aluno.\nUsa a data selecionada. Salvar grava no histórico da ficha; recolher/digitar não salva. Rascunhos ficam na sessão, por aluno/data/turno, e a saída da conta os limpa.\nP/F/FJ/SAP continuam pelos botões existentes. Salvar um relato com ausência marcada pede confirmação e preserva o histórico já personalizado.\nDiário/ficha usam melhor as laterais no computador; os quatro formulários têm espaços compactos e controles maiores no celular. A formatação das exportações não mudou.\nSem novas regras Firebase. As permissões já publicadas de Doc. Modelos continuam suficientes; seus guias permanecem apenas para quem ainda não habilitou a biblioteca.\nPacote cumulativo: autopreenchimento, logos, data final de emissão, modelos, menu e avisos do chat preservados. Publique a pasta completa, aguarde Published e use Ctrl + Shift + R.\n\n'+texto[fim:]
+        guia.write_text(texto)
+        for fonte,alvo in [('GUIA-DOCUMENTOS-MODELOS-FIREBASE.txt','GUIA-DOC-MODELOS-FIREBASE.txt'),('documentos-modelos-firestore-acrescimo.rules','PERMISSOES-DOC-MODELOS-FIRESTORE.txt'),('documentos-modelos-storage-acrescimo.rules','PERMISSOES-DOC-MODELOS-STORAGE.txt')]:
+            (destino/alvo).write_text('ETAPA 71: não repita permissões já aplicadas na etapa 69.\n\n'+(ROOT/'producao'/fonte).read_text())
+        (destino/'PERMISSOES-ASSINATURAS-FIRESTORE.txt').write_text('ETAPA 71: nenhuma nova regra.\n\n'+(ROOT/'producao'/'GUIA-ASSINATURAS-FIRESTORE.txt').read_text())
     guia=destino/'LEIA-ME-PUBLICACAO.txt'
     guia.write_text(guia.read_text().replace('até a etapa 33.',f'até a etapa {args.etapa}.'))
     if args.etapa >= 57:
