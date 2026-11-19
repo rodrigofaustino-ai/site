@@ -1,9 +1,9 @@
 PACOTE DO SITE OFICIAL — saladerecursos.netlify.app
 
-Inclui as melhorias acumuladas até a etapa 80.
+Inclui as melhorias acumuladas até a etapa 81.
 Conexões: salamulti (Diário/PEI) e paee-3fea6 (PAEE/Diagnóstica/Relatório).
 Não é uma cópia isolada de teste.
-ETAPA 80 — NÚMERO CGM NO DIÁRIO
+ETAPA 81 — CGM AO LADO DO NOME
 Na aba Doc. Modelos, use Preencher documentos online ou Preencher online nos sete modelos reconhecidos. O formulário usa os modelos enviados; não converte automaticamente qualquer arquivo cadastrado pela equipe.
 Selecione o aluno, confira os dados compatíveis, complete os campos e escolha as assinaturas da biblioteca. Nome e cargo são editáveis, com imagem opcional e espaço para assinatura manual.
 Salvar documento na ficha cria uma versão privada em Documentos salvos deste aluno. O preenchimento não altera o cadastro nem a Frequência. Nos termos com contagens, Faltas vem de F e dias de atendimento de P + F + FJ, de 01/01 do ano vigente até hoje. Sem atendimento pedagógico não entra nessas contagens. Datas repetidas em turnos distintos contam uma vez. As quantidades continuam editáveis. Use Atualizar dados do Diário para consultar novamente; versões salvas só mudam mediante atualização explícita. Professor vem do cadastro/nome da conta; o responsável pode ser escolhido entre os contatos do aluno.
@@ -26,8 +26,8 @@ Fonte menor e menos espaço entre nomes, título e busca; caixa mais baixa e rol
 Na aba Alunos, use o menu lateral para localizar o cartão de cada aluno. Os nomes intermediários aparecem abreviados; a busca considera o nome completo. O menu acompanha conta, turno e filtro de alunos e é recolhível no celular. Não abre nem salva a ficha automaticamente.
 Não há regra nova nesta etapa. Se já publicou as regras completas dos alertas da etapa 74, não precisa repetir. Se ainda não publicou, siga o GUIA-ALERTAS-FREQUENCIA-FIREBASE.txt antes de usar os alertas.
 
-CGM DOS MEUS ALUNOS
-Campo Número CGM na Identificação do aluno. Para preencher em lote, use Alunos > Preencher CGMs dos meus alunos. Selecione seu CSV privado, confira os nomes/números e salve as linhas selecionadas. Consulta somente a conta conectada; não cria cadastros, não aproxima nomes e não substitui CGM existente sem seleção e autorização explícita. Nomes ambíguos/não encontrados/duplicidades são bloqueados. O pacote NÃO contém a lista pessoal dos alunos; os dados devem vir do arquivo privado do professor. Nenhuma regra nova.
+CGM MANUAL
+O campo Número CGM fica à direita do nome na Identificação do aluno no computador; no celular aparece abaixo do nome. Preencha e use Salvar na ficha. O botão de importação foi retirado da tela. Nenhum número foi importado automaticamente. Depois de salvo no Diário, o CGM preenche o campo vazio do Relatório vinculado ao aluno e sai no documento exportado; campos já preenchidos no formulário são preservados. Não há regras novas.
 
 PARA PUBLICAR
 1. Guarde o endereço/identificador do deploy oficial atual para eventual retorno.
