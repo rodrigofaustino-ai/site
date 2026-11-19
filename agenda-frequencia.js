@@ -46,6 +46,7 @@
       }
       tx.update(ref,{status:novos});
     });
+    document.dispatchEvent(new Event('frequencia-atualizada'));
     for(const id of ids){sessao.semana.status||={};sessao.semana.status[id+'__'+sessao.dia]=status;}
   }
   window.AgendaFrequencia={carregar,salvar,corresponde};

@@ -1,3 +1,5 @@
+> Histórico da prévia inicial. A integração aprovada está concluída; veja ETAPA-74-ALERTAS-FREQUENCIA.md.
+
 # Prévia — alertas de faltas e encaminhamento
 
 Prévia isolada: previas/etapa-74/alertas.html, com três alunos e marcações inteiramente fictícios. O site oficial e o ZIP da etapa 73 não foram alterados. Não consulta nem grava no Firebase. Configurações, pendências e histórico ficam na memória desta página para demonstração.

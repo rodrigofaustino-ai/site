@@ -1,0 +1,39 @@
+ETAPA 74 — ALERTAS DE FREQUÊNCIA
+
+ANTES DE PUBLICAR O PACOTE NO NETLIFY
+
+1. Abra Firebase Console e selecione o projeto salamulti.
+2. Acesse Firestore Database > Regras.
+3. Preserve o conteúdo atual. Acrescente o bloco do arquivo
+   PERMISSOES-ALERTAS-FREQUENCIA-FIRESTORE.txt DENTRO de:
+
+   match /databases/{database}/documents {
+       ... regras atuais ...
+       ... novo bloco ...
+   }
+
+   Não substitua suas regras inteiras pelo bloco. Ele fica antes das duas
+   últimas chaves de fechamento do serviço/banco.
+4. Clique em Publicar.
+5. No Netlify, publique a pasta completa que contém index.html.
+6. Aguarde Published e atualize o site com Ctrl + Shift + R.
+
+ONDE ENCONTRAR
+Na aba Frequência, o painel Alertas de frequência vem antes da tabela.
+Abra Configurar critérios e salve os últimos dias, F seguidas e F acumuladas.
+Os critérios são privados por professor/conta, valem para todos os turnos.
+FJ e Sem atendimento pedagógico não somam nem quebram a sequência. P quebra;
+encontro previsto sem marcação impede confirmar continuidade. Uma data conta
+uma vez, mesmo em dois horários. Sem dias de atendimento cadastrados, somente
+o critério acumulado pode gerar alerta; confira Conferências da apuração.
+
+Nome vermelho e botão Encaminhar também aparecem na lista, agenda e ficha.
+O alerta fica pendente até Registrar encaminhamento, mesmo fora do período.
+Imprimir/exportar não encerra. O histórico e as imagens opcionais ficam na ficha.
+Novas faltas posteriores à providência podem gerar um novo episódio.
+
+O novo bloco autoriza somente cada usuário a consultar/salvar seus próprios
+critérios em alertasFrequenciaConfig/{uid}. Episódios, documentos e imagens
+usam as subcoleções privadas de alunos já autorizadas. Não altere Storage,
+Realtime Database ou paee-3fea6 por causa desta etapa.
+O assistente não aplicou regras nem publicou no Netlify.

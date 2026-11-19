@@ -691,6 +691,7 @@ hr.sep{border:none;border-top:2px dashed rgba(0,0,0,.06);margin:.2rem 0;}
             <button class="new-btn freq-add-btn" id="btnAddSemana">＋ Adicionar semana</button>
           </div>
         </div>
+        <section id="alertasFrequenciaPainel" class="af-painel" aria-label="Alertas de frequência"></section>
         <div class="freq-filtros" id="freqFiltros"></div>
         <section class="freq-conferencia" id="freqConferencia" aria-label="Conferência das marcações" hidden></section>
         <p id="freqSalvamento" role="status" aria-live="polite"></p>
@@ -858,6 +859,7 @@ hr.sep{border:none;border-top:2px dashed rgba(0,0,0,.06);margin:.2rem 0;}
       <div><h1 id="profileTitle">Informações do Aluno</h1><p>Visão geral, documentos e acompanhamento do aluno</p></div>
     </div>
 
+    <section id="perfilAlertasFrequencia" class="af-perfil" hidden></section>
     <div class="card perfil-unificado" id="perfilCadastro">
       <div class="color-strip" style="background:linear-gradient(90deg,var(--coral),var(--orange),var(--yellow))"></div>
       <div class="section-head"><div class="section-badge" style="background:var(--coral-l)">📋</div>Identificação do Aluno</div>
@@ -1482,9 +1484,9 @@ async function renderPaeeList(){
       return`<div class="student-item" data-id="${s.id}" data-nome="${esc(s.nome||'')}" title="Abrir PAEE de ${esc(s.nome||'')}">
         <div class="student-num">${num}</div>
         <div class="student-avatar ${avColor(s.nome)}">${av}</div>
-        <div class="student-info"><strong>${esc(s.nome||'Sem nome')}</strong>
+        <div class="student-info"><strong data-af-nome="${esc(s.id)}">${esc(s.nome||'Sem nome')}</strong>
         <span>${esc(s.turma||'')}</span></div>
-        <div class="student-actions">
+        <div class="student-actions" data-af-holder="${esc(s.id)}">
           <button class="icon-btn open" data-open-paee="${esc(s.nome||'')}" data-id="${s.id}" title="Abrir PAEE">📘</button>
         </div></div>`;
     }).join('');
@@ -1526,9 +1528,9 @@ async function renderRelatorioList(){
       return`<div class="student-item" data-id="${s.id}" data-nome="${esc(s.nome||'')}" title="Abrir Relatório de ${esc(s.nome||'')}">
         <div class="student-num">${num}</div>
         <div class="student-avatar ${avColor(s.nome)}">${av}</div>
-        <div class="student-info"><strong>${esc(s.nome||'Sem nome')}</strong>
+        <div class="student-info"><strong data-af-nome="${esc(s.id)}">${esc(s.nome||'Sem nome')}</strong>
         <span>${esc(s.turma||'')}</span></div>
-        <div class="student-actions">
+        <div class="student-actions" data-af-holder="${esc(s.id)}">
           <button class="icon-btn open" data-open-rel="${esc(s.nome||'')}" data-id="${s.id}" title="Abrir Relatório">📋</button>
         </div></div>`;
     }).join('');
@@ -1570,7 +1572,7 @@ async function renderDiagnosticaList(){
       return`<div class="student-item" data-id="${s.id}" data-nome="${esc(s.nome||'')}" title="Abrir Diagnóstica de ${esc(s.nome||'')}">
         <div class="student-num">${num}</div>
         <div class="student-avatar ${avColor(s.nome)}">${av}</div>
-        <div class="student-info"><strong>${esc(s.nome||'Sem nome')}</strong>
+        <div class="student-info"><strong data-af-nome="${esc(s.id)}">${esc(s.nome||'Sem nome')}</strong>
         <span>${esc(s.turma||'')}</span></div>
         <div class="student-actions">
           <button type="button" class="central-btn" data-familia="${esc(s.id)}" aria-label="Questionário da família de ${esc(s.nome||'Aluno')}">Família</button>
@@ -1993,6 +1995,7 @@ function limparFrequencia(){
 }
 function freqSessaoValida(uid,turno){return professorUid===uid&&turnoAtual===turno&&auth.currentUser?.uid===uid;}
 async function renderFrequencia(){
+  window.AlertasFrequencia?.ativar();
   const wrap=$('freqWrap'),uid=professorUid,turno=turnoAtual;
   if(freqDados&&(freqDados.uid!==uid||freqDados.turno!==turno))limparFrequencia();
   const version=++freqRenderVersion;
@@ -2082,7 +2085,7 @@ function renderTabelaFrequencia(){
       }
       if(r.aluno){
         const a=r.aluno;
-        html+=`<td class="td-aluno">${esc(a.nome||'Sem nome')}</td>`;
+        html+=`<td class="td-aluno" data-af-nome="${esc(a.id)}" data-af-holder="${esc(a.id)}">${esc(a.nome||'Sem nome')}</td>`;
         semanas.forEach(s=>{
           const st=FrequenciaInterface.estado(s,a.id,r.dia),status=st.value;
           const conhecido=Object.hasOwn(FREQ_STATUS,status),label=conhecido?FREQ_STATUS[status].label:status==null?'Sem lançamento':'Marcação não reconhecida';
@@ -2644,7 +2647,7 @@ function openFreqPopover(evt,semanaId,alunoId,dia){
           tx.update(ref,{['status.'+alunoId+'__'+dia]:key==='_clear'?null:key});
         });
         if(writeVersion!==freqWriteVersion||!freqSessaoValida(uid,turno))return;
-        freqSalvando=false;await renderFrequencia();
+        freqSalvando=false;document.dispatchEvent(new Event('frequencia-atualizada'));await renderFrequencia();
         if(writeVersion!==freqWriteVersion||!freqSessaoValida(uid,turno))return;
         $('freqSalvamento').textContent='Salvo: '+(aluno.nome||'Aluno')+' · '+dia+' · '+(semana.label||'Semana')+' · '+(key==='_clear'?'Sem lançamento':FrequenciaInterface.labels[key])+'.';
         const restored=[...$('freqWrap').querySelectorAll('.freq-mark')].find(b=>b.dataset.freqWeek===semanaId&&b.dataset.freqAluno===alunoId&&b.dataset.freqDia===dia&&b.dataset.freqHorario===target.dataset.freqHorario);restored?.focus({preventScroll:true});
@@ -2665,7 +2668,7 @@ function limparArquivamentoAlunos(){
   if($('arquivoAlunosStatus'))$('arquivoAlunosStatus').textContent='Arquivar mantém os documentos e o histórico. Use Arquivados para consultar ou reativar um cadastro.';
 }
 async function renderStudentList(){
-  const c=$('studentsList');
+  const c=$('studentsList');window.AlertasFrequencia?.ativar();
   $('alunosListaTitulo').textContent=({ativos:'Alunos em atendimento',arquivados:'Alunos arquivados',todos:'Todos os alunos'})[$('alunosSituacao').value]||'Alunos';
   const uid=professorUid,turno=turnoAtual;
   if(!uid||!turno){window.AgendaDia.limpar();window.MeuDia.limpar();c.replaceChildren();return;}
@@ -2690,9 +2693,9 @@ async function renderStudentList(){
       return`<div class="student-item" data-id="${s.id}">
         <div class="student-num">${num}</div>
         <div class="student-avatar ${avColor(s.nome)}">${av}</div>
-        <div class="student-info"><strong>${esc(s.nome||'Sem nome')}</strong>
+        <div class="student-info"><strong data-af-nome="${esc(s.id)}">${esc(s.nome||'Sem nome')}</strong>
         <span>${esc(s.turma||'')}${s.turma?' · ':''}Último atendimento: ${s.ultimoRegistro?fmtShort(s.ultimoRegistro):'Sem registros'}</span>${lt}${ArquivamentoAlunos.arquivado(s)?'<span class="aluno-arquivado-badge">Arquivado</span>':''}</div>
-        <div class="student-actions">
+        <div class="student-actions" data-af-holder="${esc(s.id)}">
           <button class="icon-btn open" data-open="${esc(s.id)}" aria-label="Abrir ficha de ${esc(s.nome||'aluno')}" title="Abrir">🗂️</button>
           <button class="icon-btn arquivo" data-arquivar="${esc(s.id)}" data-alvo="${!ArquivamentoAlunos.arquivado(s)}" data-nome="${esc(s.nome||'')}" aria-label="${ArquivamentoAlunos.arquivado(s)?'Reativar':'Arquivar'} cadastro de ${esc(s.nome||'aluno')}" title="${ArquivamentoAlunos.arquivado(s)?'Reativar':'Arquivar'}" ${arquivoAlunosSalvando?'disabled':''}>${ArquivamentoAlunos.arquivado(s)?'↩️':'📦'}</button>
         </div></div>`;
@@ -2700,7 +2703,7 @@ async function renderStudentList(){
     // eventos via delegação
     c.querySelectorAll('.student-item').forEach(el=>{
       el.addEventListener('click', e=>{
-        if(e.target.closest('[data-arquivar]'))return;
+        if(e.target.closest('[data-arquivar],[data-af-acao]'))return;
         openStudent(el.dataset.id);
       });
     });
@@ -2754,7 +2757,7 @@ function goNewStudent(){
   currentStudentId=null;currentProfile={};currentEntries=[];currentPhotoB64=null;contacts=[];turnoAlunoSelecionado='';
   clearForm();
   $('breadcrumbName').textContent='Novo aluno';$('profileTitle').textContent='Novo Aluno';
-  showScreen('profile');$('entryDate').value=RegistroAssistido.hoje();
+  showScreen('profile');window.AlertasFrequencia?.ativar();window.AlertasFrequencia?.pintar();$('entryDate').value=RegistroAssistido.hoje();
   renderContacts();renderEntriesList();renderRecentDates();
   if(!contacts.length)addContact();
   renderCentralAluno();
@@ -2785,7 +2788,7 @@ async function openStudent(id){
   renderCentralAluno();
   const nome=currentProfile.nome||'Aluno';
   $('breadcrumbName').textContent=nome;$('profileTitle').textContent=nome;
-  showScreen('profile');$('entryDate').value=RegistroAssistido.hoje();hideLoad();
+  showScreen('profile');window.AlertasFrequencia?.ativar();window.AlertasFrequencia?.pintar();$('entryDate').value=RegistroAssistido.hoje();hideLoad();
   // Grid e upload inicializados após showScreen — DOM da tela de perfil já visível
   // Carrega imagens da subcoleção (novo) e migra as antigas do doc principal se houver
   laudoImagens=[];
@@ -4104,7 +4107,7 @@ async function exportPDF(){
 </script>
 <script src="historico-atendimentos-frequencia.js"></script>
 <script src="historico-atendimentos-documento.js"></script><script src="biblioteca-assinaturas.js"></script><script src="assinaturas-campos.js"></script><script src="assinaturas-adicionais.js"></script><link rel="stylesheet" href="biblioteca-assinaturas.css">
-<link rel="stylesheet" href="documentos-modelos.css"><link rel="stylesheet" href="termos-online.css"><script src="frequencia-anual.js"></script><script src="termos-online-dados.js"></script><script src="termos-online-modelo.js"></script><script src="termos-online-documento.js"></script><script src="termos-online-salvar.js"></script><script src="termos-online.js"></script><script src="documentos-modelos.js"></script>
+<link rel="stylesheet" href="documentos-modelos.css"><link rel="stylesheet" href="termos-online.css"><script src="frequencia-anual.js"></script><script src="termos-online-dados.js"></script><script src="termos-online-modelo.js"></script><script src="termos-online-documento.js"></script><script src="termos-online-salvar.js"></script><script src="termos-online.js"></script><script src="documentos-modelos.js"></script><link rel="stylesheet" href="alertas-frequencia.css"><script src="alertas-frequencia-modelo.js"></script><script src="alertas-frequencia-dados.js"></script><script src="alertas-frequencia-servico.js"></script><script src="alertas-frequencia-documento.js"></script><script src="alertas-frequencia.js"></script>
 <script src="planos-aula.js"></script>
 <script src="recursos-didaticos.js"></script>
 <script src="chat-anexos-modelo.js"></script>
