@@ -1,0 +1,625 @@
+[
+  {
+    "id": "dados",
+    "title": "Ficha Dados do Aluno",
+    "fields": [
+      {
+        "key": "nome",
+        "label": "Nome completo do aluno",
+        "kind": "text"
+      },
+      {
+        "key": "nascimento",
+        "label": "Data de nascimento",
+        "kind": "date"
+      },
+      {
+        "key": "mae",
+        "label": "Nome da mãe",
+        "kind": "text"
+      },
+      {
+        "key": "telMae",
+        "label": "Telefone da mãe",
+        "kind": "text"
+      },
+      {
+        "key": "pai",
+        "label": "Nome do pai",
+        "kind": "text"
+      },
+      {
+        "key": "telPai",
+        "label": "Telefone do pai",
+        "kind": "text"
+      },
+      {
+        "key": "telTrabalho",
+        "label": "Telefone do trabalho do pai / mãe",
+        "kind": "text"
+      },
+      {
+        "key": "urgencia",
+        "label": "Para recados ou urgência, ligar para",
+        "kind": "text"
+      },
+      {
+        "key": "escola",
+        "label": "Escola regular",
+        "kind": "text"
+      },
+      {
+        "key": "regente",
+        "label": "Professor(a) regente",
+        "kind": "text"
+      },
+      {
+        "key": "turma",
+        "label": "Turma / série",
+        "kind": "text"
+      },
+      {
+        "key": "medicamento",
+        "label": "Faz uso de medicamento?",
+        "kind": "select",
+        "options": [
+          "Não informado",
+          "Sim",
+          "Não"
+        ]
+      },
+      {
+        "key": "qualMedicamento",
+        "label": "Qual medicamento?",
+        "kind": "text"
+      },
+      {
+        "key": "acompanhamento",
+        "label": "Acompanhamento em outro local?",
+        "kind": "select",
+        "options": [
+          "Não informado",
+          "Sim",
+          "Não"
+        ]
+      },
+      {
+        "key": "onde",
+        "label": "Onde?",
+        "kind": "text"
+      },
+      {
+        "key": "oculos",
+        "label": "Usa óculos?",
+        "kind": "select",
+        "options": [
+          "Não informado",
+          "Sim",
+          "Não"
+        ]
+      },
+      {
+        "key": "transporte",
+        "label": "Como vem para o atendimento?",
+        "kind": "text"
+      },
+      {
+        "key": "restricao",
+        "label": "Restrição alimentar?",
+        "kind": "select",
+        "options": [
+          "Não informado",
+          "Sim",
+          "Não"
+        ]
+      },
+      {
+        "key": "qualRestricao",
+        "label": "Qual restrição?",
+        "kind": "text"
+      },
+      {
+        "key": "vale",
+        "label": "Precisa de vale-transporte?",
+        "kind": "select",
+        "options": [
+          "Não informado",
+          "Sim",
+          "Não"
+        ]
+      },
+      {
+        "key": "dias",
+        "label": "Dias de atendimento",
+        "kind": "text"
+      }
+    ],
+    "paragraphs": []
+  },
+  {
+    "id": "checklist",
+    "title": "Check-list de matrícula",
+    "fields": [
+      {
+        "key": "nome",
+        "label": "Nome completo do aluno",
+        "kind": "text"
+      },
+      {
+        "key": "professor",
+        "label": "Professor(a) da SRM",
+        "kind": "text"
+      },
+      {
+        "key": "cidade",
+        "label": "Local",
+        "kind": "text"
+      },
+      {
+        "key": "data",
+        "label": "Data de emissão",
+        "kind": "date"
+      },
+      {
+        "key": "doc0",
+        "label": "Documento pessoal dos pais ou responsáveis",
+        "kind": "select",
+        "options": [
+          "Não conferido",
+          "Sim",
+          "Não",
+          "Não se aplica"
+        ]
+      },
+      {
+        "key": "doc1",
+        "label": "Documento pessoal do aluno",
+        "kind": "select",
+        "options": [
+          "Não conferido",
+          "Sim",
+          "Não",
+          "Não se aplica"
+        ]
+      },
+      {
+        "key": "doc2",
+        "label": "Comprovante de endereço",
+        "kind": "select",
+        "options": [
+          "Não conferido",
+          "Sim",
+          "Não",
+          "Não se aplica"
+        ]
+      },
+      {
+        "key": "doc3",
+        "label": "Laudo médico com CID-10 ou CID-11",
+        "kind": "select",
+        "options": [
+          "Não conferido",
+          "Sim",
+          "Não",
+          "Não se aplica"
+        ]
+      },
+      {
+        "key": "doc4",
+        "label": "Ficha “Dados do Aluno”",
+        "kind": "select",
+        "options": [
+          "Não conferido",
+          "Sim",
+          "Não",
+          "Não se aplica"
+        ]
+      },
+      {
+        "key": "doc5",
+        "label": "Termo de Responsabilidade",
+        "kind": "select",
+        "options": [
+          "Não conferido",
+          "Sim",
+          "Não",
+          "Não se aplica"
+        ]
+      },
+      {
+        "key": "doc6",
+        "label": "Termo Autorização do uso de imagem",
+        "kind": "select",
+        "options": [
+          "Não conferido",
+          "Sim",
+          "Não",
+          "Não se aplica"
+        ]
+      },
+      {
+        "key": "doc7",
+        "label": "Termo de Desistência (se for o caso)",
+        "kind": "select",
+        "options": [
+          "Não conferido",
+          "Sim",
+          "Não",
+          "Não se aplica"
+        ]
+      }
+    ],
+    "paragraphs": [
+      "A Sala de Recursos Multifuncional (SRM) é um espaço dentro da escola preparado para oferecer o Atendimento Educacional Especializado (AEE), conduzido por professor com formação qualificada e específica para o exercício dessa função.",
+      "Trata-se de um ambiente com materiais pedagógicos específicos, tecnologias e estratégias diferenciadas, no qual o aluno recebe suporte para superar barreiras na aprendizagem — sempre complementando, e não substituindo, a sala de aula comum.",
+      "Abaixo a relação da documentação necessária para a matrícula do aluno na sala de Recursos Multifuncionais (SRM)."
+    ],
+    "checklist": [
+      "Documento pessoal dos pais ou responsáveis",
+      "Documento pessoal do aluno",
+      "Comprovante de endereço",
+      "Laudo médico com CID-10 ou CID-11",
+      "Ficha “Dados do Aluno”",
+      "Termo de Responsabilidade",
+      "Termo Autorização do uso de imagem",
+      "Termo de Desistência (se for o caso)"
+    ],
+    "signers": [
+      [
+        "professor",
+        "Professor(a) responsável"
+      ]
+    ]
+  },
+  {
+    "id": "desistencia",
+    "title": "Termo de desistência",
+    "fields": [
+      {
+        "key": "responsavel",
+        "label": "Nome do responsável",
+        "kind": "text"
+      },
+      {
+        "key": "cpf",
+        "label": "CPF do responsável",
+        "kind": "text"
+      },
+      {
+        "key": "nome",
+        "label": "Nome completo do aluno",
+        "kind": "text"
+      },
+      {
+        "key": "ano",
+        "label": "Ano letivo",
+        "kind": "number"
+      },
+      {
+        "key": "periodo",
+        "label": "Período da escola regular",
+        "kind": "text"
+      },
+      {
+        "key": "escola",
+        "label": "Escola regular",
+        "kind": "text"
+      },
+      {
+        "key": "turma",
+        "label": "Turma / série",
+        "kind": "text"
+      },
+      {
+        "key": "classe",
+        "label": "Turma",
+        "kind": "text"
+      },
+      {
+        "key": "srm",
+        "label": "Escola de atendimento SRM",
+        "kind": "text"
+      },
+      {
+        "key": "motivos",
+        "label": "Motivos da desistência",
+        "kind": "textarea"
+      },
+      {
+        "key": "cidade",
+        "label": "Local",
+        "kind": "text"
+      },
+      {
+        "key": "data",
+        "label": "Data de emissão",
+        "kind": "date"
+      }
+    ],
+    "paragraphs": [
+      "Eu, {{responsavel}}, portador do CPF {{cpf}}, responsável pelo(a) aluno(a) {{nome}}, matriculado no ano de {{ano}}, no período {{periodo}}, na Escola Municipal {{escola}}, na série {{turma}}, na turma {{classe}}, com vaga assegurada na Sala de Recursos Multifuncional {{srm}}, abdico da mesma, estando ciente que é direito do meu filho(a) receber atendimento educacional especializado, porém, devido a motivos:",
+      "{{motivos}}",
+      "estou desistindo temporariamente da vaga ofertada."
+    ],
+    "signers": [
+      [
+        "responsavel",
+        "Responsável"
+      ]
+    ]
+  },
+  {
+    "id": "responsabilidade",
+    "title": "Termo de responsabilidade",
+    "fields": [
+      {
+        "key": "responsavel",
+        "label": "Nome do responsável",
+        "kind": "text"
+      },
+      {
+        "key": "cpf",
+        "label": "CPF do responsável",
+        "kind": "text"
+      },
+      {
+        "key": "nome",
+        "label": "Nome completo do aluno",
+        "kind": "text"
+      },
+      {
+        "key": "escola",
+        "label": "Escola regular",
+        "kind": "text"
+      },
+      {
+        "key": "turma",
+        "label": "Turma / série",
+        "kind": "text"
+      },
+      {
+        "key": "ano",
+        "label": "Ano letivo",
+        "kind": "number"
+      },
+      {
+        "key": "cidade",
+        "label": "Local",
+        "kind": "text"
+      },
+      {
+        "key": "data",
+        "label": "Data de emissão",
+        "kind": "date"
+      }
+    ],
+    "paragraphs": [
+      "Eu, {{responsavel}}, portador do CPF {{cpf}}, responsável pelo(a) aluno(a) {{nome}}, matriculado na Escola Municipal de Cambé {{escola}}, na série {{turma}}, assumo a responsabilidade de adesão e frequência ao Atendimento Educacional Especializado ofertado pela sala de recursos multifuncional no ano de {{ano}}.",
+      "O(a) aluno(a) deverá frequentar nas datas e dias combinados, podendo perder o direito, caso obtenha mais de 3 faltas consecutivas, sem aviso prévio."
+    ],
+    "signers": [
+      [
+        "responsavel",
+        "Responsável"
+      ]
+    ]
+  },
+  {
+    "id": "faltas",
+    "title": "Termo de faltas",
+    "fields": [
+      {
+        "key": "nome",
+        "label": "Nome completo do aluno",
+        "kind": "text"
+      },
+      {
+        "key": "faltas",
+        "label": "Quantidade de faltas",
+        "kind": "number"
+      },
+      {
+        "key": "atendimentos",
+        "label": "Quantidade de dias de atendimento",
+        "kind": "number"
+      },
+      {
+        "key": "dias",
+        "label": "Dias de atendimento",
+        "kind": "text"
+      },
+      {
+        "key": "horario",
+        "label": "Horário de atendimento",
+        "kind": "text"
+      },
+      {
+        "key": "professor",
+        "label": "Professor(a) da SRM",
+        "kind": "text"
+      },
+      {
+        "key": "responsavel",
+        "label": "Nome do responsável",
+        "kind": "text"
+      },
+      {
+        "key": "cidade",
+        "label": "Local",
+        "kind": "text"
+      },
+      {
+        "key": "data",
+        "label": "Data de emissão",
+        "kind": "date"
+      }
+    ],
+    "paragraphs": [
+      "Senhores pais ou responsáveis,",
+      "Comunicamos que o(a) aluno(a) {{nome}} tem apresentado faltas recorrentes nos atendimentos da Sala de Recursos Multifuncional.",
+      "Ressaltamos que a frequência regular aos atendimentos é fundamental para a continuidade do trabalho pedagógico, bem como para o acompanhamento e desenvolvimento das habilidades e potencialidades do(a) aluno(a).",
+      "O aluno até o momento já tem {{faltas}} de falta referente a {{atendimentos}} dias de atendimento. Diante das faltas apresentadas, solicitamos que a família entre em contato para agendar um horário para atendimento e esclarecimento dos motivos que estão ocasionando as ausências.",
+      "Salientamos que a participação da família e o compromisso com a frequência do(a) aluno(a) são indispensáveis para a continuidade do atendimento. Na ausência de contato da família e diante da permanência das faltas, o atendimento poderá ser encerrado, considerando a ausência de frequência e de manifestação do responsável quanto à continuidade do acompanhamento.",
+      "Reforçamos que o(a) aluno(a) deverá comparecer aos atendimentos no dia e horário previamente estabelecidos.",
+      "Dia: {{dias}}",
+      "Horário: {{horario}}",
+      "Contamos com a compreensão e a colaboração da família para que possamos assegurar a continuidade e a qualidade do atendimento educacional especializado.",
+      "Atenciosamente, {{professor}}."
+    ],
+    "signers": [
+      [
+        "responsavel",
+        "Responsável"
+      ]
+    ]
+  },
+  {
+    "id": "ausencias",
+    "title": "Termo de ausência e desligamento",
+    "documentTitle": "TERMO DE REGISTRO DE AUSÊNCIAS, BUSCA ATIVA E DESLIGAMENTO DA SALA DE RECURSOS MULTIFUNCIONAL",
+    "fields": [
+      {
+        "key": "nome",
+        "label": "Nome completo do aluno",
+        "kind": "text"
+      },
+      {
+        "key": "turma",
+        "label": "Turma / série",
+        "kind": "text"
+      },
+      {
+        "key": "professor",
+        "label": "Professor(a) da SRM",
+        "kind": "text"
+      },
+      {
+        "key": "periodo",
+        "label": "Período de atendimento",
+        "kind": "text"
+      },
+      {
+        "key": "faltas",
+        "label": "Quantidade de faltas",
+        "kind": "number"
+      },
+      {
+        "key": "periodoAusencias",
+        "label": "Período das ausências",
+        "kind": "text"
+      },
+      {
+        "key": "desligamento",
+        "label": "Data do desligamento",
+        "kind": "date"
+      },
+      {
+        "key": "coordenacao",
+        "label": "Nome da coordenação",
+        "kind": "text"
+      },
+      {
+        "key": "cidade",
+        "label": "Local",
+        "kind": "text"
+      },
+      {
+        "key": "data",
+        "label": "Data de emissão",
+        "kind": "date"
+      }
+    ],
+    "paragraphs": [
+      "Nome do aluno: {{nome}} · Turma/Ano: {{turma}}",
+      "Professor(a) da SRM: {{professor}}",
+      "Período de atendimento: {{periodo}} · Quantidade de faltas registradas: {{faltas}}",
+      "A unidade escolar registra que o aluno acima identificado vem apresentando faltas recorrentes aos atendimentos da Sala de Recursos Multifuncional (SRM), totalizando {{faltas}} ausências no período de {{periodoAusencias}}. A frequência irregular compromete a continuidade do Atendimento Educacional Especializado (AEE), prejudicando o desenvolvimento das habilidades propostas em seu Plano de Atendimento e a consolidação das aprendizagens trabalhadas. Diante das ausências, a professora da Sala de Recursos Multifuncional, em conjunto com a Secretaria Escolar, realizou diversas tentativas de contato com a família, por meio dos canais de comunicação disponibilizados pelos responsáveis, bem como ações de busca ativa, com o objetivo de informar sobre as faltas, compreender os motivos das ausências e buscar alternativas para o retorno e a regularização da frequência do aluno. Entretanto, apesar das tentativas realizadas, não houve retorno da família nem manifestação de interesse ou adesão que possibilitasse a regularização da frequência e a continuidade do atendimento. Ressalta-se que a participação regular do estudante é fundamental para a efetividade das intervenções pedagógicas especializadas. As ausências recorrentes e a falta de comunicação com os responsáveis impossibilitaram a continuidade do acompanhamento e o desenvolvimento do trabalho pedagógico planejado. Diante do exposto, considerando as faltas recorrentes, as tentativas de busca ativa realizadas e a ausência de retorno e adesão da família, fica formalizado, por meio deste documento, o desligamento do aluno do Atendimento Educacional Especializado oferecido na Sala de Recursos Multifuncional, a partir de {{desligamento}}. O encerramento do atendimento permitirá a reorganização das vagas disponíveis, possibilitando que outro estudante que aguarda atendimento possa ser contemplado. Este documento tem por finalidade registrar as ocorrências, as tentativas de contato e as providências adotadas pela unidade escolar, bem como formalizar o desligamento do estudante da Sala de Recursos Multifuncional."
+    ],
+    "signers": [
+      [
+        "professor",
+        "Professor(a) da SRM"
+      ],
+      [
+        "coordenacao",
+        "Coordenação Pedagógica"
+      ]
+    ]
+  },
+  {
+    "id": "imagem",
+    "title": "Termo de uso de imagem",
+    "documentTitle": "TERMO MUNICIPAL DE AUTORIZAÇÃO DE USO DE IMAGEM DE MENORES DE IDADE",
+    "fields": [
+      {
+        "key": "responsavel",
+        "label": "Nome do responsável",
+        "kind": "text"
+      },
+      {
+        "key": "rg",
+        "label": "RG do responsável",
+        "kind": "text"
+      },
+      {
+        "key": "cpf",
+        "label": "CPF do responsável",
+        "kind": "text"
+      },
+      {
+        "key": "endereco",
+        "label": "Endereço",
+        "kind": "text"
+      },
+      {
+        "key": "complemento",
+        "label": "Complemento / número",
+        "kind": "text"
+      },
+      {
+        "key": "nome",
+        "label": "Nome completo do aluno",
+        "kind": "text"
+      },
+      {
+        "key": "nacionalidade",
+        "label": "Nacionalidade",
+        "kind": "text"
+      },
+      {
+        "key": "cidade",
+        "label": "Local",
+        "kind": "text"
+      },
+      {
+        "key": "data",
+        "label": "Data de emissão",
+        "kind": "date"
+      }
+    ],
+    "paragraphs": [
+      "Eu, {{responsavel}}, portador(a) da cédula de identidade RG nº {{rg}}, inscrito no CPF sob nº {{cpf}}, residente à {{endereco}}, complemento/nº {{complemento}}, no município de Cambé / Paraná, na qualidade de responsável legal pelo(a) aluno(a): {{nome}}, de nacionalidade {{nacionalidade}} e matriculado(a) nesta Rede Pública Municipal de Ensino.",
+      "AUTORIZO o uso de imagem do aluno(a) acima indicado(a) nos materiais referentes a esta unidade escolar ou a rede municipal de ensino. Compreendendo esta autorização para o uso de imagens de vídeo, fotos e documentos, que poderão ser utilizados nas Mídias Sociais (Site, Redes Sociais, Plataformas de vídeos e outros meios de comunicação) da Prefeitura Municipal de Cambé, Secretaria de Educação e/ou unidade escolar.",
+      "Sejam essas destinadas à divulgação ao público em geral como fomento e incentivo à Educação Municipal, bem como ferramenta de transparência à sociedade acerca do serviço público prestado, promoção de projetos escolares e institucionais de interesse público, se comprometendo o Município a não utilizar as imagens com fins econômicos ou cedê-las, a título gratuito ou oneroso a terceiros.",
+      "A presente autorização é concedida a título gratuito, abrangendo o uso da imagem acima mencionada em todo território nacional e no exterior, podendo também se estender seu uso das seguintes formas: (I) out-door; (II) busdoor; impressos em geral (editoriais, encartes, mala direta, catálogo, etc.); (III) folder; (IV) anúncios em revistas e jornais em geral; (V) cartazes; (VI) mídia eletrônica (painéis, vídeos, televisão, cinema, programa para rádio, entre outros) e também documentação pedagógica.",
+      "DO TRATAMENTO DE DADOS PESSOAIS DE CRIANÇAS E DE ADOLESCENTES DENTRO DA LEI Nº 13.709/2018.¹",
+      "Art. 14. O tratamento de dados pessoais de crianças e de adolescentes deverá ser realizado em seu melhor interesse, nos termos deste artigo e da legislação pertinente.",
+      "§ 1º O tratamento de dados pessoais de crianças deverá ser realizado com o consentimento específico e em destaque dado por pelo menos um dos pais ou pelo responsável legal.",
+      "§ 2º No tratamento de dados de que trata o § 1º deste artigo, os controladores deverão manter pública a informação sobre os tipos de dados coletados, a forma de sua utilização e os procedimentos para o exercício dos direitos a que se refere o art. 18 desta Lei.",
+      "§ 3º Poderão ser coletados dados pessoais de crianças sem o consentimento a que se refere o § 1º deste artigo quando a coleta for necessária para contatar os pais ou o responsável legal, utilizados uma única vez e sem armazenamento, ou para sua proteção, e em nenhum caso poderão ser repassados a terceiro sem o consentimento de que trata o § 1º deste artigo.",
+      "§ 4º Os controladores não deverão condicionar a participação dos titulares de que trata o § 1º deste artigo em jogos, aplicações de internet ou outras atividades ao fornecimento de informações pessoais além das estritamente necessárias à atividade.",
+      "§ 5º O controlador deve realizar todos os esforços razoáveis para verificar que o consentimento a que se refere o § 1º deste artigo foi dado pelo responsável pela criança, consideradas as tecnologias disponíveis.",
+      "§ 6º As informações sobre o tratamento de dados referidas neste artigo deverão ser fornecidas de maneira simples, clara e acessível, consideradas as características físico-motoras, perceptivas, sensoriais, intelectuais e mentais do usuário, com uso de recursos audiovisuais quando adequado, de forma a proporcionar a informação necessária aos pais ou ao responsável legal e adequada ao entendimento da criança.",
+      "A Secretaria Municipal de Educação de Cambé se compromete a cumprir e se sujeitará às tratativas delineadas pela Lei nº 13.709/2018, e sendo assim fica ainda autorizada, de livre e espontânea vontade, para os mesmos fins, a cessão de direitos da veiculação das imagens não recebendo para tanto qualquer tipo de remuneração ou vantagem.",
+      "Esta autorização não abrange a possibilidade de que pessoas externas ao funcionamento da escola criem, em seus dispositivos, conteúdos e registros com a imagem do aluno(a).",
+      "Declaro que autorizo o uso acima descrito sem que nada haja a ser reclamado a título de direitos conexos à imagem do(a) aluno(a) ou a qualquer outro e, assino a presente autorização.",
+      "¹ L13709. Disponível em: <http://www.planalto.gov.br/ccivil_03/_ato2015-2018/2018/Lei/L13709.htm>. Acesso em: 12 maio. 2021."
+    ],
+    "signers": [
+      [
+        "responsavel",
+        "Responsável legal"
+      ]
+    ]
+  }
+]

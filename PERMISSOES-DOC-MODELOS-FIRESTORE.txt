@@ -1,4 +1,4 @@
-ETAPA 71: não repita permissões já aplicadas na etapa 69.
+ETAPA 72: nenhuma regra nova; não repita permissões já aplicadas.
 
     // Acrescentar DENTRO de match /databases/{database}/documents, sem remover regras existentes.
     match /documentosModelos/{modeloId} {

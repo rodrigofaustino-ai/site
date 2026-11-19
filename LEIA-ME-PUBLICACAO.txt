@@ -1,15 +1,16 @@
 PACOTE DO SITE OFICIAL — saladerecursos.netlify.app
 
-Inclui as melhorias acumuladas até a etapa 71.
+Inclui as melhorias acumuladas até a etapa 72.
 Conexões: salamulti (Diário/PEI) e paee-3fea6 (PAEE/Diagnóstica/Relatório).
 Não é uma cópia isolada de teste.
-ETAPA 71 — REGISTRO RÁPIDO E MELHOR USO DA TELA
-Em Alunos do Dia, Registrar atendimento abre/recolhe relato, IA, humor e Salvar no histórico abaixo de cada aluno.
-Usa a data selecionada. Salvar grava no histórico da ficha; recolher/digitar não salva. Rascunhos ficam na sessão, por aluno/data/turno, e a saída da conta os limpa.
-P/F/FJ/SAP continuam pelos botões existentes. Salvar um relato com ausência marcada pede confirmação e preserva o histórico já personalizado.
-Diário/ficha usam melhor as laterais no computador; os quatro formulários têm espaços compactos e controles maiores no celular. A formatação das exportações não mudou.
-Sem novas regras Firebase. As permissões já publicadas de Doc. Modelos continuam suficientes; seus guias permanecem apenas para quem ainda não habilitou a biblioteca.
-Pacote cumulativo: autopreenchimento, logos, data final de emissão, modelos, menu e avisos do chat preservados. Publique a pasta completa, aguarde Published e use Ctrl + Shift + R.
+ETAPA 72 — DOCUMENTOS PREENCHIDOS ONLINE
+Na aba Doc. Modelos, use Preencher documentos online ou Preencher online nos sete modelos reconhecidos. O formulário usa os modelos enviados; não converte automaticamente qualquer arquivo cadastrado pela equipe.
+Selecione o aluno, confira os dados compatíveis, complete os campos e escolha as assinaturas da biblioteca. Nome e cargo são editáveis, com imagem opcional e espaço para assinatura manual.
+Salvar documento na ficha cria uma versão privada em Documentos salvos deste aluno. O preenchimento não altera o cadastro nem a Frequência. As quantidades de faltas são manuais.
+Com a opção de cópia marcada, cada página vira uma imagem em Imagens do laudo (fotos ou digitalizações), com nome, data e página. PDF e imagens usam a mesma paginação; o DOCX é editável e pode paginar diferente no Word.
+O PDF original de uso de imagem também está disponível como DOCX editável. Os modelos originais da biblioteca continuam disponíveis para baixar.
+Não exige novas regras Firebase: utiliza as subcoleções privadas já existentes sob alunos e a biblioteca de assinaturas já liberada. Não repita permissões já aplicadas.
+Pacote cumulativo, incluindo registro rápido, formulários compactos, autopreenchimento, logos e avisos do chat. Publique a pasta completa, aguarde Published e use Ctrl + Shift + R.
 
 PARA PUBLICAR
 1. Guarde o endereço/identificador do deploy oficial atual para eventual retorno.

@@ -1,4 +1,4 @@
-ETAPA 71: nenhuma nova regra.
+ETAPA 72: nenhuma regra nova; não repita permissões já aplicadas.
 
 ASSINATURAS — ATUALIZAÇÃO ÚNICA DAS PERMISSÕES
 
