@@ -1,9 +1,9 @@
 PACOTE DO SITE OFICIAL — saladerecursos.netlify.app
 
-Inclui as melhorias acumuladas até a etapa 81.
+Inclui as melhorias acumuladas até a etapa 82.
 Conexões: salamulti (Diário/PEI) e paee-3fea6 (PAEE/Diagnóstica/Relatório).
 Não é uma cópia isolada de teste.
-ETAPA 81 — CGM AO LADO DO NOME
+ETAPA 82 — SALVAR ALTERAÇÕES GERAL
 Na aba Doc. Modelos, use Preencher documentos online ou Preencher online nos sete modelos reconhecidos. O formulário usa os modelos enviados; não converte automaticamente qualquer arquivo cadastrado pela equipe.
 Selecione o aluno, confira os dados compatíveis, complete os campos e escolha as assinaturas da biblioteca. Nome e cargo são editáveis, com imagem opcional e espaço para assinatura manual.
 Salvar documento na ficha cria uma versão privada em Documentos salvos deste aluno. O preenchimento não altera o cadastro nem a Frequência. Nos termos com contagens, Faltas vem de F e dias de atendimento de P + F + FJ, de 01/01 do ano vigente até hoje. Sem atendimento pedagógico não entra nessas contagens. Datas repetidas em turnos distintos contam uma vez. As quantidades continuam editáveis. Use Atualizar dados do Diário para consultar novamente; versões salvas só mudam mediante atualização explícita. Professor vem do cadastro/nome da conta; o responsável pode ser escolhido entre os contatos do aluno.
@@ -28,6 +28,9 @@ Não há regra nova nesta etapa. Se já publicou as regras completas dos alertas
 
 CGM MANUAL
 O campo Número CGM fica à direita do nome na Identificação do aluno no computador; no celular aparece abaixo do nome. Preencha e use Salvar na ficha. O botão de importação foi retirado da tela. Nenhum número foi importado automaticamente. Depois de salvo no Diário, o CGM preenche o campo vazio do Relatório vinculado ao aluno e sai no documento exportado; campos já preenchidos no formulário são preservados. Não há regras novas.
+
+SALVAR ALTERAÇÕES GERAL
+Novo botão no topo da Identificação, acima do CGM, com a mesma função do botão Salvar informações. Salva os dados cadastrais da ficha, incluindo CGM. O botão original foi mantido; os dois respeitam o bloqueio durante a gravação e a mesma validação. Não registra relatos de atendimento nem altera formulários separados. Sem permissões novas.
 
 PARA PUBLICAR
 1. Guarde o endereço/identificador do deploy oficial atual para eventual retorno.
