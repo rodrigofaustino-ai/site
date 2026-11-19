@@ -6,4 +6,4 @@ No celular, os atalhos mantêm letra de 12 px e área de toque de 36 px; o menu 
 
 Verificação existente do menu executada para capturar novas prévias em previas/etapa-76 e conferir a navegação. O teste agora permite escolher a pasta da prévia e aguarda a atualização assíncrona da troca de aba antes de verificar visibilidade.
 
-Estado: ajuste implementado, prévia pronta; ainda não incluído em novo pacote Netlify. O pacote 75 permanece como entregue anteriormente.
+Estado: ajuste aprovado pelo usuário e incluído no pacote cumulativo 76 para publicação manual no Netlify.

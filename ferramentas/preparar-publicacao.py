@@ -37,7 +37,7 @@ def validar(pasta):
     if faltantes:raise ValueError('Referências locais ausentes: '+repr(faltantes))
 
 def main():
-    p=argparse.ArgumentParser();p.add_argument('destino',type=Path);p.add_argument('zip',type=Path);p.add_argument('--etapa',type=int,default=75);args=p.parse_args()
+    p=argparse.ArgumentParser();p.add_argument('destino',type=Path);p.add_argument('zip',type=Path);p.add_argument('--etapa',type=int,default=76);args=p.parse_args()
     destino=args.destino.resolve();arquivo_zip=args.zip.resolve()
     if destino==ROOT or destino.is_relative_to(ROOT):raise ValueError('Use uma pasta nova fora do repositório de fonte.')
     if destino.exists() and any(destino.iterdir()):raise ValueError('A pasta de destino precisa estar vazia ou não existir.')
@@ -357,7 +357,7 @@ serviços externos de IA ou a configuração remota atual de todos os serviços.
         for fonte,alvo in [('GUIA-DOCUMENTOS-MODELOS-FIREBASE.txt','GUIA-DOC-MODELOS-FIREBASE.txt'),('documentos-modelos-firestore-acrescimo.rules','PERMISSOES-DOC-MODELOS-FIRESTORE.txt'),('documentos-modelos-storage-acrescimo.rules','PERMISSOES-DOC-MODELOS-STORAGE.txt')]:
             (destino/alvo).write_text('ETAPA 71: não repita permissões já aplicadas na etapa 69.\n\n'+(ROOT/'producao'/fonte).read_text())
         (destino/'PERMISSOES-ASSINATURAS-FIRESTORE.txt').write_text('ETAPA 71: nenhuma nova regra.\n\n'+(ROOT/'producao'/'GUIA-ASSINATURAS-FIRESTORE.txt').read_text())
-    if args.etapa in (72,73,74,75):
+    if args.etapa in (72,73,74,75,76):
         guia=destino/'LEIA-ME-PUBLICACAO.txt'
         texto=guia.read_text()
         inicio=texto.index('ATENÇÃO — QUESTIONÁRIO DA FAMÍLIA')
@@ -375,13 +375,13 @@ Pacote cumulativo, incluindo registro rápido, formulários compactos, autopreen
         guia.write_text(texto)
         for fonte,alvo in [('GUIA-DOCUMENTOS-MODELOS-FIREBASE.txt','GUIA-DOC-MODELOS-FIREBASE.txt'),('documentos-modelos-firestore-acrescimo.rules','PERMISSOES-DOC-MODELOS-FIRESTORE.txt'),('documentos-modelos-storage-acrescimo.rules','PERMISSOES-DOC-MODELOS-STORAGE.txt'),('GUIA-ASSINATURAS-FIRESTORE.txt','PERMISSOES-ASSINATURAS-FIRESTORE.txt')]:
             (destino/alvo).write_text('ETAPA 72: nenhuma regra nova; não repita permissões já aplicadas.\n\n'+(ROOT/'producao'/fonte).read_text())
-    if args.etapa in (73,74,75):
+    if args.etapa in (73,74,75,76):
         guia=destino/'LEIA-ME-PUBLICACAO.txt'
         guia.write_text(guia.read_text().replace('ETAPA 72 — DOCUMENTOS PREENCHIDOS ONLINE','ETAPA 73 — DADOS DO DIÁRIO E TOTAIS DO ANO VIGENTE').replace('As quantidades de faltas são manuais.','Nos termos com contagens, Faltas vem de F e dias de atendimento de P + F + FJ, de 01/01 do ano vigente até hoje. Sem atendimento pedagógico não entra nessas contagens. Datas repetidas em turnos distintos contam uma vez. As quantidades continuam editáveis. Use Atualizar dados do Diário para consultar novamente; versões salvas só mudam mediante atualização explícita. Professor vem do cadastro/nome da conta; o responsável pode ser escolhido entre os contatos do aluno.'))
         for alvo in ('GUIA-DOC-MODELOS-FIREBASE.txt','PERMISSOES-DOC-MODELOS-FIRESTORE.txt','PERMISSOES-DOC-MODELOS-STORAGE.txt','PERMISSOES-ASSINATURAS-FIRESTORE.txt'):
             arq=destino/alvo
             arq.write_text(arq.read_text().replace('ETAPA 72:','ETAPA 73:'))
-    if args.etapa in (74,75):
+    if args.etapa in (74,75,76):
         guia=destino/'LEIA-ME-PUBLICACAO.txt'
         texto=guia.read_text().replace('ETAPA 73 — DADOS DO DIÁRIO E TOTAIS DO ANO VIGENTE','ETAPA 74 — ALERTAS DE FREQUÊNCIA E TEXTOS JUSTIFICADOS')
         texto=texto.replace('Não exige novas regras Firebase: utiliza as subcoleções privadas já existentes sob alunos e a biblioteca de assinaturas já liberada. Não repita permissões já aplicadas.','ATENÇÃO: antes de publicar esta etapa, acrescente as permissões dos critérios de alertas no Firestore de salamulti. Siga GUIA-ALERTAS-FREQUENCIA-FIREBASE.txt e PERMISSOES-ALERTAS-FREQUENCIA-FIRESTORE.txt. Preserve todas as regras atuais.')
@@ -394,11 +394,14 @@ Pacote cumulativo, incluindo registro rápido, formulários compactos, autopreen
             linhas=arq.read_text().splitlines()
             linhas[0]='ETAPA 74: estas permissões antigas não precisam ser repetidas. O NOVO bloco dos alertas está em PERMISSOES-ALERTAS-FREQUENCIA-FIRESTORE.txt.'
             arq.write_text('\n'.join(linhas)+'\n')
-    if args.etapa == 75:
+    if args.etapa in (75,76):
         guia=destino/'LEIA-ME-PUBLICACAO.txt'
         texto=guia.read_text().replace('ETAPA 74 — ALERTAS DE FREQUÊNCIA E TEXTOS JUSTIFICADOS','ETAPA 75 — MENU LATERAL DE ALUNOS')
         texto=texto.replace('PARA PUBLICAR','MENU LATERAL DE ALUNOS\nNa aba Alunos, use o menu lateral para localizar o cartão de cada aluno. Os nomes intermediários aparecem abreviados; a busca considera o nome completo. O menu acompanha conta, turno e filtro de alunos e é recolhível no celular. Não abre nem salva a ficha automaticamente.\nNão há regra nova nesta etapa. Se já publicou as regras completas dos alertas da etapa 74, não precisa repetir. Se ainda não publicou, siga o GUIA-ALERTAS-FREQUENCIA-FIREBASE.txt antes de usar os alertas.\n\nPARA PUBLICAR',1)
         guia.write_text(texto)
+    if args.etapa == 76:
+        guia=destino/'LEIA-ME-PUBLICACAO.txt'
+        guia.write_text(guia.read_text().replace('ETAPA 75 — MENU LATERAL DE ALUNOS','ETAPA 76 — MENU DE ALUNOS COMPACTO').replace('MENU LATERAL DE ALUNOS\n','MENU LATERAL DE ALUNOS\nFonte menor e menos espaço entre nomes, título e busca; caixa mais baixa e rolagem interna quando necessária. Sem novas permissões em relação à etapa 74.\n',1))
     guia=destino/'LEIA-ME-PUBLICACAO.txt'
     guia.write_text(guia.read_text().replace('até a etapa 33.',f'até a etapa {args.etapa}.'))
     if args.etapa >= 57:
