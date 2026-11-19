@@ -4,3 +4,6 @@
 @media print{.alunos-menu{display:none!important}#screen-home>.wrapper.com-menu-alunos{display:block}}
 
 .alunos-voltar-topo{display:block;width:100%;min-height:36px;border:1px solid #afc6bc;border-radius:7px;padding:8px 6px;background:#f2f7f4;color:#205848;font:700 11px/1.4 Arial,sans-serif;cursor:pointer}.alunos-voltar-topo:hover{background:#e3f0e9}.alunos-voltar-topo:focus-visible{outline:2px solid #176b5b;outline-offset:2px}@media print{.alunos-lateral{display:none!important}}
+
+/* Destaque temporário de quem foi localizado pelo menu. */
+#studentsList .student-item.aluno-localizado{background:#fff4bf;border-color:#d4ab36;box-shadow:0 2px 10px #bb8d1b20}#studentsList .student-item.aluno-localizado::before{background:#d4a129}#studentsList .student-item.aluno-localizado:focus{outline-color:#b08319}
