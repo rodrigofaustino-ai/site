@@ -1,9 +1,9 @@
 PACOTE DO SITE OFICIAL — saladerecursos.netlify.app
 
-Inclui as melhorias acumuladas até a etapa 82.
+Inclui as melhorias acumuladas até a etapa 83.
 Conexões: salamulti (Diário/PEI) e paee-3fea6 (PAEE/Diagnóstica/Relatório).
 Não é uma cópia isolada de teste.
-ETAPA 82 — SALVAR ALTERAÇÕES GERAL
+ETAPA 83 — BIBLIOTECA PRIVADA DE TRECHOS
 Na aba Doc. Modelos, use Preencher documentos online ou Preencher online nos sete modelos reconhecidos. O formulário usa os modelos enviados; não converte automaticamente qualquer arquivo cadastrado pela equipe.
 Selecione o aluno, confira os dados compatíveis, complete os campos e escolha as assinaturas da biblioteca. Nome e cargo são editáveis, com imagem opcional e espaço para assinatura manual.
 Salvar documento na ficha cria uma versão privada em Documentos salvos deste aluno. O preenchimento não altera o cadastro nem a Frequência. Nos termos com contagens, Faltas vem de F e dias de atendimento de P + F + FJ, de 01/01 do ano vigente até hoje. Sem atendimento pedagógico não entra nessas contagens. Datas repetidas em turnos distintos contam uma vez. As quantidades continuam editáveis. Use Atualizar dados do Diário para consultar novamente; versões salvas só mudam mediante atualização explícita. Professor vem do cadastro/nome da conta; o responsável pode ser escolhido entre os contatos do aluno.
@@ -31,6 +31,10 @@ O campo Número CGM fica à direita do nome na Identificação do aluno no compu
 
 SALVAR ALTERAÇÕES GERAL
 Novo botão no topo da Identificação, acima do CGM, com a mesma função do botão Salvar informações. Salva os dados cadastrais da ficha, incluindo CGM. O botão original foi mantido; os dois respeitam o bloqueio durante a gravação e a mesma validação. Não registra relatos de atendimento nem altera formulários separados. Sem permissões novas.
+
+TRECHOS FREQUENTES
+Use o botão Trechos ao lado da IA ou nos campos de texto compatíveis, inclusive nome da escola, cidade e nome do professor. Cadastre título e conteúdo, busque, edite, exclua ou insira no cursor/seleção. A biblioteca é privada por conta e compartilhada com os formulários pelo acesso do Diário. Quando necessário, entre com a mesma conta do Diário na janela. O restante do campo é preservado. Use Salvar no documento para gravar o preenchimento. Os textos já inseridos não dependem do cadastro original.
+PERMISSÃO NOVA: o bloco bibliotecaTrechos deve estar publicado no Firestore do projeto salamulti. Se já substituiu as regras completas revisadas desta etapa, não repita a alteração. Leia GUIA-TRECHOS-FIREBASE.txt. Storage e o projeto paee-3fea6 não precisam de alteração.
 
 PARA PUBLICAR
 1. Guarde o endereço/identificador do deploy oficial atual para eventual retorno.
