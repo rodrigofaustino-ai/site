@@ -63,7 +63,7 @@ Leitura dos caminhos de entrada, campos e botões da interface, handlers de grav
 
 - Navegação completa por todos os capítulos e vínculos internos, busca com palavras, categorias de FAQ, foco por teclado, janela ampliada e telas de 1440/390 px.
 - Todas as imagens do manual são locais; exemplos fictícios. Há um diagrama de dependências com descrição alternativa em texto.
-- Impressão integral inclui capítulos e perguntas, testada em PDF A4 e leitura do texto extraído.
+- Impressão integral inclui capítulos e perguntas, testada em PDF A4 e leitura do texto extraído. Revisão de espaçamento: fluxo contínuo, sem quebra obrigatória a cada capítulo; 59 páginas em vez de 99, preservando os 39 capítulos e as 137 perguntas.
 - Aba real no Diário alterna com Alunos e não altera o banco simulado; ajuda dos quatro formulários abre em outra aba.
 - Sintaxe/carregamento dos documentos conferidos com o verificador existente de configuração oficial; nenhum renderizador de exportação de documentos pedagógicos foi alterado.
 - Regras Firebase, autenticação e dados de produção não foram alterados. O guia não ensina professores a mexer em infraestrutura para contornar erros.
