@@ -1,9 +1,9 @@
 PACOTE DO SITE OFICIAL — saladerecursos.netlify.app
 
-Inclui as melhorias acumuladas até a etapa 85.
+Inclui as melhorias acumuladas até a etapa 86.
 Conexões: salamulti (Diário/PEI) e paee-3fea6 (PAEE/Diagnóstica/Relatório).
 Não é uma cópia isolada de teste.
-ETAPA 85 — TAMANHO DA FONTE NA TELA
+ETAPA 86 — PLANNER E FREQUÊNCIA SEM BOTÕES DESNECESSÁRIOS
 Na aba Doc. Modelos, use Preencher documentos online ou Preencher online nos sete modelos reconhecidos. O formulário usa os modelos enviados; não converte automaticamente qualquer arquivo cadastrado pela equipe.
 Selecione o aluno, confira os dados compatíveis, complete os campos e escolha as assinaturas da biblioteca. Nome e cargo são editáveis, com imagem opcional e espaço para assinatura manual.
 Salvar documento na ficha cria uma versão privada em Documentos salvos deste aluno. O preenchimento não altera o cadastro nem a Frequência. Nos termos com contagens, Faltas vem de F e dias de atendimento de P + F + FJ, de 01/01 do ano vigente até hoje. Sem atendimento pedagógico não entra nessas contagens. Datas repetidas em turnos distintos contam uma vez. As quantidades continuam editáveis. Use Atualizar dados do Diário para consultar novamente; versões salvas só mudam mediante atualização explícita. Professor vem do cadastro/nome da conta; o responsável pode ser escolhido entre os contatos do aluno.
@@ -42,6 +42,9 @@ Nova aba no Diário com manual passo a passo, perguntas frequentes por assunto, 
 TAMANHO DA FONTE NA TELA
 Controles A−, percentual, A+ e Padrão no canto superior direito do Diário e das páginas principais dos formulários. De 85% a 130%, em passos de 5%; Padrão retorna a 100%. A preferência é guardada neste navegador e não altera cadastros. Textos, menus e cartões reorganizam a visualização.
 A preferência não modifica modelos de exportação: impressão usa tamanho padrão e a geração em lote ignora o ajuste visual. Partes Word e imagens do Relatório DOCX e páginas dos sete termos foram comparadas em 100% e 130%. Nenhuma regra Firebase nova.
+
+PLANNER E FREQUÊNCIA
+Os nomes das semanas da Frequência não oferecem Trechos. Os campos diários do Planner não oferecem IA nem Trechos. Edição das semanas, controles de data/remoção e salvamento automático do planejamento foram mantidos. As ferramentas continuam nos demais campos compatíveis. O pacote preserva o ajuste de fonte, o Manual como última aba, chat, notificações e exportações anteriores. Nenhuma regra Firebase nova.
 
 PARA PUBLICAR
 1. Guarde o endereço/identificador do deploy oficial atual para eventual retorno.
