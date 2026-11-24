@@ -17,7 +17,7 @@ popup.innerHTML='<p id="comunicadosCategoria"></p><h2 id="comunicadosPopupTitulo
 document.body.append(panel,popup);
 const images=ComunicadosImagens.criar({auth,status:text=>{$('comunicadosAdminStatus').textContent=text;}});
 const nav=document.querySelector('.tabs-bar');
-for(const tipo of ['aviso','mensagem']){const b=el('button',names[tipo]);b.type='button';b.className='tab-btn';b.id='btnComunicados'+tipo;b.hidden=true;b.setAttribute('aria-haspopup','dialog');b.onclick=()=>openAdmin(tipo);nav.append(b);}
+for(const tipo of ['aviso','mensagem']){const b=el('button',names[tipo]);b.type='button';b.className='tab-btn';b.id='btnComunicados'+tipo;b.hidden=true;b.setAttribute('aria-haspopup','dialog');b.onclick=()=>openAdmin(tipo);nav.insertBefore(b,document.getElementById('tabBtnManual'));}
 function reset(){images.reset();generation++;queue=[];current=null;owner=null;pending=null;publishing=false;if(popup.open)popup.close();if(panel.open)panel.close();$('comunicadosForm').reset();$('comunicadosLista').replaceChildren();lock(false);}
 auth.onAuthStateChanged(u=>{reset();for(const t of ['aviso','mensagem'])$('btnComunicados'+t).hidden=!admin(u);});
 async function loadAdmin(u,g){
