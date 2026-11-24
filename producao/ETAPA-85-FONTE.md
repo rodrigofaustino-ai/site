@@ -17,4 +17,4 @@ Textos e controles usam tamanhos relativos à preferência visual. Menus flexív
 
 `validacao/verificar-visual-fonte.cjs`: Chromium com dados fictícios e Firebase simulado, sem requisições externas. Confere limites, cálculo das fontes, campos dinâmicos sem multiplicação acumulada, reorganização de cartões, persistência após recarregar, impressão padrão, PEI legado sem alteração do HTML, saídas de documentos iguais, celular sem rolagem horizontal e nenhum salvamento cadastral. Capturas em previas/etapa-85.
 
-Configuração/carregamento/sintaxe conferidos pelo verificador existente. Não exige regra Firebase nova. Prévia de interface; pacote Netlify será preparado quando solicitado.
+Configuração/carregamento/sintaxe conferidos pelo verificador existente. Não exige regra Firebase nova. Incluído no pacote cumulativo da etapa 85 para publicação manual no Netlify.

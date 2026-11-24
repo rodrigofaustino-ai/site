@@ -37,7 +37,7 @@ def validar(pasta):
     if faltantes:raise ValueError('Referências locais ausentes: '+repr(faltantes))
 
 def main():
-    p=argparse.ArgumentParser();p.add_argument('destino',type=Path);p.add_argument('zip',type=Path);p.add_argument('--etapa',type=int,default=84);args=p.parse_args()
+    p=argparse.ArgumentParser();p.add_argument('destino',type=Path);p.add_argument('zip',type=Path);p.add_argument('--etapa',type=int,default=85);args=p.parse_args()
     destino=args.destino.resolve();arquivo_zip=args.zip.resolve()
     if destino==ROOT or destino.is_relative_to(ROOT):raise ValueError('Use uma pasta nova fora do repositório de fonte.')
     if destino.exists() and any(destino.iterdir()):raise ValueError('A pasta de destino precisa estar vazia ou não existir.')
@@ -357,7 +357,7 @@ serviços externos de IA ou a configuração remota atual de todos os serviços.
         for fonte,alvo in [('GUIA-DOCUMENTOS-MODELOS-FIREBASE.txt','GUIA-DOC-MODELOS-FIREBASE.txt'),('documentos-modelos-firestore-acrescimo.rules','PERMISSOES-DOC-MODELOS-FIRESTORE.txt'),('documentos-modelos-storage-acrescimo.rules','PERMISSOES-DOC-MODELOS-STORAGE.txt')]:
             (destino/alvo).write_text('ETAPA 71: não repita permissões já aplicadas na etapa 69.\n\n'+(ROOT/'producao'/fonte).read_text())
         (destino/'PERMISSOES-ASSINATURAS-FIRESTORE.txt').write_text('ETAPA 71: nenhuma nova regra.\n\n'+(ROOT/'producao'/'GUIA-ASSINATURAS-FIRESTORE.txt').read_text())
-    if args.etapa in (72,73,74,75,76,77,78,79,80,81,82,83,84):
+    if args.etapa in (72,73,74,75,76,77,78,79,80,81,82,83,84,85):
         guia=destino/'LEIA-ME-PUBLICACAO.txt'
         texto=guia.read_text()
         inicio=texto.index('ATENÇÃO — QUESTIONÁRIO DA FAMÍLIA')
@@ -375,13 +375,13 @@ Pacote cumulativo, incluindo registro rápido, formulários compactos, autopreen
         guia.write_text(texto)
         for fonte,alvo in [('GUIA-DOCUMENTOS-MODELOS-FIREBASE.txt','GUIA-DOC-MODELOS-FIREBASE.txt'),('documentos-modelos-firestore-acrescimo.rules','PERMISSOES-DOC-MODELOS-FIRESTORE.txt'),('documentos-modelos-storage-acrescimo.rules','PERMISSOES-DOC-MODELOS-STORAGE.txt'),('GUIA-ASSINATURAS-FIRESTORE.txt','PERMISSOES-ASSINATURAS-FIRESTORE.txt')]:
             (destino/alvo).write_text('ETAPA 72: nenhuma regra nova; não repita permissões já aplicadas.\n\n'+(ROOT/'producao'/fonte).read_text())
-    if args.etapa in (73,74,75,76,77,78,79,80,81,82,83,84):
+    if args.etapa in (73,74,75,76,77,78,79,80,81,82,83,84,85):
         guia=destino/'LEIA-ME-PUBLICACAO.txt'
         guia.write_text(guia.read_text().replace('ETAPA 72 — DOCUMENTOS PREENCHIDOS ONLINE','ETAPA 73 — DADOS DO DIÁRIO E TOTAIS DO ANO VIGENTE').replace('As quantidades de faltas são manuais.','Nos termos com contagens, Faltas vem de F e dias de atendimento de P + F + FJ, de 01/01 do ano vigente até hoje. Sem atendimento pedagógico não entra nessas contagens. Datas repetidas em turnos distintos contam uma vez. As quantidades continuam editáveis. Use Atualizar dados do Diário para consultar novamente; versões salvas só mudam mediante atualização explícita. Professor vem do cadastro/nome da conta; o responsável pode ser escolhido entre os contatos do aluno.'))
         for alvo in ('GUIA-DOC-MODELOS-FIREBASE.txt','PERMISSOES-DOC-MODELOS-FIRESTORE.txt','PERMISSOES-DOC-MODELOS-STORAGE.txt','PERMISSOES-ASSINATURAS-FIRESTORE.txt'):
             arq=destino/alvo
             arq.write_text(arq.read_text().replace('ETAPA 72:','ETAPA 73:'))
-    if args.etapa in (74,75,76,77,78,79,80,81,82,83,84):
+    if args.etapa in (74,75,76,77,78,79,80,81,82,83,84,85):
         guia=destino/'LEIA-ME-PUBLICACAO.txt'
         texto=guia.read_text().replace('ETAPA 73 — DADOS DO DIÁRIO E TOTAIS DO ANO VIGENTE','ETAPA 74 — ALERTAS DE FREQUÊNCIA E TEXTOS JUSTIFICADOS')
         texto=texto.replace('Não exige novas regras Firebase: utiliza as subcoleções privadas já existentes sob alunos e a biblioteca de assinaturas já liberada. Não repita permissões já aplicadas.','ATENÇÃO: antes de publicar esta etapa, acrescente as permissões dos critérios de alertas no Firestore de salamulti. Siga GUIA-ALERTAS-FREQUENCIA-FIREBASE.txt e PERMISSOES-ALERTAS-FREQUENCIA-FIRESTORE.txt. Preserve todas as regras atuais.')
@@ -394,47 +394,52 @@ Pacote cumulativo, incluindo registro rápido, formulários compactos, autopreen
             linhas=arq.read_text().splitlines()
             linhas[0]='ETAPA 74: estas permissões antigas não precisam ser repetidas. O NOVO bloco dos alertas está em PERMISSOES-ALERTAS-FREQUENCIA-FIRESTORE.txt.'
             arq.write_text('\n'.join(linhas)+'\n')
-    if args.etapa in (75,76,77,78,79,80,81,82,83,84):
+    if args.etapa in (75,76,77,78,79,80,81,82,83,84,85):
         guia=destino/'LEIA-ME-PUBLICACAO.txt'
         texto=guia.read_text().replace('ETAPA 74 — ALERTAS DE FREQUÊNCIA E TEXTOS JUSTIFICADOS','ETAPA 75 — MENU LATERAL DE ALUNOS')
         texto=texto.replace('PARA PUBLICAR','MENU LATERAL DE ALUNOS\nNa aba Alunos, use o menu lateral para localizar o cartão de cada aluno. Os nomes intermediários aparecem abreviados; a busca considera o nome completo. O menu acompanha conta, turno e filtro de alunos e é recolhível no celular. Não abre nem salva a ficha automaticamente.\nNão há regra nova nesta etapa. Se já publicou as regras completas dos alertas da etapa 74, não precisa repetir. Se ainda não publicou, siga o GUIA-ALERTAS-FREQUENCIA-FIREBASE.txt antes de usar os alertas.\n\nPARA PUBLICAR',1)
         guia.write_text(texto)
-    if args.etapa in (76,77,78,79,80,81,82,83,84):
+    if args.etapa in (76,77,78,79,80,81,82,83,84,85):
         guia=destino/'LEIA-ME-PUBLICACAO.txt'
         guia.write_text(guia.read_text().replace('ETAPA 75 — MENU LATERAL DE ALUNOS','ETAPA 76 — MENU DE ALUNOS COMPACTO').replace('MENU LATERAL DE ALUNOS\n','MENU LATERAL DE ALUNOS\nFonte menor e menos espaço entre nomes, título e busca; caixa mais baixa e rolagem interna quando necessária. Sem novas permissões em relação à etapa 74.\n',1))
-    if args.etapa in (77,78,79,80,81,82,83,84):
+    if args.etapa in (77,78,79,80,81,82,83,84,85):
         guia=destino/'LEIA-ME-PUBLICACAO.txt'
         guia.write_text(guia.read_text().replace('ETAPA 76 — MENU DE ALUNOS COMPACTO','ETAPA 77 — VOLTAR AO TOPO').replace('MENU LATERAL DE ALUNOS\n','MENU LATERAL DE ALUNOS\nO botão Voltar ao topo fica abaixo da caixa, fora da rolagem interna dos nomes, e acompanha o menu. Retorna ao início da página sem abrir ou salvar fichas. Sem regras novas.\n',1))
-    if args.etapa in (78,79,80,81,82,83,84):
+    if args.etapa in (78,79,80,81,82,83,84,85):
         guia=destino/'LEIA-ME-PUBLICACAO.txt'
         guia.write_text(guia.read_text().replace('ETAPA 77 — VOLTAR AO TOPO','ETAPA 78 — DESTAQUE DO ALUNO LOCALIZADO').replace('MENU LATERAL DE ALUNOS\n','MENU LATERAL DE ALUNOS\nAo localizar um aluno pelo menu, o cartão inteiro recebe fundo amarelo suave. O destaque sai ao voltar ao topo (botão ou rolagem manual), escolher outro aluno, sair da aba ou abrir a ficha e retornar. Não altera dados nem o vermelho dos alertas de faltas.\n',1))
-    if args.etapa in (79,80,81,82,83,84):
+    if args.etapa in (79,80,81,82,83,84,85):
         guia=destino/'LEIA-ME-PUBLICACAO.txt'
         guia.write_text(guia.read_text().replace('ETAPA 78 — DESTAQUE DO ALUNO LOCALIZADO','ETAPA 79 — CARTÕES DE ALUNOS COMPACTOS').replace('MENU LATERAL DE ALUNOS\n','CARTÕES DE ALUNOS\nPrimeiro e último nome por extenso, nomes intermediários abreviados nos cartões. Nome completo ao passar o mouse e ao abrir a ficha. Espaços compactos, botões alinhados e texto à esquerda. Dados, nomes salvos e documentos exportados preservados; não há regras novas.\n\nMENU LATERAL DE ALUNOS\n',1))
-    if args.etapa in (80,81,82,83,84):
+    if args.etapa in (80,81,82,83,84,85):
         guia=destino/'LEIA-ME-PUBLICACAO.txt'
         guia.write_text(guia.read_text().replace('ETAPA 79 — CARTÕES DE ALUNOS COMPACTOS','ETAPA 80 — NÚMERO CGM NO DIÁRIO').replace('PARA PUBLICAR','CGM DOS MEUS ALUNOS\nCampo Número CGM na Identificação do aluno. Para preencher em lote, use Alunos > Preencher CGMs dos meus alunos. Selecione seu CSV privado, confira os nomes/números e salve as linhas selecionadas. Consulta somente a conta conectada; não cria cadastros, não aproxima nomes e não substitui CGM existente sem seleção e autorização explícita. Nomes ambíguos/não encontrados/duplicidades são bloqueados. O pacote NÃO contém a lista pessoal dos alunos; os dados devem vir do arquivo privado do professor. Nenhuma regra nova.\n\nPARA PUBLICAR',1))
-    if args.etapa in (81,82,83,84):
+    if args.etapa in (81,82,83,84,85):
         guia=destino/'LEIA-ME-PUBLICACAO.txt'
         texto=guia.read_text().replace('ETAPA 80 — NÚMERO CGM NO DIÁRIO','ETAPA 81 — CGM AO LADO DO NOME')
         inicio=texto.index('CGM DOS MEUS ALUNOS\n')
         fim=texto.index('PARA PUBLICAR',inicio)
         texto=texto[:inicio]+'CGM MANUAL\nO campo Número CGM fica à direita do nome na Identificação do aluno no computador; no celular aparece abaixo do nome. Preencha e use Salvar na ficha. O botão de importação foi retirado da tela. Nenhum número foi importado automaticamente. Depois de salvo no Diário, o CGM preenche o campo vazio do Relatório vinculado ao aluno e sai no documento exportado; campos já preenchidos no formulário são preservados. Não há regras novas.\n\n'+texto[fim:]
         guia.write_text(texto)
-    if args.etapa in (82,83,84):
+    if args.etapa in (82,83,84,85):
         guia=destino/'LEIA-ME-PUBLICACAO.txt'
         guia.write_text(guia.read_text().replace('ETAPA 81 — CGM AO LADO DO NOME','ETAPA 82 — SALVAR ALTERAÇÕES GERAL').replace('PARA PUBLICAR','SALVAR ALTERAÇÕES GERAL\nNovo botão no topo da Identificação, acima do CGM, com a mesma função do botão Salvar informações. Salva os dados cadastrais da ficha, incluindo CGM. O botão original foi mantido; os dois respeitam o bloqueio durante a gravação e a mesma validação. Não registra relatos de atendimento nem altera formulários separados. Sem permissões novas.\n\nPARA PUBLICAR',1))
-    if args.etapa in (83,84):
+    if args.etapa in (83,84,85):
         guia=destino/'LEIA-ME-PUBLICACAO.txt'
         texto=guia.read_text().replace('ETAPA 82 — SALVAR ALTERAÇÕES GERAL','ETAPA 83 — BIBLIOTECA PRIVADA DE TRECHOS')
         texto=texto.replace('PARA PUBLICAR','TRECHOS FREQUENTES\nUse o botão Trechos ao lado da IA ou nos campos de texto compatíveis, inclusive nome da escola, cidade e nome do professor. Cadastre título e conteúdo, busque, edite, exclua ou insira no cursor/seleção. A biblioteca é privada por conta e compartilhada com os formulários pelo acesso do Diário. Quando necessário, entre com a mesma conta do Diário na janela. O restante do campo é preservado. Use Salvar no documento para gravar o preenchimento. Os textos já inseridos não dependem do cadastro original.\nPERMISSÃO NOVA: o bloco bibliotecaTrechos deve estar publicado no Firestore do projeto salamulti. Se já substituiu as regras completas revisadas desta etapa, não repita a alteração. Leia GUIA-TRECHOS-FIREBASE.txt. Storage e o projeto paee-3fea6 não precisam de alteração.\n\nPARA PUBLICAR',1)
         guia.write_text(texto)
         for fonte,alvo in [('GUIA-TRECHOS-FIREBASE.txt','GUIA-TRECHOS-FIREBASE.txt'),('trechos-firestore-acrescimo.rules','PERMISSOES-TRECHOS-FIRESTORE.txt')]:
             shutil.copyfile(ROOT/'producao'/fonte,destino/alvo)
-    if args.etapa == 84:
+    if args.etapa in (84,85):
         guia=destino/'LEIA-ME-PUBLICACAO.txt'
         texto=guia.read_text().replace('ETAPA 83 — BIBLIOTECA PRIVADA DE TRECHOS','ETAPA 84 — MANUAL DE USO E PERGUNTAS FREQUENTES')
         texto=texto.replace('PARA PUBLICAR','MANUAL E DÚVIDAS\nNova aba no Diário com manual passo a passo, perguntas frequentes por assunto, busca, imagens fictícias ampliáveis e impressão completa. O mapa de dependências explica o que preencher/salvar antes de cada tarefa. A ajuda pode abrir em outra aba; há links nos quatro formulários e no login. Conteúdo estático de consulta, sem novas permissões Firebase. Não altera preenchimentos nem modelos de exportação.\n\nPARA PUBLICAR',1)
+        guia.write_text(texto)
+    if args.etapa == 85:
+        guia=destino/'LEIA-ME-PUBLICACAO.txt'
+        texto=guia.read_text().replace('ETAPA 84 — MANUAL DE USO E PERGUNTAS FREQUENTES','ETAPA 85 — TAMANHO DA FONTE NA TELA')
+        texto=texto.replace('PARA PUBLICAR','TAMANHO DA FONTE NA TELA\nControles A−, percentual, A+ e Padrão no canto superior direito do Diário e das páginas principais dos formulários. De 85% a 130%, em passos de 5%; Padrão retorna a 100%. A preferência é guardada neste navegador e não altera cadastros. Textos, menus e cartões reorganizam a visualização.\nA preferência não modifica modelos de exportação: impressão usa tamanho padrão e a geração em lote ignora o ajuste visual. Partes Word e imagens do Relatório DOCX e páginas dos sete termos foram comparadas em 100% e 130%. Nenhuma regra Firebase nova.\n\nPARA PUBLICAR',1)
         guia.write_text(texto)
     guia=destino/'LEIA-ME-PUBLICACAO.txt'
     guia.write_text(guia.read_text().replace('até a etapa 33.',f'até a etapa {args.etapa}.'))
