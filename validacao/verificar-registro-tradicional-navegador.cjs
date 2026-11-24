@@ -32,7 +32,7 @@ function mock(){
  await page.getByRole('button',{name:'Abrir ficha de Aluno fictício A',exact:true}).focus();await page.keyboard.press('Enter');
  await page.waitForFunction(()=>currentStudentId==='aluno-a'&&document.getElementById('screen-profile').classList.contains('active'));
  check(await page.getByLabel('Nome completo do aluno',{exact:true}).inputValue(),'Aluno fictício A');
- check(await page.getByLabel('Relato do atendimento',{exact:false}).count(),1);
+ check(await page.getByLabel('Relato do atendimento',{exact:false}).and(page.locator('textarea')).count(),1);
  await page.locator('label[for=entryText]').click();check(await page.locator('#entryText').evaluate(el=>el===document.activeElement),true);
  await page.evaluate(()=>goHome());await page.locator('#tabBtnGrade').focus();await page.keyboard.press('Enter');
  check(await page.locator('#tabBtnGrade').getAttribute('aria-current'),'true');check(await page.locator('#tabBtnAlunos').getAttribute('aria-current'),null);
