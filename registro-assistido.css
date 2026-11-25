@@ -1,0 +1,15 @@
+#registroAssistido{padding:14px;background:#f7fbf9;border:1px solid #d6e4df;border-radius:10px;margin:16px 0}
+#registroAssistido summary{cursor:pointer;font-weight:600}
+#registroAssistido p{font-size:14px;line-height:1.6;text-align:left;white-space:pre-wrap}
+.registro-roteiro-campos{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0}
+.registro-roteiro-campos label{display:flex;flex-direction:column;gap:6px;font-size:14px;font-weight:600;min-width:0}
+.registro-roteiro-campos textarea{box-sizing:border-box;width:100%;font:inherit;padding:10px;border:1px solid #afc6c2;border-radius:8px;resize:vertical;font-weight:400}
+.registro-acoes{display:flex;flex-wrap:wrap;gap:10px}
+#roteiroPrevia{padding:14px;border:1px solid #d6e4df;background:white;border-radius:8px;overflow-wrap:anywhere}
+#registroStatus{font-size:14px;line-height:1.6;text-align:left;margin:12px 0}
+.humor-opt[aria-disabled=true]{opacity:.6;cursor:wait}
+@media(max-width:650px){.registro-roteiro-campos{grid-template-columns:1fr}}
+
+.registro-orientacao{font-size:13px;line-height:1.6;margin:8px 0}
+.registro-orientacao summary{cursor:pointer;font-weight:600;color:#245b83}
+.registro-orientacao p{text-align:left}
