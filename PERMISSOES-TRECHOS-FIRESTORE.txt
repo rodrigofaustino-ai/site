@@ -1,0 +1,19 @@
+// Biblioteca de trechos privada por conta. Acrescente dentro de /databases/{database}/documents.
+match /bibliotecaTrechos/{uid}/itens/{trechoId} {
+  function donoTrecho() { return request.auth != null && request.auth.uid == uid; }
+  function trechoValido() {
+    let d = request.resource.data;
+    return d.keys().hasAll(['titulo','conteudo','versao','criadoEm','atualizadoEm'])
+      && d.keys().hasOnly(['titulo','conteudo','versao','criadoEm','atualizadoEm'])
+      && d.titulo is string && d.titulo.size() > 0 && d.titulo.size() <= 120
+      && d.conteudo is string && d.conteudo.size() > 0 && d.conteudo.size() <= 5000
+      && d.versao is int && d.versao > 0 && d.versao <= 1000000
+      && d.criadoEm is timestamp && d.atualizadoEm == request.time;
+  }
+  allow read, delete: if donoTrecho();
+  allow create: if donoTrecho() && trechoValido()
+    && request.resource.data.versao == 1 && request.resource.data.criadoEm == request.time;
+  allow update: if donoTrecho() && trechoValido()
+    && request.resource.data.criadoEm == resource.data.criadoEm
+    && request.resource.data.versao == resource.data.versao + 1;
+}
