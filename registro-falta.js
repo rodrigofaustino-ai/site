@@ -1,0 +1,7 @@
+/* Atalhos explícitos: preencher não salva e nunca descarta texto sem confirmação. */
+(()=>{'use strict';let tipo='';const $=id=>document.getElementById(id);
+function atualizar(){for(const b of document.querySelectorAll('[data-registro-falta]'))b.setAttribute('aria-pressed',String(b.dataset.registroFalta===tipo));$('registroFaltaEstado').textContent=tipo==='falta'?'Registro de falta selecionado. Confira a data e salve.':tipo==='justificado'?'Falta justificada selecionada. Confira a data e salve.':'';}
+function limpar(){tipo='';if($('registroFaltaEstado'))atualizar();}
+function iniciar(){for(const b of document.querySelectorAll('[data-registro-falta]'))b.addEventListener('click',()=>{if(window.RegistroAssistido.salvando())return;const t=b.dataset.registroFalta,input=$('entryText'),texto=t==='falta'?'Aluno faltou':'Aluno faltou — falta justificada';if(input.value.trim()&&input.value.trim()!==texto&&!confirm('Substituir o relato digitado pelo registro de falta?'))return;tipo=t;input.value=texto;input.dispatchEvent(new Event('input',{bubbles:true}));window.RegistroAssistido.limparIA();atualizar();input.focus();});$('registroRetomarAtendimento').addEventListener('click',()=>{if(window.RegistroAssistido.salvando())return;limpar();});}
+window.RegistroFalta=Object.freeze({limpar,tipo:()=>tipo});if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',iniciar,{once:true});else iniciar();
+})();
