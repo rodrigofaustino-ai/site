@@ -1,0 +1,97 @@
+PACOTE DO SITE OFICIAL — saladerecursos.netlify.app
+
+Inclui as melhorias acumuladas até a etapa 90.
+Conexões: salamulti (Diário/PEI) e paee-3fea6 (PAEE/Diagnóstica/Relatório).
+Não é uma cópia isolada de teste.
+ETAPA 90 — CHECK-LIST DE DOCUMENTOS
+Na aba Doc. Modelos, use Preencher documentos online ou Preencher online nos sete modelos reconhecidos. O formulário usa os modelos enviados; não converte automaticamente qualquer arquivo cadastrado pela equipe.
+Selecione o aluno, confira os dados compatíveis, complete os campos e escolha as assinaturas da biblioteca. Nome e cargo são editáveis, com imagem opcional e espaço para assinatura manual.
+Salvar documento na ficha cria uma versão privada em Documentos salvos deste aluno. O preenchimento não altera o cadastro nem a Frequência. Nos termos com contagens, Faltas vem de F e dias de atendimento de P + F + FJ, de 01/01 do ano vigente até hoje. Sem atendimento pedagógico não entra nessas contagens. Datas repetidas em turnos distintos contam uma vez. As quantidades continuam editáveis. Use Atualizar dados do Diário para consultar novamente; versões salvas só mudam mediante atualização explícita. Professor vem do cadastro/nome da conta; o responsável pode ser escolhido entre os contatos do aluno.
+Com a opção de cópia marcada, cada página vira uma imagem em Imagens do laudo (fotos ou digitalizações), com nome, data e página. PDF e imagens usam a mesma paginação; o DOCX é editável e pode paginar diferente no Word.
+O PDF original de uso de imagem também está disponível como DOCX editável. Os modelos originais da biblioteca continuam disponíveis para baixar.
+ATENÇÃO: antes de publicar esta etapa, acrescente as permissões dos critérios de alertas no Firestore de salamulti. Siga GUIA-ALERTAS-FREQUENCIA-FIREBASE.txt e PERMISSOES-ALERTAS-FREQUENCIA-FIRESTORE.txt. Preserve todas as regras atuais.
+Pacote cumulativo, incluindo registro rápido, formulários compactos, autopreenchimento, logos e avisos do chat. Publique a pasta completa, aguarde Published e use Ctrl + Shift + R.
+
+ALERTAS DE FREQUÊNCIA
+Na aba Frequência, configure o período móvel (60 dias), F seguidas (3) ou F acumuladas (7). FJ e SAP não somam nem quebram a sequência; P quebra. Nomes destacados indicam pendência até registrar a providência. Encaminhamentos têm histórico, assinaturas, impressão, DOCX/PDF e cópias opcionais das páginas na ficha. Imprimir/exportar não encerra o alerta. Nenhuma mensagem é enviada automaticamente.
+Textos dos parágrafos também são justificados nas páginas PDF/imagem dos modelos online; títulos e assinaturas mantêm alinhamento próprio.
+
+CARTÕES DE ALUNOS
+Primeiro e último nome por extenso, nomes intermediários abreviados nos cartões. Nome completo ao passar o mouse e ao abrir a ficha. Espaços compactos, botões alinhados e texto à esquerda. Dados, nomes salvos e documentos exportados preservados; não há regras novas.
+
+MENU LATERAL DE ALUNOS
+Ao localizar um aluno pelo menu, o cartão inteiro recebe fundo amarelo suave. O destaque sai ao voltar ao topo (botão ou rolagem manual), escolher outro aluno, sair da aba ou abrir a ficha e retornar. Não altera dados nem o vermelho dos alertas de faltas.
+O botão Voltar ao topo fica abaixo da caixa, fora da rolagem interna dos nomes, e acompanha o menu. Retorna ao início da página sem abrir ou salvar fichas. Sem regras novas.
+Fonte menor e menos espaço entre nomes, título e busca; caixa mais baixa e rolagem interna quando necessária. Sem novas permissões em relação à etapa 74.
+Na aba Alunos, use o menu lateral para localizar o cartão de cada aluno. Os nomes intermediários aparecem abreviados; a busca considera o nome completo. O menu acompanha conta, turno e filtro de alunos e é recolhível no celular. Não abre nem salva a ficha automaticamente.
+Não há regra nova nesta etapa. Se já publicou as regras completas dos alertas da etapa 74, não precisa repetir. Se ainda não publicou, siga o GUIA-ALERTAS-FREQUENCIA-FIREBASE.txt antes de usar os alertas.
+
+CGM MANUAL
+O campo Número CGM fica à direita do nome na Identificação do aluno no computador; no celular aparece abaixo do nome. Preencha e use Salvar na ficha. O botão de importação foi retirado da tela. Nenhum número foi importado automaticamente. Depois de salvo no Diário, o CGM preenche o campo vazio do Relatório vinculado ao aluno e sai no documento exportado; campos já preenchidos no formulário são preservados. Não há regras novas.
+
+SALVAR ALTERAÇÕES GERAL
+Novo botão no topo da Identificação, acima do CGM, com a mesma função do botão Salvar informações. Salva os dados cadastrais da ficha, incluindo CGM. O botão original foi mantido; os dois respeitam o bloqueio durante a gravação e a mesma validação. Não registra relatos de atendimento nem altera formulários separados. Sem permissões novas.
+
+TRECHOS FREQUENTES
+Use o botão Trechos ao lado da IA ou nos campos de texto compatíveis, inclusive nome da escola, cidade e nome do professor. Cadastre título e conteúdo, busque, edite, exclua ou insira no cursor/seleção. A biblioteca é privada por conta e compartilhada com os formulários pelo acesso do Diário. Quando necessário, entre com a mesma conta do Diário na janela. O restante do campo é preservado. Use Salvar no documento para gravar o preenchimento. Os textos já inseridos não dependem do cadastro original.
+PERMISSÃO NOVA: o bloco bibliotecaTrechos deve estar publicado no Firestore do projeto salamulti. Se já substituiu as regras completas revisadas desta etapa, não repita a alteração. Leia GUIA-TRECHOS-FIREBASE.txt. Storage e o projeto paee-3fea6 não precisam de alteração.
+
+MANUAL E DÚVIDAS
+Nova aba no Diário com manual passo a passo, perguntas frequentes por assunto, busca, imagens fictícias ampliáveis e impressão completa. O mapa de dependências explica o que preencher/salvar antes de cada tarefa. A ajuda pode abrir em outra aba; há links nos quatro formulários e no login. Conteúdo estático de consulta, sem novas permissões Firebase. Não altera preenchimentos nem modelos de exportação.
+
+TAMANHO DA FONTE NA TELA
+Controles A−, percentual, A+ e Padrão no canto superior direito do Diário e das páginas principais dos formulários. De 85% a 130%, em passos de 5%; Padrão retorna a 100%. A preferência é guardada neste navegador e não altera cadastros. Textos, menus e cartões reorganizam a visualização.
+A preferência não modifica modelos de exportação: impressão usa tamanho padrão e a geração em lote ignora o ajuste visual. Partes Word e imagens do Relatório DOCX e páginas dos sete termos foram comparadas em 100% e 130%. Nenhuma regra Firebase nova.
+
+PLANNER E FREQUÊNCIA
+Os nomes das semanas da Frequência não oferecem Trechos. Os campos diários do Planner não oferecem IA nem Trechos. Edição das semanas, controles de data/remoção e salvamento automático do planejamento foram mantidos. As ferramentas continuam nos demais campos compatíveis. O pacote preserva o ajuste de fonte, o Manual como última aba, chat, notificações e exportações anteriores. Nenhuma regra Firebase nova.
+
+ÚLTIMO REGISTRO NO ATENDIMENTO RÁPIDO
+Ao expandir Registrar atendimento em Alunos do Dia, o bloco mostra data e texto do último registro salvo até a data selecionada. Quando há vários na mesma data, usa o mais recente pelo horário de criação disponível. F/FJ/SAP são identificados quando presentes. Textos longos têm Ver relato completo e Recolher relato. É apenas consulta: não preenche o novo relato, não grava no histórico e não altera a frequência.
+A consulta confere o vínculo do aluno e a conta, descarta respostas de contextos antigos e distingue falta de histórico de falha de conexão. Depois de salvar um novo relato, a referência é atualizada nos blocos abertos daquele aluno. Nenhuma regra Firebase nova.
+
+RECOLHIMENTO APÓS SALVAR
+Ao confirmar Salvar no histórico, o bloco Registrar atendimento se recolhe automaticamente. Se houver erro ou confirmação pendente, permanece aberto com o texto preservado. Ao reabrir, consulta novamente o último registro. As demais melhorias e as exportações foram preservadas. Nenhuma regra Firebase nova.
+
+BANCO DE METAS
+399 metas adaptáveis em sete áreas e três etapas, com consulta às 48 páginas originais, apoios, frases e exemplos. Salvar cria uma cópia individual na ficha do aluno.
+
+CHECK-LIST
+Lista privada por aluno: PAEE, Diagnóstica, Relatório final e SERE. Períodos de 7, 15 e 30 dias e marcação manual. Novas exportações dos três formulários e do assistente marcam o Check-list; SERE é manual. Exportações antigas não são recuperadas. Confira a pasta Downloads. Banco de Metas e Check-list usam as permissões existentes das subcoleções do aluno; nenhuma regra Firebase nova nesta atualização. Manual e dúvidas continua como última aba.
+
+PARA PUBLICAR
+1. Guarde o endereço/identificador do deploy oficial atual para eventual retorno.
+2. Extraia o ZIP inteiro. Abra a pasta que contém index.html, vendor e modelos.
+3. No Netlify, abra o site saladerecursos, endereço saladerecursos.netlify.app.
+4. Em Deploys, arraste essa pasta inteira. Não arraste somente index.html.
+5. Aguarde Published e atualize o site com Ctrl + Shift + R.
+6. Confira com sua conta e outra conta de professor: alunos, documentos antigos,
+   atendimentos, frequência, arquivamento/reativação, Meu dia e exportação.
+7. Em uma ficha de aluno fictício, abra Questionário da família, gere e copie um
+   link. Abra-o em janela anônima/celular, responda e envie. Retorne ao professor e
+   clique em Atualizar respostas para conferir o relato e os itens correspondentes.
+   Confira também a desativação do link. Não use dados reais nesse teste.
+8. Confira o aviso no primeiro Continuar com perguntas em branco e a confirmação
+   no segundo clique. Ao enviar, os campos pulados ficam como Sem resposta.
+9. No botão Exportar Documentos, selecione Questionário da família e confira um
+   DOCX/ODT com as respostas salvas. Se houver várias, escolha a versão desejada.
+10. Na aba Alunos, mude a data do encontro e confira o quadro Agenda do Dia, no turno
+    escolhido. A edição do conteúdo continua na aba Planner.
+11. No chat, use 📎 com um arquivo fictício de até 10 MB e clique em Enviar.
+    Confira prévia/download com outra conta e Apagar pelo autor.
+
+DOCUMENTOS DOS PROFESSORES
+Exportar Documentos oferece DOCX/ODT individuais por padrão. ZIP é opcional.
+A associação de documentos antigos únicos pelo nome ocorre na primeira abertura:
+ela grava apenas alunoId, sem exigir Salvar e sem alterar o texto do documento.
+
+ASSINATURAS
+Use Adicionar pessoa para assinar nos cinco documentos. No Relatório, coordenação e demais responsáveis ficam na lista de pessoas, sem campo fixo separado na Identificação. Nomes e imagens antigos são preservados ao abrir; salve para confirmar.
+
+OBSERVAÇÕES
+Os backups de dados e arquivos devem ser guardados separadamente. Este ZIP contém
+somente o código do site e seus recursos estáticos; não contém registros do banco.
+A transferência administrativa permanece temporariamente bloqueada.
+Uma reversão de deploy retorna o código, mas não desfaz gravações feitas no banco.
+Os testes foram locais, com dados fictícios; não validam credenciais reais, índices,
+serviços externos de IA ou a configuração remota atual de todos os serviços.

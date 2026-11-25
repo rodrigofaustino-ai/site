@@ -1,0 +1,13 @@
+#chatEquipe #chatForm{grid-template-columns:36px minmax(0,1fr) 36px 64px;grid-template-areas:'resposta resposta resposta resposta' 'anexo anexo anexo anexo' 'anexar texto emojis enviar'}
+#chatEquipe #chatAnexar{grid-area:anexar;min-height:44px;padding:4px;font-size:21px}
+#chatEquipe #chatEmojis summary{width:36px}
+#chatEquipe #chatAnexoSelecionado{grid-area:anexo;display:flex;align-items:center;gap:8px;background:#f0f6f3;padding:7px;border-radius:6px;max-height:110px;overflow:auto}
+#chatEquipe #chatAnexoSelecionado[hidden]{display:none}
+#chatEquipe #chatAnexoSelecionado img{max-width:75px;max-height:65px;object-fit:contain}
+#chatEquipe #chatAnexoSelecionado span{font-size:12px;overflow-wrap:anywhere;min-width:0;flex:1}
+#chatEquipe #chatAnexoSelecionado button{font-size:11px;min-height:32px;padding:4px}
+#chatEquipe .chat-anexo{border:1px solid #bad2c7;border-radius:8px;background:#f5faf7;padding:9px;margin:6px 0;display:flex;flex-wrap:wrap;align-items:center;gap:7px;min-width:0}
+#chatEquipe .chat-anexo>strong{font-size:12px;overflow-wrap:anywhere;flex-basis:100%}
+#chatEquipe .chat-anexo>small{font-size:11px;flex-basis:100%}
+#chatEquipe .chat-anexo img{max-width:100%;max-height:230px;object-fit:contain;display:block;flex-basis:100%;min-width:0}
+#chatEquipe .chat-anexo button{font-size:12px;min-height:34px;padding:5px 9px}

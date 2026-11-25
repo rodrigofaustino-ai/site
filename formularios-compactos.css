@@ -1,0 +1,28 @@
+/* Edição em tela; não participa dos geradores de documentos. */
+@media screen{
+.srm-form-visual :is(.main,.container,#app-screen,.app-shell){max-width:1480px}
+.srm-form-visual .form-shell{gap:16px}
+.srm-form-visual .form-header{margin-bottom:12px;padding-bottom:8px;gap:10px}
+.srm-form-visual .form-header h1{font-size:22px}
+.srm-form-visual #form-sections .card{margin-bottom:12px;border-radius:10px}
+.srm-form-visual #form-sections .card-head{padding:12px 16px;gap:8px}
+.srm-form-visual #form-sections .card-head h2{font-size:16px;margin:0}
+.srm-form-visual #form-sections .card-body{padding:14px 16px}
+.srm-form-visual #form-sections .field-row{gap:10px;margin-bottom:10px}
+.srm-form-visual #form-sections :is(.field-group,.pei-field){margin-bottom:10px}
+.srm-form-visual #form-sections label{font-size:12px;line-height:1.4;margin-bottom:3px}
+.srm-form-visual #form-sections :is(input[type=text],input[type=date],input[type=number],select){min-height:36px;font-size:14px;padding:7px 9px}
+.srm-form-visual #form-sections textarea{font-size:14px;line-height:1.5;padding:9px 10px;min-height:76px}
+.srm-form-visual #form-sections .btn{min-height:36px;padding:7px 10px;font-size:12px}
+.srm-form-visual #form-sections :is(.desc,.hint,.notice){font-size:12px;line-height:1.45}
+.srm-form-visual #form-sections details{margin-top:6px;margin-bottom:7px}
+.srm-form-visual .cadastro-diario{padding:8px 10px;margin-bottom:10px}
+.srm-form-visual .cadastro-diario p{font-size:12px;margin-bottom:6px}
+.srm-form-visual .form-nav button{font-size:12px;padding:8px 10px}
+.srm-form-visual .pei-guidance{padding:7px 10px;margin:5px 0}
+@media(max-width:600px){.srm-form-visual #form-sections .card-head{padding:10px 12px}.srm-form-visual #form-sections .card-body{padding:12px}.srm-form-visual #form-sections :is(input[type=text],input[type=date],input[type=number],select){font-size:16px;min-height:44px}.srm-form-visual #form-sections textarea{font-size:16px}.srm-form-visual #form-sections .btn{min-height:44px}}
+}
+@media screen and (min-width:861px){.srm-form-visual .shell{max-width:1600px;padding:20px 16px 60px}.srm-form-visual .form-shell{grid-template-columns:190px minmax(0,1fr)}}
+@media screen{.srm-form-visual #form-sections textarea:is([rows="6"],[rows="8"],[rows="10"]){height:132px}.srm-form-visual #form-sections textarea:is([rows="2"],[rows="3"]){height:76px}}
+@media screen{.srm-form-visual #form-sections .field-row{margin-bottom:8px}.srm-form-visual #form-sections .field-row>.field-group{margin-bottom:0}.srm-form-visual #form-sections .orientacao-preenchimento{margin:3px 0 0;font-size:11px}.srm-form-visual .cadastro-diario{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}.srm-form-visual .cadastro-diario p{flex:1 1 280px;margin:0}}
+@media screen and (min-width:861px){#pei-editor #sec-id .card-body{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px 12px}#pei-editor #sec-id .pei-field{margin-bottom:0}#pei-editor #sec-id .pei-field:is(:has([data-path="identificacao.nome"]),:has(textarea),:has([data-path="identificacao.nee"]),:has([data-path="identificacao.diasAtendimento"])){grid-column:1/-1}}
