@@ -1,0 +1,38 @@
+/* Densidade da ficha, preservando tamanho legível e foco dos controles. */
+#screen-profile .wrapper{gap:12px}
+#screen-profile .card{padding:16px;margin-bottom:12px}
+#screen-profile .section-head{margin:0 0 10px;gap:8px}
+#screen-profile .section-badge{width:26px;height:26px;font-size:15px}
+#screen-profile .field{gap:4px;margin-bottom:8px}
+#screen-profile .fg{gap:8px 12px}
+#screen-profile .field input,#screen-profile .field select{padding:7px 10px;min-height:36px}
+#screen-profile .field textarea{padding:8px 10px;line-height:1.5}
+#screen-profile .photo-row{gap:14px}
+#screen-profile .photo-area{flex:0 0 78px}
+#screen-profile .photo-circle{width:76px;height:76px}
+#screen-profile .photo-hint{font-size:11px;line-height:1.35;margin-top:4px}
+#screen-profile .turno-resumo-linha{gap:12px}
+#screen-profile .aluno-totais{padding:9px 11px;flex-basis:300px}
+#screen-profile .aluno-totais-valores{gap:16px;margin-top:4px}
+#screen-profile .aluno-totais p{margin:4px 0}
+#screen-profile .aluno-totais b{font-size:21px}
+#screen-profile .sep{margin:10px 0;border-top:1px solid #dbe5df}
+#screen-profile .ai-hint{margin:2px 0 6px;line-height:1.4}
+#screen-profile .contacts-area{gap:8px;margin:4px 0}
+#screen-profile .save-btn{margin-top:10px}
+#perfilCadastro #centralAluno{border:0;border-top:1px solid #dbe5df;box-shadow:none;border-radius:0;margin:14px 0 0;padding:14px 0 0;background:transparent}
+#screen-profile .central-facts{gap:8px}
+#screen-profile .central-fact{padding:9px 11px}
+#screen-profile .central-actions{gap:7px;margin:10px 0}
+@media(max-width:600px){#screen-profile .card{padding:12px}#screen-profile .photo-row{flex-direction:row;align-items:flex-start}#screen-profile .photo-area{flex-basis:60px}#screen-profile .photo-circle{width:58px;height:58px}#screen-profile .photo-row .flds{min-width:0;flex:1}#screen-profile .turno-resumo-linha{gap:6px}#screen-profile #turnoAlunoGroup{flex-wrap:wrap}#screen-profile .aluno-totais-valores{gap:10px;flex-wrap:wrap}}
+#screen-profile .card{gap:8px}#screen-profile .flds{gap:6px}
+#screen-profile .field :is(input:not([type=checkbox]):not([type=radio]):not([type=file]),select){min-height:36px;font-size:14px;padding:6px 9px}
+#screen-profile .photo-ph small{display:none}#screen-profile .photo-ph span{font-size:22px}
+#screen-profile .central-subtitle{margin-bottom:10px}
+#screen-profile .central-facts{margin-bottom:10px}
+#screen-profile .central-docs{gap:8px;margin-bottom:10px}
+#screen-profile .central-doc{padding:10px;gap:6px}
+#screen-profile .central-box{padding:12px}
+#screen-profile .central-checks li+li{margin-top:4px}
+#screen-profile .central-aluno h3{margin-bottom:8px}
+@media(max-width:600px){#screen-profile .field :is(input:not([type=checkbox]):not([type=radio]):not([type=file]),select){min-height:44px;font-size:16px}}

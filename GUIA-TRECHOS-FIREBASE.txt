@@ -1,0 +1,12 @@
+TRECHOS FREQUENTES — ETAPA 83
+A biblioteca usa somente o Cloud Firestore do projeto salamulti, por conta do Diário.
+Se já publicou as regras completas revisadas desta etapa, nenhuma outra alteração é necessária.
+Não altere Storage, Realtime Database ou paee-3fea6 para esta funcionalidade.
+
+O arquivo PERMISSOES-TRECHOS-FIRESTORE.txt contém somente o acréscimo. Para publicação manual, acrescente dentro de match /databases/{database}/documents e preserve todas as regras atuais. Não substitua o arquivo completo por esse bloco isolado.
+Caminho: bibliotecaTrechos/{uid}/itens/{trechoId}. Somente o dono pode ler, cadastrar, editar ou excluir. Título até 120 e conteúdo até 5.000 caracteres. Versão evita sobrescrever alterações de outra aba.
+
+USO
+Clique em Trechos, cadastre título e conteúdo e use Inserir. Para substituir uma parte do campo, selecione essa parte antes de abrir a biblioteca. Sem seleção, o trecho entra no cursor. Um campo vazio recebe somente o trecho. O limite do campo é respeitado sem truncar ou apagar texto. A biblioteca não salva o documento de destino: use o botão habitual de Salvar.
+Diário, PAEE, PEI, Relatório e Diagnóstica consultam a mesma biblioteca pela conta do Diário. Se uma tela não tiver a sessão do Diário disponível, a janela solicita o acesso com o mesmo e-mail. Uma conta diferente é bloqueada, sem encerrá-la ou trocá-la automaticamente.
+Cadastros da biblioteca não alteram os textos já inseridos nem os arquivos anteriormente exportados.

@@ -1,0 +1,12 @@
+/* Data de emissão da cópia gerada; não altera o relógio nem datas cadastrais. */
+(()=>{'use strict';let escolhida='';
+function hoje(){const p=new Intl.DateTimeFormat('en-US',{timeZone:'America/Sao_Paulo',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date()),v=t=>p.find(p=>p.type===t).value;return v('year')+'-'+v('month')+'-'+v('day');}
+function valida(s){if(!/^\d{4}-\d{2}-\d{2}$/.test(s))return false;const d=new Date(s+'T12:00:00Z');return Number.isFinite(d.getTime())&&d.toISOString().slice(0,10)===s&&Number(s.slice(0,4))>=1;}
+function iso(){return escolhida||hoje();}
+function extenso(){return new Intl.DateTimeFormat('pt-BR',{timeZone:'UTC',day:'numeric',month:'long',year:'numeric'}).format(new Date(iso()+'T12:00:00Z'));}
+function definir(s=''){if(s&&!valida(s))throw Error('Confira a data de emissão.');escolhida=s;document.querySelectorAll('[data-emissao-input]').forEach(i=>i.value=s);window.dispatchEvent(new Event('srm-data-emissao'));}
+function controle(){const box=document.createElement('div');box.className='data-emissao-controle';const l=document.createElement('label'),input=document.createElement('input'),b=document.createElement('button'),nota=document.createElement('small');l.textContent='Data de emissão ';input.type='date';input.dataset.emissaoInput='true';input.setAttribute('aria-label','Data de emissão (opcional)');input.value=escolhida;input.title='Deixe em branco para usar a data do dia. Aceita datas anteriores e futuras.';input.onchange=()=>{if(!input.value||valida(input.value)){input.setCustomValidity('');definir(input.value);}else{input.setCustomValidity('Confira a data de emissão.');input.reportValidity();}};b.type='button';b.textContent='Usar data de hoje';b.onclick=()=>definir('');nota.textContent='Em branco: data do dia. A escolha vale para as próximas cópias nesta página.';l.append(input);box.append(l,b,nota);return box;}
+window.DataEmissao=Object.freeze({hoje,valida,iso,extenso,definir,controle});
+function montar(){if(window.SRMExportacaoWorker)return;let host=document.querySelector('.fonte-linha');if(!host){host=document.createElement('div');document.body.prepend(host);}host.append(controle());try{const auth=window.firebase?.auth?.();let anterior=auth?.currentUser?.uid||null;auth?.onAuthStateChanged(user=>{const uid=user?.uid||null;if(uid!==anterior){anterior=uid;definir('');}});}catch(error){/* Páginas sem autenticação também podem exportar. */}}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',montar,{once:true});else montar();
+})();
