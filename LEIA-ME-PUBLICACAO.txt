@@ -1,0 +1,62 @@
+PACOTE DO SITE OFICIAL — saladerecursos.netlify.app
+
+Inclui as melhorias acumuladas até a etapa 97.
+Conexões: salamulti (Diário/PEI) e paee-3fea6 (PAEE/Diagnóstica/Relatório).
+Não é uma cópia isolada de teste.
+ETAPA 91 — REMOÇÃO DO CHECK-LIST
+Lista privada por aluno: PAEE, Diagnóstica, Relatório final e SERE. Períodos de 7, 15 e 30 dias e marcação manual. Novas exportações dos três formulários e do assistente marcam o Check-list; SERE é manual. Exportações antigas não são recuperadas. Confira a pasta Downloads. O Check-list usa as permissões existentes das subcoleções do aluno; nenhuma regra Firebase nova nesta atualização. Manual e dúvidas continua como última aba.
+
+REMOÇÃO DO BANCO DE METAS
+A aba Banco de Metas e seus arquivos de consulta foram removidos. As metas individuais já salvas nas fichas e o Check-list permanecem disponíveis. Não altera dados existentes, formulários nem exportações.
+
+CALENDÁRIO LETIVO DE CAMBÉ — 2026
+Botão abaixo de Voltar ao topo no menu dos alunos. Abre em outra aba uma versão digital de consulta baseada no calendário enviado, com meses, legenda, identificação das datas e impressão. O Check-list permanece e o Banco de Metas continua removido. Nenhuma regra Firebase nova.
+
+FILTRO POR SÉRIE
+Filtro ao lado de Mostrar alunos, combinável com situação e turno. Campo Turma / Série do perfil com seleção de 1º a 5º. Valores anteriores são preservados e reconhecidos quando compatíveis, como 3º ano A. Nenhuma migração de dados nem alteração de regras Firebase.
+
+FILTROS NOS DOCUMENTOS
+Situação e série nas listas PAEE, PEI, Relatório e Diagnóstica do Diário e nos formulários independentes. Consulta ao perfil atual, com mesmo e-mail da sessão do Diário nos formulários separados. Documentos sem vínculo confirmado permanecem em Todos + Todas as séries. Check-list aceita situação e série; seleção para exportação ganha filtro por série. Não altera documentos ou regras Firebase.
+
+DATA DE EMISSÃO
+A opção não fica mais no topo do Diário ou dos formulários. Surge ao exportar ou imprimir, ou dentro do assistente Exportar Documentos. Em branco usa o dia atual de São Paulo; permite datas anteriores e futuras. Usar data de hoje restaura o padrão. Cada exportação individual inicia com a data do dia. A escolha vale para a geração e não altera nascimento, avaliações, registros, períodos de frequência ou datas reais de gravação. Nenhuma regra Firebase nova.
+
+CIDADE E DATA NOS DOCUMENTOS
+Os documentos exportados/impressos apresentam apenas cidade e data por extenso, sem o rótulo Data de emissão. Exemplo: Cambé, 18 de dezembro de 2026. A escolha da data continua somente na ação de exportar/imprimir. Nenhuma alteração de regras Firebase.
+
+PARA PUBLICAR
+1. Guarde o endereço/identificador do deploy oficial atual para eventual retorno.
+2. Extraia o ZIP inteiro. Abra a pasta que contém index.html, vendor e modelos.
+3. No Netlify, abra o site saladerecursos, endereço saladerecursos.netlify.app.
+4. Em Deploys, arraste essa pasta inteira. Não arraste somente index.html.
+5. Aguarde Published e atualize o site com Ctrl + Shift + R.
+6. Confira com sua conta e outra conta de professor: alunos, documentos antigos,
+   atendimentos, frequência, arquivamento/reativação, Meu dia e exportação.
+7. Em uma ficha de aluno fictício, abra Questionário da família, gere e copie um
+   link. Abra-o em janela anônima/celular, responda e envie. Retorne ao professor e
+   clique em Atualizar respostas para conferir o relato e os itens correspondentes.
+   Confira também a desativação do link. Não use dados reais nesse teste.
+8. Confira o aviso no primeiro Continuar com perguntas em branco e a confirmação
+   no segundo clique. Ao enviar, os campos pulados ficam como Sem resposta.
+9. No botão Exportar Documentos, selecione Questionário da família e confira um
+   DOCX/ODT com as respostas salvas. Se houver várias, escolha a versão desejada.
+10. Na aba Alunos, mude a data do encontro e confira o quadro Agenda do Dia, no turno
+    escolhido. A edição do conteúdo continua na aba Planner.
+11. No chat, use 📎 com um arquivo fictício de até 10 MB e clique em Enviar.
+    Confira prévia/download com outra conta e Apagar pelo autor.
+
+DOCUMENTOS DOS PROFESSORES
+Exportar Documentos oferece DOCX/ODT individuais por padrão. ZIP é opcional.
+A associação de documentos antigos únicos pelo nome ocorre na primeira abertura:
+ela grava apenas alunoId, sem exigir Salvar e sem alterar o texto do documento.
+
+ASSINATURAS
+Use Adicionar pessoa para assinar nos cinco documentos. No Relatório, coordenação e demais responsáveis ficam na lista de pessoas, sem campo fixo separado na Identificação. Nomes e imagens antigos são preservados ao abrir; salve para confirmar.
+
+OBSERVAÇÕES
+Os backups de dados e arquivos devem ser guardados separadamente. Este ZIP contém
+somente o código do site e seus recursos estáticos; não contém registros do banco.
+A transferência administrativa permanece temporariamente bloqueada.
+Uma reversão de deploy retorna o código, mas não desfaz gravações feitas no banco.
+Os testes foram locais, com dados fictícios; não validam credenciais reais, índices,
+serviços externos de IA ou a configuração remota atual de todos os serviços.
